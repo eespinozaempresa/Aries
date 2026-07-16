@@ -1,0 +1,742 @@
+Structure for table:    D:\ESPV\DATA\ALMACEN.DBF
+Number of data records: 0       
+Date of last update:    07/20/00
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROART          Character               5                             No
+    2  TIENDA1         Character              10                             No
+    3  STOCK1          Numeric                 9      2                      No
+    4  TIENDA2         Character              10                             No
+    5  STOCK2          Numeric                 9      2                      No
+    6  TIENDA3         Character              10                             No
+    7  STOCK3          Numeric                 9      2                      No
+    8  TIENDA4         Character              10                             No
+    9  STOCK4          Numeric                 9      2                      No
+   10  TIENDA5         Character              10                             No
+   11  STOCK5          Numeric                 9      2                      No
+   12  TIENDA6         Character              10                             No
+   13  STOCK6          Numeric                 9      2                      No
+   14  TIENDA7         Character              10                             No
+   15  STOCK7          Numeric                 9      2                      No
+   16  TIENDA8         Character              10                             No
+   17  STOCK8          Numeric                 9      2                      No
+   18  TIENDA9         Character              10                             No
+   19  STOCK9          Numeric                 9      2                      No
+   20  TIENDA10        Character              10                             No
+   21  STOCK10         Numeric                 9      2                      No
+** Total **                                  196
+
+Structure for table:    D:\ESPV\DATA\ARTICULO.DBF
+Number of data records: 155     
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROART          Character               5            Asc   Machine    No
+    2  CODTIP          Character               3                             No
+    3  CODMED          Character               3                             No
+    4  NOMART          Character             100            Asc   Machine    No
+    5  VALCOM          Numeric                 9      3                      No
+    6  IGVCOM          Numeric                 9      3                      No
+    7  PRECOM          Numeric                 9      3                      No
+    8  UTIL            Numeric                 6      2                      No
+    9  VALVTA          Numeric                 9      3                      No
+   10  IGVVTA          Numeric                 9      3                      No
+   11  PREVTA          Numeric                 9      3                      No
+   12  FECREG          Date                    8                             No
+   13  FECVEN          Date                    8                             No
+   14  STKMIN          Numeric                10      3                      No
+   15  CODBAR          Character              30            Asc   Machine    No
+   16  STKMAX          Numeric                10      3                      No
+   17  PENDIENTE       Logical                 1                             No
+   18  CODMAR          Character               3                             No
+   19  STOCK1          Numeric                10      3                      No
+   20  STOCK2          Numeric                10      3                      No
+   21  STOCK3          Numeric                10      3                      No
+   22  STOCK4          Numeric                10      3                      No
+   23  STOCK5          Numeric                10      3                      No
+   24  STOCK6          Numeric                10      3                      No
+** Total **                                  302
+
+Structure for table:    D:\ESPV\DATA\ASIGNA.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  FECASI          Date                    8                             No
+    4  CONASI          Character              45                             No
+    5  CODTIEO         Character               2                             No
+    6  CODTIED         Character               2                             No
+    7  OBSASI          Character               8                             No
+    8  CODUSU          Character              10                             No
+    9  TOTAL           Numeric                13      3                      No
+** Total **                                  101
+
+Structure for table:    D:\ESPV\DATA\BANCOS.DBF
+Number of data records: 6       
+Date of last update:    05/12/07
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODBAN          Character               2            Asc   Machine    No
+    2  DESBAN          Character              20            Asc   Machine    No
+** Total **                                   23
+
+Structure for table:    D:\ESPV\DATA\CAJA.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROCAJ          Numeric                 8                             No
+    2  CODDOC          Character               2                             No
+    3  NRODOC          Character              15                             No
+    4  FECHA           Date                    8                             No
+    5  TIPO            Character               7                             No
+    6  CONCEP          Character              50                             No
+    7  USUARIO         Character              50                             No
+    8  MONTO           Numeric                10      2                      No
+    9  TIPPAG          Character              10                             No
+   10  NUMERO          Character              15                             No
+   11  CODBAN          Character               2                             No
+** Total **                                  178
+
+Structure for table:    D:\ESPV\DATA\CLIENTES.DBF
+Number of data records: 420     
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODCLI          Character               5            Asc   Machine    No
+    2  RAZCLI          Character              50            Asc   Machine    No
+    3  DIRCLI          Character              50                             No
+    4  RUCCLI          Character              11            Asc   Machine    No
+    5  TELCLI          Character               8                             No
+    6  FAXCLI          Character               8                             No
+** Total **                                  133
+
+Structure for table:    D:\ESPV\DATA\COBROS.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROPROVI        Numeric                 8                             No
+    2  FECHA           Date                    8                             No
+    3  TIPPAG          Character              10                             No
+    4  NUMERO          Character              15                             No
+    5  CODBAN          Character               2                             No
+    6  MONTO           Numeric                 9      2                      No
+    7  NROREC          Character              15                             No
+    8  IDCOBRO         Numeric                10                             No
+    9  STAT            Character               1                             No
+** Total **                                   79
+
+Structure for table:    D:\ESPV\DATA\COMPRAS.DBF
+Number of data records: 50      
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  FECCOM          Date                    8                             No
+    4  FORMCOM         Character              10                             No
+    5  PLAZO           Numeric                 3                             No
+    6  FECVEN          Date                    8                             No
+    7  OBSCOM          Character               8                             No
+    8  CODTIE          Character               2                             No
+    9  CODPROV         Character               5                             No
+   10  CODUSU          Character              10                             No
+   11  SUBTOT          Numeric                10      2                      No
+   12  IGVTOT          Numeric                 8      2                      No
+   13  TOTAL           Numeric                10      2                      No
+   14  SUBTOT2         Numeric                10      2                      No
+   15  IGVTOT2         Numeric                10      2                      No
+   16  TOTAL2          Numeric                10      2                      No
+   17  MONEDA          Character               3                             No
+** Total **                                  128
+
+Structure for table:    D:\ESPV\DATA\CONSIGNA.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  FECASI          Date                    8                             No
+    4  CODTIE          Character               2                             No
+    5  OBSASI          Character               8                             No
+    6  CODCLI          Character               5                             No
+    7  CODUSU          Character              10                             No
+    8  TOTAL           Numeric                12      2                      No
+    9  PENDIENTE       Logical                 1                             No
+** Total **                                   59
+
+Structure for table:    D:\ESPV\DATA\CREDITOS.DBF
+Number of data records: 4       
+Date of last update:    01/17/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROPROVI        Numeric                 8            Asc   Machine    No
+    2  NROPROVIA       Numeric                 8                             No
+    3  CODDOC          Character               2                             No
+    4  NRODOC          Character              15                             No
+    5  NROCUO          Numeric                 2                             No
+    6  CUOTA           Numeric                 2                             No
+    7  TOTAL           Numeric                10      2                      No
+    8  ACTA            Numeric                10      2                      No
+    9  SALDO           Numeric                10      2                      No
+   10  INTERES         Numeric                 8      2                      No
+   11  FECEMI          Date                    8                             No
+   12  FECVEN          Date                    8                             No
+   13  CODCLI          Character               5                             No
+   14  PENDIENTE       Logical                 1                             No
+   15  REFER           Character              30                             No
+** Total **                                  128
+
+Structure for table:    D:\ESPV\DATA\CUAVEN.DBF
+Number of data records: 0       
+Date of last update:    01/07/10
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROART          Character               5                             No
+    2  CONUNI          Numeric                 9      2                      No
+    3  CREUNI          Numeric                 9      2                      No
+    4  TOTUNI          Numeric                 9      2                      No
+    5  CONDIN          Numeric                11      2                      No
+    6  CREDIN          Numeric                11      2                      No
+    7  TOTDIN          Numeric                11      2                      No
+    8  CODTIE          Character               2                             No
+** Total **                                   68
+
+Structure for table:    D:\ESPV\DATA\DETAASI.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  NROART          Character               5                             No
+    4  CANART          Numeric                10      3                      No
+    5  PREART          Numeric                 9      3                      No
+    6  IMPART          Numeric                11      3                      No
+** Total **                                   48
+
+Structure for table:    D:\ESPV\DATA\DETACOM.DBF
+Number of data records: 121     
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  NROART          Character               5                             No
+    4  CANART          Numeric                10      3                      No
+    5  PREART          Numeric                 9      3                      No
+    6  IMPART          Numeric                10      2                      No
+    7  FECVEN          Date                    8                             No
+    8  PREART2         Numeric                 9      3                      No
+    9  IMPART2         Numeric                10      2                      No
+** Total **                                   74
+
+Structure for table:    D:\ESPV\DATA\DETACON.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  NROART          Character               5                             No
+    4  CANART          Numeric                 9      2                      No
+    5  PREART          Numeric                 8      2                      No
+    6  IMPART          Numeric                10      2                      No
+** Total **                                   45
+
+Structure for table:    D:\ESPV\DATA\DETADEV.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  NROART          Character               5                             No
+    4  CANART          Numeric                 9      2                      No
+    5  PREART          Numeric                 8      2                      No
+    6  IMPART          Numeric                10      2                      No
+** Total **                                   45
+
+Structure for table:    D:\ESPV\DATA\DETAGUIA.DBF
+Number of data records: 0       
+Date of last update:    12/23/00
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROGUIA         Character              10                             No
+    2  NROART          Character               5                             No
+    3  CANART          Numeric                10      3                      No
+    4  PREART          Numeric                 9      3                      No
+    5  IMPART          Numeric                10      2                      No
+** Total **                                   45
+
+Structure for table:    D:\ESPV\DATA\DETAING.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  NROART          Character               5                             No
+    4  CANART          Numeric                10      3                      No
+    5  PREART          Numeric                 9      3                      No
+    6  IMPART          Numeric                10      2                      No
+** Total **                                   47
+
+Structure for table:    D:\ESPV\DATA\DETAMOV.DBF
+Number of data records: 103     
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  NROART          Character               5                             No
+    4  CANART          Numeric                10      3                      No
+    5  PREART          Numeric                 9      3                      No
+    6  IMPART          Numeric                10      2                      No
+** Total **                                   47
+
+Structure for table:    D:\ESPV\DATA\DETASAL.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  NROART          Character               5                             No
+    4  CANART          Numeric                10      3                      No
+    5  PREART          Numeric                 9      3                      No
+    6  IMPART          Numeric                10      2                      No
+** Total **                                   47
+
+Structure for table:    D:\ESPV\DATA\DETASOL.DBF
+Number of data records: 0       
+Date of last update:    01/07/10
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROSOL          Character               8                             No
+    2  CODPER          Character               5                             No
+** Total **                                   14
+
+Structure for table:    D:\ESPV\DATA\DETAVEN.DBF
+Number of data records: 1835    
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  NROART          Character               5                             No
+    4  CANART          Numeric                10      3                      No
+    5  PREART          Numeric                 9      3                      No
+    6  DESART          Numeric                 6      2                      No
+    7  IMPART          Numeric                10      2                      No
+** Total **                                   53
+
+Structure for table:    D:\ESPV\DATA\DEVOLU.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  FECASI          Date                    8                             No
+    4  CODTIE          Character               2                             No
+    5  OBSASI          Character               8                             No
+    6  CODCLI          Character               5                             No
+    7  CODUSU          Character              10                             No
+    8  TOTAL           Numeric                12      2                      No
+    9  CODDOCI         Character               2                             No
+   10  NRODOCI         Character              10                             No
+** Total **                                   70
+
+Structure for table:    D:\ESPV\DATA\DOCUS.DBF
+Number of data records: 8       
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2            Asc   Machine    No
+    2  DESDOC          Character              20            Asc   Machine    No
+    3  NRODOC          Character              10                             No
+    4  ABRDOC          Character               2                             No
+    5  IGV             Numeric                 1                             No
+    6  CODCON          Character               2                             No
+** Total **                                   38
+
+Structure for table:    D:\ESPV\DATA\DOLAR.DBF
+Number of data records: 1051    
+Date of last update:    07/14/26
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  FECHAD          Date                    8            Asc   Machine    No
+    2  CAMBIOS         Numeric                 6      2                      No
+** Total **                                   15
+
+Structure for table:    D:\ESPV\DATA\FECVEN.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROART          Character               5                             No
+    2  FECHA           Date                    8            Asc   Machine    No
+    3  ACTIVO          Logical                 1                             No
+** Total **                                   15
+
+Structure for table:    D:\ESPV\DATA\FINANZA.DBF
+Number of data records: 0       
+Date of last update:    07/20/00
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODTIE          Character               2                             No
+    2  VENTAS          Numeric                10      2                      No
+    3  COMPRAS         Numeric                10      2                      No
+    4  SALDO           Numeric                10      2                      No
+** Total **                                   33
+
+Structure for table:    D:\ESPV\DATA\GUIACRE.DBF
+Number of data records: 0       
+Date of last update:    09/07/02
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROGUIA         Character              10                             No
+    2  FECGUIA         Date                    8                             No
+    3  CODCLI          Character               5                             No
+    4  PLAZO           Numeric                 3                             No
+    5  FECVTO          Date                    8                             No
+    6  CODTIE          Character               2                             No
+    7  NROSOL          Character               8                             No
+    8  TOTGUIA         Numeric                10      2                      No
+    9  OBSGUIA         Character               8                             No
+   10  CODPER          Character               5                             No
+** Total **                                   68
+
+Structure for table:    D:\ESPV\DATA\INGRE.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  FECASI          Date                    8                             No
+    4  CODTIE          Character               2                             No
+    5  OBSASI          Character               8                             No
+    6  CODCLI          Character               5                             No
+    7  CODUSU          Character              10                             No
+    8  TOTAL           Numeric                12      2                      No
+    9  DOCUS           Character              30                             No
+   10  PENDIENTE       Logical                 1                             No
+** Total **                                   89
+
+Structure for table:    D:\ESPV\DATA\INSUMO.DBF
+Number of data records: 0       
+Date of last update:    07/20/00
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROART          Character               5                             No
+    2  CODTIP          Character               2                             No
+    3  CODMED          Character               2                             No
+    4  NOMART          Character              40                             No
+    5  VALCOM          Numeric                 8      2                      No
+    6  IGVCOM          Numeric                 8      2                      No
+    7  PRECOM          Numeric                 8      2                      No
+    8  FECREG          Date                    8                             No
+    9  FECVEN          Date                    8                             No
+   10  STKMIN          Numeric                 9      2                      No
+   11  STKMAX          Numeric                 9      2                      No
+   12  CODBAR          Character              20                             No
+** Total **                                  128
+
+Structure for table:    D:\ESPV\DATA\KARDEX.DBF
+Number of data records: 68      
+Date of last update:    02/04/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODTIE          Character               2                             No
+    2  NROART          Character               5                             No
+    3  FECHA           Date                    8            Asc   Machine    No
+    4  CODDOC          Character               2                             No
+    5  NRODOC          Character              10                             No
+    6  TIPO            Character              13                             No
+    7  ENTRADA         Numeric                10      3                      No
+    8  PREENT          Numeric                 9      3                      No
+    9  IMPENT          Numeric                13      3                      No
+   10  SALIDA          Numeric                10      3                      No
+   11  PRESAL          Numeric                 9      3                      No
+   12  IMPSAL          Numeric                13      3                      No
+   13  STOCK           Numeric                10      3                      No
+   14  PRESTK          Numeric                13      3                      No
+   15  IMPSTK          Numeric                13      3                      No
+   16  REPORTE         Character               1                             No
+   17  ORDEN           Numeric                 8                             No
+** Total **                                  150
+
+Structure for table:    D:\ESPV\DATA\MARCA.DBF
+Number of data records: 30      
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODMAR          Character               3            Asc   Machine    No
+    2  DESMAR          Character              20            Asc   Machine    No
+** Total **                                   24
+
+Structure for table:    D:\ESPV\DATA\MEDIDA.DBF
+Number of data records: 33      
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODMED          Character               3            Asc   Machine    No
+    2  DESMED          Character              20            Asc   Machine    No
+** Total **                                   24
+
+Structure for table:    D:\ESPV\DATA\MOVIM.DBF
+Number of data records: 7       
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  FECASI          Date                    8                             No
+    4  CODTIE          Character               2                             No
+    5  OBSASI          Character               8                             No
+    6  TIPO            Character               7                             No
+    7  CODUSU          Character              10                             No
+    8  TOTAL           Numeric                12      2                      No
+    9  CONCEP          Character              50                             No
+** Total **                                  110
+
+Structure for table:    D:\ESPV\DATA\PAGOS.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROPROVI        Numeric                 8                             No
+    2  FECHA           Date                    8                             No
+    3  TIPPAG          Character              10                             No
+    4  NUMERO          Character              15                             No
+    5  CODBAN          Character               2                             No
+    6  MONTO           Numeric                 9      2                      No
+    7  NROREC          Character              15                             No
+    8  IDPAGO          Numeric                10                             No
+** Total **                                   78
+
+Structure for table:    D:\ESPV\DATA\PERSO.DBF
+Number of data records: 9       
+Date of last update:    07/14/26
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODPER          Character               5                             No
+    2  NOMPER          Character              50                             No
+    3  DNIPER          Character               8                             No
+    4  TELPER          Character               8                             No
+    5  DIRPER          Character              50                             No
+    6  CODCLI          Character               5                             No
+** Total **                                  127
+
+Structure for table:    D:\ESPV\DATA\PRECOM.DBF
+Number of data records: 0       
+Date of last update:    07/20/00
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROART          Character               5                             No
+    2  FECHA           Date                    8                             No
+    3  PRECIOA         Numeric                 8      2                      No
+    4  PRECIO          Numeric                 8      2                      No
+** Total **                                   30
+
+Structure for table:    D:\ESPV\DATA\PROVEE.DBF
+Number of data records: 22      
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODPROV         Character               5            Asc   Machine    No
+    2  RAZPROV         Character              50            Asc   Machine    No
+    3  DIRPROV         Character              50                             No
+    4  RUCPROV         Character              11                             No
+    5  TELPROV         Character               8                             No
+    6  FAXPROV         Character               8                             No
+** Total **                                  133
+
+Structure for table:    D:\ESPV\DATA\PROVI.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROPROVI        Numeric                 8            Asc   Machine    No
+    2  NROPROVIA       Numeric                 8                             No
+    3  CODDOC          Character               2                             No
+    4  NRODOC          Character              15                             No
+    5  NROCUO          Numeric                 2                             No
+    6  CUOTA           Numeric                 2                             No
+    7  TOTAL           Numeric                10      2                      No
+    8  ACTA            Numeric                10      2                      No
+    9  SALDO           Numeric                10      2                      No
+   10  INTERES         Numeric                 8      2                      No
+   11  FECEMI          Date                    8                             No
+   12  FECVEN          Date                    8                             No
+   13  CODPROV         Character               5                             No
+   14  PENDIENTE       Logical                 1                             No
+   15  REFER           Character              30                             No
+** Total **                                  128
+
+Structure for table:    D:\ESPV\DATA\REPE.DBF
+Number of data records: 0       
+Date of last update:    01/07/10
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NOMART          Character              40                             No
+    2  CODBAR          Character              30                             No
+    3  NROART          Character               5                             No
+** Total **                                   76
+
+Structure for table:    D:\ESPV\DATA\REPORTESTOCK.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODTIE          Character               2                             No
+    2  NROART          Character               5                             No
+    3  INICIAL         Numeric                 9      2                      No
+    4  INGRESO         Numeric                 9      2                      No
+    5  SALIDA          Numeric                 9      2                      No
+    6  STOCK           Numeric                 9      2                      No
+** Total **                                   44
+
+Structure for table:    D:\ESPV\DATA\SALIDA.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  FECASI          Date                    8                             No
+    4  CODTIE          Character               2                             No
+    5  OBSASI          Character               8                             No
+    6  CODCLI          Character               5                             No
+    7  CODUSU          Character              10                             No
+    8  TOTAL           Numeric                12      2                      No
+    9  CODDOCI         Character               2                             No
+   10  NRODOCI         Character              10                             No
+** Total **                                   70
+
+Structure for table:    D:\ESPV\DATA\SOLICITO.DBF
+Number of data records: 2       
+Date of last update:    07/14/26
+Memo file block size:   64
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROSOL          Character               8                             No
+    2  CODCLI          Character               5                             No
+    3  REFSOL          Memo                    4                             No
+    4  FECSOL          Date                    8                             No
+    5  TOTSOL          Numeric                10      2                      No
+    6  OBSSOL          Character               8                             No
+** Total **                                   44
+
+Structure for table:    D:\ESPV\DATA\STOCK.DBF
+Number of data records: 31      
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODTIE          Character               2                             No
+    2  NROART          Character               5                             No
+    3  INICIAL         Numeric                10      3                      No
+    4  COMPRAS         Numeric                10      3                      No
+    5  ASIGNA          Numeric                10      3                      No
+    6  INGRESO         Numeric                10      3                      No
+    7  VENTAS          Numeric                10      3                      No
+    8  TRANSFE         Numeric                10      3                      No
+    9  SALIO           Numeric                10      3                      No
+   10  STKART          Numeric                10      3                      No
+   11  FECHA           Date                    8                             No
+   12  PREPRO          Numeric                10      3                      No
+   13  IMPORTE         Numeric                10      2                      No
+** Total **                                  116
+
+Structure for table:    D:\ESPV\DATA\TABLA.DBF
+Number of data records: 1       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  USUARIO         Character              50                             No
+    2  IGV             Numeric                 6      2                      No
+    3  BACKUP          Character              45                             No
+    4  RESTORE         Character              45                             No
+    5  AVISO           Numeric                 2                             No
+    6  ACCESO          Logical                 1                             No
+** Total **                                  150
+
+Structure for table:    D:\ESPV\DATA\TIENDA.DBF
+Number of data records: 6       
+Date of last update:    05/15/07
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODTIE          Character               2            Asc   Machine    No
+    2  ABRTIE          Character              10            Asc   Machine    No
+    3  DESTIE          Character              40            Asc   Machine    No
+    4  UBITIE          Character              40                             No
+    5  TIPTIE          Character              11                             No
+** Total **                                  104
+
+Structure for table:    D:\ESPV\DATA\TIPO.DBF
+Number of data records: 11      
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODTIP          Character               3            Asc   Machine    No
+    2  DESTIP          Character              20            Asc   Machine    No
+** Total **                                   24
+
+Structure for table:    D:\ESPV\DATA\USUARIO.DBF
+Number of data records: 1       
+Date of last update:    06/14/07
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODUSU          Character              10            Asc   Machine    No
+    2  CLAUSU          Character               5                             No
+    3  NIVUSU          Character              10                             No
+    4  NOMUSU          Character              40                             No
+** Total **                                   66
+
+Structure for table:    D:\ESPV\DATA\UTILIDAD.DBF
+Number of data records: 0       
+Date of last update:    09/16/24
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  NROART          Character               5                             No
+    2  TOTVEN          Numeric                11      2                      No
+    3  PREVEN          Numeric                11      2                      No
+    4  PRECOM          Numeric                11      2                      No
+    5  UTIL            Numeric                11      2                      No
+    6  CODTIE          Character               2                             No
+** Total **                                   52
+
+Structure for table:    D:\ESPV\DATA\VENTAS.DBF
+Number of data records: 585     
+Date of last update:    02/05/25
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODDOC          Character               2                             No
+    2  NRODOC          Character              10                             No
+    3  FECVTA          Date                    8                             No
+    4  OBSVTA          Character               8                             No
+    5  CODTIE          Character               2                             No
+    6  CODCLI          Character               5                             No
+    7  CODUSU          Character              10                             No
+    8  SUBTOT          Numeric                10      2                      No
+    9  IGVTOT          Numeric                 8      2                      No
+   10  TOTAL           Numeric                10      2                      No
+   11  TIPVEN          Character               8                             No
+   12  PLAZO           Numeric                 3                             No
+   13  FECVTO          Date                    8                             No
+** Total **                                   93
+
+Structure for table:    D:\ESPV\DATA\ZONA.DBF
+Number of data records: 4       
+Date of last update:    03/11/06
+Code Page:              1252    
+Field  Field Name      Type                Width    Dec   Index   Collate Nulls    Next    Step
+    1  CODZON          Character               2            Asc   Machine    No
+    2  DESZON          Character              20            Asc   Machine    No
+** Total **                                   23

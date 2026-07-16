@@ -1,0 +1,46 @@
+class TablaBase {
+  final String id;
+  final String codigoEmpresa;
+  final String codigo;
+  final String descripcion;
+  final bool activo;
+
+  const TablaBase({
+    required this.id,
+    required this.codigoEmpresa,
+    required this.codigo,
+    required this.descripcion,
+    required this.activo,
+  });
+
+  String get subtitle => codigo;
+}
+
+class Linea  extends TablaBase { const Linea({required super.id, required super.codigoEmpresa, required super.codigo, required super.descripcion, required super.activo}); }
+class Medida extends TablaBase { const Medida({required super.id, required super.codigoEmpresa, required super.codigo, required super.descripcion, required super.activo}); }
+class Banco  extends TablaBase { const Banco({required super.id, required super.codigoEmpresa, required super.codigo, required super.descripcion, required super.activo}); }
+class Marca  extends TablaBase { const Marca({required super.id, required super.codigoEmpresa, required super.codigo, required super.descripcion, required super.activo}); }
+
+class Documento extends TablaBase {
+  final String? abreviatura;
+  final String serie;
+  final int numeroSiguiente;
+  final bool aplicaIgv;
+  final String? tipo;
+
+  const Documento({
+    required super.id,
+    required super.codigoEmpresa,
+    required super.codigo,
+    required super.descripcion,
+    required super.activo,
+    this.abreviatura,
+    this.serie = '0001',
+    required this.numeroSiguiente,
+    required this.aplicaIgv,
+    this.tipo,
+  });
+
+  @override
+  String get subtitle => '$codigo-$serie';
+}

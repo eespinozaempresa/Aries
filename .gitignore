@@ -1,0 +1,27 @@
+# Backend
+backend/node_modules/
+backend/dist/
+backend/.env
+
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/build/
+mobile/android/
+mobile/ios/
+mobile/linux/
+mobile/macos/
+mobile/web/
+mobile/windows/
+mobile/.packages
+mobile/pubspec.lock
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
