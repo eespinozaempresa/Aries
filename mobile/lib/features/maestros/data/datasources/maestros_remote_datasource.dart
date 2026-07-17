@@ -16,6 +16,7 @@ class PageResult<T> {
 
 abstract class MaestrosRemoteDataSource {
   Future<PageResult<ArticuloModel>> searchArticulos({String? q, bool? activo, int page = 1, int limit = 20});
+  Future<ArticuloModel> getArticulo(String id);
   Future<ArticuloModel> saveArticulo(Map<String, dynamic> data, {String? id});
 
   Future<PageResult<ClienteModel>> searchClientes({String? q, bool? activo, int page = 1, int limit = 20});
@@ -52,6 +53,14 @@ class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
         'limit': limit,
       });
       return _parsePage(res.data, ArticuloModel.fromJson);
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<ArticuloModel> getArticulo(String id) async {
+    try {
+      final res = await _dio.get('/maestros/articulos/$id');
+      return ArticuloModel.fromJson(res.data['data'] as Map<String, dynamic>);
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 

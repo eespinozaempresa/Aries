@@ -95,22 +95,16 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
   }
 
   Future<void> _loadArticulo() async {
-    final result = await _repo.search(q: widget.articuloId, limit: 1);
-    if (!mounted) return;
-    result.fold(
-      (e) => setState(() => _loading = false),
-      (page) async {
-        final a = page.data.isNotEmpty ? page.data.first : null;
-        if (a != null) {
-          _populate(a);
-          try {
-            final lp = await _maestroDs.listPrecios(a.id);
-            if (mounted) setState(() => _listaPrecios = lp);
-          } catch (_) {}
-        }
-        if (mounted) setState(() => _loading = false);
-      },
-    );
+    try {
+      final a = await _maestroDs.getArticulo(widget.articuloId!);
+      if (!mounted) return;
+      _populate(a);
+      try {
+        final lp = await _maestroDs.listPrecios(a.id);
+        if (mounted) setState(() => _listaPrecios = lp);
+      } catch (_) {}
+    } catch (_) {}
+    if (mounted) setState(() => _loading = false);
   }
 
   void _populate(Articulo a) {

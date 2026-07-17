@@ -33,6 +33,14 @@ export class ArticulosController {
     return this.searchUC.execute(user.empresa, q, activoFilter, page, limit);
   }
 
+  @Get(':id')
+  async findOne(@Param('id') id: string, @Req() req: Request) {
+    const user = req['user'] as JwtPayload;
+    const found = await this.repo.findById(id, user.empresa);
+    if (!found) throw new NotFoundException('Artículo no encontrado');
+    return { data: found };
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: CreateArticuloDto, @Req() req: Request) {
