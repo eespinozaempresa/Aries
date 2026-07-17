@@ -129,7 +129,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
     setState(() => _saving = true);
 
     final data = <String, dynamic>{
-      'codigo'          : _codigoCtrl.text.toUpperCase(),
+      if (!widget.isEdit) 'codigo': _codigoCtrl.text.toUpperCase(),
       'descripcion'     : _descCtrl.text,
       'activo'          : _activo,
       if (_barrasCtrl.text.isNotEmpty) 'codigoBarras': _barrasCtrl.text,
@@ -156,7 +156,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
         );
       },
       (saved) async {
-        // Ejecutar operaciones pendientes de lista_precios
+        bool precioError = false;
         for (final op in _pendingOps) {
           try {
             if (op.isDelete) {
@@ -165,10 +165,19 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
               final body = {...op.data!, 'idArticulo': saved.id};
               await _maestroDs.saveListaPrecio(body, id: op.id);
             }
-          } catch (_) {}
+          } catch (_) {
+            precioError = true;
+          }
         }
         setState(() => _saving = false);
-        if (mounted) context.pop(true);
+        if (mounted) {
+          if (precioError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Artículo guardado, pero falló guardar algún precio')),
+            );
+          }
+          context.pop(true);
+        }
       },
     );
   }

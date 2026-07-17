@@ -19,35 +19,36 @@ export class ListaPreciosController {
   ) {
     const emp = req.user.empresa;
     if (articuloId && tipoListaId) {
-      return this.repo.findByTipoLista(emp, articuloId, tipoListaId);
+      const single = await this.repo.findByTipoLista(emp, articuloId, tipoListaId);
+      return { data: single ? [single] : [] };
     }
     if (articuloId) {
-      return this.repo.findByArticulo(emp, articuloId);
+      return { data: await this.repo.findByArticulo(emp, articuloId) };
     }
-    return [];
+    return { data: [] };
   }
 
   @Post()
-  create(@Body() dto: CreateListaPrecioDto, @Request() req: any) {
-    return this.repo.save(req.user.empresa, dto);
+  async create(@Body() dto: CreateListaPrecioDto, @Request() req: any) {
+    return { data: await this.repo.save(req.user.empresa, dto) };
   }
 
   @Put(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() dto: UpdateListaPrecioDto,
     @Request() req: any,
   ) {
-    return this.repo.save(req.user.empresa, dto as any, id);
+    return { data: await this.repo.save(req.user.empresa, dto as any, id) };
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Request() req: any) {
-    return this.repo.remove(req.user.empresa, id);
+  async remove(@Param('id') id: string, @Request() req: any) {
+    await this.repo.remove(req.user.empresa, id);
   }
 
   @Patch(':id/toggle')
-  toggle(@Param('id') id: string, @Request() req: any) {
-    return this.repo.toggleActivo(req.user.empresa, id);
+  async toggle(@Param('id') id: string, @Request() req: any) {
+    return { data: await this.repo.toggleActivo(req.user.empresa, id) };
   }
 }
