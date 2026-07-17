@@ -3,6 +3,7 @@ export interface DetalleCompra {
   compraId: string;
   codigoEmpresa: string;
   codigoArticulo: string;
+  descripcionArticulo?: string;
   cantidad: number;
   precioUnitario: number;
   importe: number;

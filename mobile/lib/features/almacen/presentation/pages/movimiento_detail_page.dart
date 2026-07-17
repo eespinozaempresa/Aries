@@ -78,8 +78,8 @@ class _MovimientoBody extends StatelessWidget {
         const SizedBox(height: 8),
         ...mov.detalles.map((d) => ListTile(
               dense: true,
-              title: Text(d.codigoArticulo),
-              subtitle: Text('${d.cantidad} × ${d.precioUnitario.toStringAsFixed(4)}'),
+              title: Text(d.descripcionArticulo ?? d.codigoArticulo),
+              subtitle: Text('${d.codigoArticulo}  |  ${d.cantidad} × ${d.precioUnitario.toStringAsFixed(4)}'),
               trailing: Text('S/ ${d.importe.toStringAsFixed(2)}'),
             )),
         const SizedBox(height: 24),

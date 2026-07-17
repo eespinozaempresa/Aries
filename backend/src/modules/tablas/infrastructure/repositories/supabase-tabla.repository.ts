@@ -12,6 +12,7 @@ function makeRepo<T extends TablaBase>(tableName: string, fromRow: (r: Record<st
       let q = this.supabase.db.from(tableName).select('*').eq('codigo_empresa', f.codigoEmpresa);
       if (f.activo !== undefined) q = q.eq('activo', f.activo);
       if (f.q) q = q.or(`descripcion.ilike.%${f.q}%,codigo.ilike.%${f.q}%`);
+      if (f.tipo !== undefined) q = (q as any).eq('tipo', f.tipo);
       q = q.order('codigo', { ascending: true });
       const { data, error } = await q;
       if (error) throw new InternalServerErrorException(error.message);

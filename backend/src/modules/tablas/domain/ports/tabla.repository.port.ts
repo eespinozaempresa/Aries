@@ -4,6 +4,7 @@ export interface TablaFilter {
   codigoEmpresa: string;
   q?: string;
   activo?: boolean;
+  tipo?: string;
 }
 
 export abstract class ITablaRepository<T extends TablaBase> {

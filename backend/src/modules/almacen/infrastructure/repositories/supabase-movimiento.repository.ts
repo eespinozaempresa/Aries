@@ -31,7 +31,7 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
       p_observacion: data.observacion ?? null,
       p_concepto:    data.concepto ?? null,
       p_cod_usuario: data.codigoUsuario,
-      p_lineas:      JSON.stringify(data.lineas),
+      p_lineas:      data.lineas,
     });
     if (error) {
       if (error.code === '23505') throw new ConflictException('Número de documento ya existe');
@@ -84,7 +84,7 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
   async findById(id: string, codigoEmpresa: string): Promise<Movimiento | null> {
     const { data, error } = await this.supabase.db
       .from('movimientos_almacen')
-      .select('*, detalle_movimientos(*)')
+      .select('*, detalle_movimientos(*, articulos(descripcion))')
       .eq('id', id)
       .eq('codigo_empresa', codigoEmpresa)
       .maybeSingle();
@@ -116,11 +116,13 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
   }
 
   private toDetalle(row: Record<string, unknown>): DetalleMovimiento {
+    const art = row.articulos as Record<string, unknown> | null | undefined;
     return {
       id: row.id as string,
       movimientoId: row.movimiento_id as string,
       codigoEmpresa: row.codigo_empresa as string,
       codigoArticulo: row.codigo_articulo as string,
+      descripcionArticulo: art?.descripcion as string | undefined,
       cantidad: Number(row.cantidad),
       precioUnitario: Number(row.precio_unitario),
       importe: Number(row.importe),

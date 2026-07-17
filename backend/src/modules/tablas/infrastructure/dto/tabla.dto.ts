@@ -26,7 +26,7 @@ export class CreateDocumentoDto extends CreateTablaDto {
   @IsString() @IsNotEmpty() @MaxLength(4)
   serie: string = '0001';
 
-  @IsNumber() @Min(1) @IsOptional()
+  @IsNumber() @Min(0) @IsOptional()
   numeroSiguiente?: number;
 
   @IsBoolean() @IsOptional()
@@ -65,7 +65,7 @@ export class UpdateDocumentoDto {
   @IsString() @IsOptional() @MaxLength(4)
   serie?: string;
 
-  @IsNumber() @Min(1) @IsOptional()
+  @IsNumber() @Min(0) @IsOptional()
   numeroSiguiente?: number;
 
   @IsBoolean() @IsOptional()

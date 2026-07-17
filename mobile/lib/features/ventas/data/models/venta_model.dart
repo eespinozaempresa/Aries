@@ -33,6 +33,7 @@ class DetalleVentaModel {
     ventaId: j['ventaId'] as String,
     codigoEmpresa: j['codigoEmpresa'] as String,
     codigoArticulo: j['codigoArticulo'] as String,
+    descripcionArticulo: j['descripcionArticulo'] as String?,
     cantidad: (j['cantidad'] as num).toDouble(),
     precioUnitario: (j['precioUnitario'] as num).toDouble(),
     descuentoPct: (j['descuentoPct'] as num?)?.toDouble() ?? 0,

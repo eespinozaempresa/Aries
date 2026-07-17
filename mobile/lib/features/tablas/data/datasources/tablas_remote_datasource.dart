@@ -5,11 +5,12 @@ class TablasRemoteDataSource {
   final Dio _dio;
   TablasRemoteDataSource(this._dio);
 
-  Future<List<Map<String, dynamic>>> list(String path, {String? q, bool? activo}) async {
+  Future<List<Map<String, dynamic>>> list(String path, {String? q, bool? activo, String? tipo}) async {
     try {
       final params = <String, dynamic>{};
       if (q != null && q.isNotEmpty) params['q'] = q;
       if (activo != null) params['activo'] = activo.toString();
+      if (tipo != null) params['tipo'] = tipo;
       final res = await _dio.get('/tablas/$path', queryParameters: params);
       final data = res.data;
       return List<Map<String, dynamic>>.from(

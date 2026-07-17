@@ -103,15 +103,8 @@ export class SupabaseVentaRepository implements IVentaRepository {
 
     // CxC automática para ventas a crédito
     if (d.tipoVenta === 'CREDITO') {
-      const { data: nextProv } = await this.supabase.db
-        .from('cuentas_cobrar')
-        .select('numero_provision')
-        .eq('codigo_empresa', codigoEmpresa)
-        .order('numero_provision', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      const numProv = ((nextProv?.numero_provision as number) ?? 0) + 1;
+      const numProvStr = await this.numeracion.siguiente(codigoEmpresa, 'CXC', '0001');
+      const numProv = parseInt(numProvStr, 10);
 
       await this.supabase.db.from('cuentas_cobrar').insert({
         codigo_empresa:    codigoEmpresa,
@@ -199,7 +192,7 @@ export class SupabaseVentaRepository implements IVentaRepository {
 
   async findById(id: string, codigoEmpresa: string): Promise<Venta | null> {
     const { data, error } = await this.supabase.db
-      .from('ventas').select('*, detalle_ventas(*)')
+      .from('ventas').select('*, detalle_ventas(*, articulos(descripcion))')
       .eq('id', id).eq('codigo_empresa', codigoEmpresa).maybeSingle();
     if (error) throw new InternalServerErrorException(error.message);
     if (!data) return null;
@@ -231,11 +224,13 @@ export class SupabaseVentaRepository implements IVentaRepository {
   }
 
   private toDetalle(r: Record<string, unknown>): DetalleVenta {
+    const art = r.articulos as Record<string, unknown> | null | undefined;
     return {
       id: r.id as string,
       ventaId: r.venta_id as string,
       codigoEmpresa: r.codigo_empresa as string,
       codigoArticulo: r.codigo_articulo as string,
+      descripcionArticulo: art?.descripcion as string | undefined,
       cantidad: Number(r.cantidad),
       precioUnitario: Number(r.precio_unitario),
       descuentoPct: Number(r.descuento_pct),

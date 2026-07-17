@@ -50,8 +50,8 @@ class _View extends StatelessWidget {
             const SizedBox(height: 8),
             ...v.detalles.map((d) => ListTile(
               dense: true,
-              title: Text(d.codigoArticulo),
-              subtitle: Text('${d.cantidad} × ${d.precioUnitario.toStringAsFixed(4)}${d.descuentoPct > 0 ? " (-${d.descuentoPct}%)" : ""}'),
+              title: Text(d.descripcionArticulo ?? d.codigoArticulo),
+              subtitle: Text('${d.codigoArticulo}  |  ${d.cantidad} × ${d.precioUnitario.toStringAsFixed(4)}${d.descuentoPct > 0 ? " (-${d.descuentoPct}%)" : ""}'),
               trailing: Text('S/ ${d.importe.toStringAsFixed(2)}'),
             )),
             const Divider(),

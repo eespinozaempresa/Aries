@@ -7,6 +7,9 @@ import '../../../maestros/domain/repositories/almacen_repository.dart' as maestr
 import '../../../maestros/domain/entities/articulo.dart';
 import '../../../maestros/domain/entities/almacen.dart' as maestro_alm_ent;
 import '../../../maestros/presentation/widgets/maestro_picker.dart';
+import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
+import '../../../tablas/data/models/tabla_model.dart';
+import '../../../tablas/domain/entities/tabla_base.dart';
 import '../../domain/entities/movimiento.dart';
 import '../../domain/repositories/movimiento_repository.dart';
 import '../bloc/movimiento_bloc.dart';
@@ -57,8 +60,8 @@ class _MovimientoFormState extends State<_MovimientoForm> {
   final _formKey = GlobalKey<FormState>();
 
   TipoMovimiento _tipo = TipoMovimiento.INGRESO;
-  String _codigoDoc = 'ENT';
-  String _serie     = '0001';
+  List<Documento> _documentos = [];
+  Documento? _documento;
   String _fecha = DateTime.now().toIso8601String().substring(0, 10);
   String? _almacenOrigen;
   String? _almacenOrigenNombre;
@@ -69,6 +72,25 @@ class _MovimientoFormState extends State<_MovimientoForm> {
   final List<_LineaEntry> _lineas = [];
 
   bool get _needsDest => _tipo == TipoMovimiento.TRASLADO;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDocumentos();
+  }
+
+  Future<void> _loadDocumentos() async {
+    try {
+      final ds = getIt<TablasRemoteDataSource>();
+      final raw = await ds.list('documentos', activo: true, tipo: 'ALMACEN');
+      if (mounted) {
+        setState(() {
+          _documentos = raw.map(TablaModel.documentoFromJson).toList();
+          if (_documentos.length == 1) _documento = _documentos.first;
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -155,6 +177,10 @@ class _MovimientoFormState extends State<_MovimientoForm> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    if (_documento == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seleccione un documento')));
+      return;
+    }
     if (_almacenOrigen == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seleccione almacén origen')));
       return;
@@ -169,8 +195,8 @@ class _MovimientoFormState extends State<_MovimientoForm> {
     }
 
     context.read<MovimientoBloc>().add(MovimientoRegistrar(
-      codigoDocumento: _codigoDoc,
-      serie: _serie,
+      codigoDocumento: _documento!.codigo,
+      serie: _documento!.serie,
       fecha: _fecha,
       tipo: _tipo,
       codigoAlmacenOrigen: _almacenOrigen!,
@@ -215,42 +241,21 @@ class _MovimientoFormState extends State<_MovimientoForm> {
                       ButtonSegment(value: TipoMovimiento.TRASLADO, label: Text('Traslado')),
                     ],
                     selected: {_tipo},
-                    onSelectionChanged: (s) => setState(() {
-                      _tipo = s.first;
-                      _codigoDoc = switch (s.first) {
-                        TipoMovimiento.INGRESO  => 'ENT',
-                        TipoMovimiento.SALIDA   => 'SAL',
-                        TipoMovimiento.TRASLADO => 'TRA',
-                      };
-                    }),
+                    onSelectionChanged: (s) => setState(() => _tipo = s.first),
                   ),
                   const SizedBox(height: 16),
 
-                  // Documento y serie
-                  Row(children: [
-                    SizedBox(
-                      width: 80,
-                      child: TextFormField(
-                        initialValue: _codigoDoc,
-                        decoration: const InputDecoration(labelText: 'Cod. Doc'),
-                        textCapitalization: TextCapitalization.characters,
-                        onChanged: (v) => _codigoDoc = v,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 90,
-                      child: TextFormField(
-                        initialValue: _serie,
-                        decoration: const InputDecoration(labelText: 'Serie'),
-                        onChanged: (v) => _serie = v.isEmpty ? '0001' : v,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text('N.º: Auto', style: TextStyle(color: Colors.grey)),
-                    ),
-                  ]),
+                  // Documento
+                  DropdownButtonFormField<Documento>(
+                    value: _documento,
+                    decoration: const InputDecoration(labelText: 'Documento *', border: OutlineInputBorder(), isDense: true),
+                    items: _documentos.map((d) => DropdownMenuItem(
+                      value: d,
+                      child: Text('${d.codigo} · ${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
+                    )).toList(),
+                    onChanged: (d) => setState(() => _documento = d),
+                    validator: (v) => v == null ? 'Seleccione un documento' : null,
+                  ),
                   const SizedBox(height: 12),
 
                   // Fecha

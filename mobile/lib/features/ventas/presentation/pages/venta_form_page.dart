@@ -10,6 +10,9 @@ import '../../../maestros/domain/entities/articulo.dart';
 import '../../../maestros/domain/entities/almacen.dart' as mae;
 import '../../../maestros/data/datasources/maestros_remote_datasource.dart';
 import '../../../maestros/presentation/widgets/maestro_picker.dart';
+import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
+import '../../../tablas/data/models/tabla_model.dart';
+import '../../../tablas/domain/entities/tabla_base.dart';
 import '../../data/datasources/ventas_remote_datasource.dart';
 import '../../domain/entities/venta.dart';
 import '../bloc/venta_bloc.dart';
@@ -47,8 +50,8 @@ class _FormState extends State<_Form> {
   final _formKey = GlobalKey<FormState>();
   final _obsCtrl = TextEditingController();
 
-  String _codDoc = 'BOL';
-  String _serie  = '0001';
+  List<Documento> _documentos = [];
+  Documento? _documento;
   String _fecha  = DateTime.now().toIso8601String().substring(0, 10);
   TipoVenta _tipo = TipoVenta.CONTADO;
   int _plazo      = 30;
@@ -61,7 +64,6 @@ class _FormState extends State<_Form> {
   // IGV dinámico
   double _igvPct    = 18.0;
   bool   _aplicaIgv = true;
-  Map<String, bool> _docAplicaIgv = {};
 
   @override
   void initState() {
@@ -73,22 +75,22 @@ class _FormState extends State<_Form> {
   void dispose() { _obsCtrl.dispose(); super.dispose(); }
 
   Future<void> _loadConfiguracion() async {
-    final ds = getIt<VentasRemoteDataSource>();
     try {
       final results = await Future.wait([
-        ds.getParametros(),
-        ds.getDocumentos(),
+        getIt<VentasRemoteDataSource>().getParametros(),
+        getIt<TablasRemoteDataSource>().list('documentos', activo: true, tipo: 'VENTA'),
       ]);
       final params = results[0] as Map<String, dynamic>;
-      final docs   = results[1] as List<Map<String, dynamic>>;
+      final docs   = (results[1] as List<Map<String, dynamic>>)
+          .map(TablaModel.documentoFromJson).toList();
       if (mounted) {
         setState(() {
-          _igvPct = (params['igv'] as num?)?.toDouble() ?? 18.0;
-          _docAplicaIgv = {
-            for (final d in docs)
-              (d['codigo'] as String? ?? ''): d['aplicaIgv'] as bool? ?? true,
-          };
-          _aplicaIgv = _docAplicaIgv[_codDoc] ?? true;
+          _igvPct    = (params['igv'] as num?)?.toDouble() ?? 18.0;
+          _documentos = docs;
+          if (docs.length == 1) {
+            _documento = docs.first;
+            _aplicaIgv = docs.first.aplicaIgv;
+          }
         });
       }
     } catch (_) {}
@@ -98,10 +100,10 @@ class _FormState extends State<_Form> {
   double get _igv      => _aplicaIgv ? _subtotal * (_igvPct / 100) : 0;
   double get _total    => _subtotal + _igv;
 
-  void _onDocChanged(String v) {
+  void _onDocChanged(Documento? doc) {
     setState(() {
-      _codDoc    = v;
-      _aplicaIgv = _docAplicaIgv[v] ?? true;
+      _documento = doc;
+      _aplicaIgv = doc?.aplicaIgv ?? true;
     });
   }
 
@@ -192,6 +194,11 @@ class _FormState extends State<_Form> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    if (_documento == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Seleccione el tipo de documento')));
+      return;
+    }
     if (_almacen == null || _clienteCodigo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Seleccione almacén y cliente')));
@@ -203,8 +210,8 @@ class _FormState extends State<_Form> {
       return;
     }
     context.read<VentaBloc>().add(VentaRegistrar({
-      'codigoDocumento': _codDoc,
-      'serie'          : _serie,
+      'codigoDocumento': _documento!.codigo,
+      'serie'          : _documento!.serie,
       'fecha'          : _fecha,
       'tipoVenta'      : _tipo.name,
       if (_tipo == TipoVenta.CREDITO) 'plazoDias': _plazo,
@@ -241,20 +248,16 @@ class _FormState extends State<_Form> {
           final saving = state is VentaSaving;
           return Stack(children: [
             Form(key: _formKey, child: ListView(padding: const EdgeInsets.all(16), children: [
-              Row(children: [
-                SizedBox(width: 80, child: TextFormField(
-                    initialValue: _codDoc,
-                    decoration: const InputDecoration(labelText: 'Doc'),
-                    textCapitalization: TextCapitalization.characters,
-                    onChanged: _onDocChanged)),
-                const SizedBox(width: 12),
-                SizedBox(width: 90, child: TextFormField(
-                    initialValue: _serie,
-                    decoration: const InputDecoration(labelText: 'Serie'),
-                    onChanged: (v) => _serie = v.isEmpty ? '0001' : v)),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('N.º: Auto', style: TextStyle(color: Colors.grey))),
-              ]),
+              DropdownButtonFormField<Documento>(
+                value: _documento,
+                decoration: const InputDecoration(labelText: 'Documento *', border: OutlineInputBorder(), isDense: true),
+                items: _documentos.map((d) => DropdownMenuItem(
+                  value: d,
+                  child: Text('${d.codigo} · ${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
+                )).toList(),
+                onChanged: _onDocChanged,
+                validator: (v) => v == null ? 'Seleccione un documento' : null,
+              ),
               const SizedBox(height: 12),
               ListTile(
                 contentPadding: EdgeInsets.zero,

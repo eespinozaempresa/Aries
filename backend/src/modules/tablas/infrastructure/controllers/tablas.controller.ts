@@ -199,9 +199,17 @@ export class TiposListaController {
 export class DocumentosController {
   constructor(private readonly repo: IDocumentoRepository) {}
   @Get()
-  list(@Request() req: any, @Query('q') q?: string, @Query('activo') activo?: string) {
-    return new ListTablaUseCase<Documento>(this.repo).execute({ codigoEmpresa: req.user.empresa, q,
-      activo: activo === 'true' ? true : activo === 'false' ? false : undefined });
+  list(
+    @Request() req: any,
+    @Query('q') q?: string,
+    @Query('activo') activo?: string,
+    @Query('tipo') tipo?: string,
+  ) {
+    return new ListTablaUseCase<Documento>(this.repo).execute({
+      codigoEmpresa: req.user.empresa, q,
+      activo: activo === 'true' ? true : activo === 'false' ? false : undefined,
+      tipo,
+    });
   }
   @Post()
   create(@Body() dto: CreateDocumentoDto, @Request() req: any) {

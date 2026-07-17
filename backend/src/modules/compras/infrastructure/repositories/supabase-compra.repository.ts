@@ -98,11 +98,11 @@ export class SupabaseCompraRepository implements ICompraRepository {
       p_observacion: d.observacion ?? null,
       p_concepto:    'COMPRA',
       p_cod_usuario: d.codigoUsuario,
-      p_lineas:      JSON.stringify(lineasProc.map((l) => ({
+      p_lineas:      lineasProc.map((l) => ({
         codigoArticulo: l.codigoArticulo,
         cantidad:       l.cantidad,
         precioUnitario: l.precioUnitario,
-      }))),
+      })),
     });
 
     if (rpcErr) throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
@@ -179,7 +179,7 @@ export class SupabaseCompraRepository implements ICompraRepository {
   async findById(id: string, codigoEmpresa: string): Promise<Compra | null> {
     const { data, error } = await this.supabase.db
       .from('compras')
-      .select('*, detalle_compras(*)')
+      .select('*, detalle_compras(*, articulos(descripcion))')
       .eq('id', id)
       .eq('codigo_empresa', codigoEmpresa)
       .maybeSingle();
@@ -218,11 +218,13 @@ export class SupabaseCompraRepository implements ICompraRepository {
   }
 
   private toDetalle(r: Record<string, unknown>): DetalleCompra {
+    const art = r.articulos as Record<string, unknown> | null | undefined;
     return {
       id: r.id as string,
       compraId: r.compra_id as string,
       codigoEmpresa: r.codigo_empresa as string,
       codigoArticulo: r.codigo_articulo as string,
+      descripcionArticulo: art?.descripcion as string | undefined,
       cantidad: Number(r.cantidad),
       precioUnitario: Number(r.precio_unitario),
       importe: Number(r.importe),

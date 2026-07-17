@@ -9,6 +9,9 @@ import '../../../maestros/domain/entities/proveedor.dart';
 import '../../../maestros/domain/entities/articulo.dart';
 import '../../../maestros/domain/entities/almacen.dart' as mae;
 import '../../../maestros/presentation/widgets/maestro_picker.dart';
+import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
+import '../../../tablas/data/models/tabla_model.dart';
+import '../../../tablas/domain/entities/tabla_base.dart';
 import '../../data/datasources/compras_remote_datasource.dart';
 import '../../domain/entities/compra.dart';
 import '../bloc/compra_bloc.dart';
@@ -44,8 +47,8 @@ class _FormState extends State<_Form> {
   final _obsCtrl = TextEditingController();
   final _tcCtrl  = TextEditingController(text: '1.0000');
 
-  String _codDoc = 'FAC';
-  String _serie  = '0001';
+  List<Documento> _documentos = [];
+  Documento? _documento;
   String _fecha  = DateTime.now().toIso8601String().substring(0, 10);
   FormaPago _forma  = FormaPago.CONTADO;
   int _plazo        = 30;
@@ -57,6 +60,25 @@ class _FormState extends State<_Form> {
   String? _proveedorNombre;
 
   final List<_LineaEntry> _lineas = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDocumentos();
+  }
+
+  Future<void> _loadDocumentos() async {
+    try {
+      final ds = getIt<TablasRemoteDataSource>();
+      final raw = await ds.list('documentos', activo: true, tipo: 'COMPRA');
+      if (mounted) {
+        setState(() {
+          _documentos = raw.map(TablaModel.documentoFromJson).toList();
+          if (_documentos.length == 1) _documento = _documentos.first;
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() { _obsCtrl.dispose(); _tcCtrl.dispose(); super.dispose(); }
@@ -118,6 +140,10 @@ class _FormState extends State<_Form> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    if (_documento == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seleccione un documento')));
+      return;
+    }
     if (_almacen == null || _proveedor == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seleccione almacén y proveedor')));
       return;
@@ -127,8 +153,8 @@ class _FormState extends State<_Form> {
       return;
     }
     context.read<CompraBloc>().add(CompraRegistrar({
-      'codigoDocumento': _codDoc,
-      'serie': _serie,
+      'codigoDocumento': _documento!.codigo,
+      'serie': _documento!.serie,
       'fecha': _fecha,
       'formaPago': _forma.name,
       if (_forma == FormaPago.CREDITO) 'plazoDias': _plazo,
@@ -162,14 +188,17 @@ class _FormState extends State<_Form> {
           final saving = state is CompraSaving;
           return Stack(children: [
             Form(key: _formKey, child: ListView(padding: const EdgeInsets.all(16), children: [
-              // Documento y serie
-              Row(children: [
-                SizedBox(width: 80, child: TextFormField(initialValue: _codDoc, decoration: const InputDecoration(labelText: 'Doc'), textCapitalization: TextCapitalization.characters, onChanged: (v) => _codDoc = v)),
-                const SizedBox(width: 12),
-                SizedBox(width: 90, child: TextFormField(initialValue: _serie, decoration: const InputDecoration(labelText: 'Serie'), onChanged: (v) => _serie = v.isEmpty ? '0001' : v)),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('N.º: Auto', style: TextStyle(color: Colors.grey))),
-              ]),
+              // Documento
+              DropdownButtonFormField<Documento>(
+                value: _documento,
+                decoration: const InputDecoration(labelText: 'Documento *', border: OutlineInputBorder(), isDense: true),
+                items: _documentos.map((d) => DropdownMenuItem(
+                  value: d,
+                  child: Text('${d.codigo} · ${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
+                )).toList(),
+                onChanged: (d) => setState(() => _documento = d),
+                validator: (v) => v == null ? 'Seleccione un documento' : null,
+              ),
               const SizedBox(height: 12),
               // Fecha
               ListTile(contentPadding: EdgeInsets.zero, title: Text('Fecha: $_fecha'), trailing: const Icon(Icons.calendar_today),

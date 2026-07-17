@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException, BadRequestException, ConflictException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
+import { NumeroDocumentoService } from '../../../../shared/infrastructure/supabase/numero-documento.service';
 import {
   ICxCRepository, CxCFilter, CxCListResult,
   RegistrarCobroData, RenovarCxCData,
@@ -8,7 +9,10 @@ import { CuentaCobrar, Cobro } from '../../domain/entities/cuenta-cobrar.entity'
 
 @Injectable()
 export class SupabaseCxCRepository implements ICxCRepository {
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly supabase: SupabaseService,
+    private readonly numeracion: NumeroDocumentoService,
+  ) {}
 
   async list(f: CxCFilter): Promise<CxCListResult> {
     const page  = f.page ?? 1;
@@ -99,12 +103,8 @@ export class SupabaseCxCRepository implements ICxCRepository {
       .eq('id', d.cuentaCobrarId).eq('codigo_empresa', codigoEmpresa);
 
     // Crear nueva con el saldo + interés
-    const { data: nextProv } = await this.supabase.db
-      .from('cuentas_cobrar').select('numero_provision')
-      .eq('codigo_empresa', codigoEmpresa)
-      .order('numero_provision', { ascending: false }).limit(1).maybeSingle();
-
-    const numProv   = ((nextProv?.numero_provision as number) ?? 0) + 1;
+    const numProvStr = await this.numeracion.siguiente(codigoEmpresa, 'CXC', '0001');
+    const numProv    = parseInt(numProvStr, 10);
     const interes   = d.interes ?? 0;
     const nuevoMonto = parseFloat((original.saldo + interes).toFixed(2));
 

@@ -38,6 +38,7 @@ class DetalleCompraModel {
     compraId: j['compraId'] as String,
     codigoEmpresa: j['codigoEmpresa'] as String,
     codigoArticulo: j['codigoArticulo'] as String,
+    descripcionArticulo: j['descripcionArticulo'] as String?,
     cantidad: (j['cantidad'] as num).toDouble(),
     precioUnitario: (j['precioUnitario'] as num).toDouble(),
     importe: (j['importe'] as num).toDouble(),
