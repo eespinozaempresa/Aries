@@ -163,16 +163,20 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
   V? _getExtraValue<V>(String key) {
     final item = widget.item;
     if (item == null) return null;
-    final map = {
-      'abreviatura'   : (item as dynamic).abreviatura,
-      'serie'         : (item as dynamic).serie,
-      'numeroSiguiente': (item as dynamic).numeroSiguiente?.toString(),
-      'tipo'          : (item as dynamic).tipo,
-      'aplicaIgv'     : (item as dynamic).aplicaIgv,
-      'dsctoPct'      : (item as dynamic).dsctoPct?.toString(),
-      'dctoMto'       : (item as dynamic).dctoMto?.toString(),
-    };
-    return map[key] as V?;
+    try {
+      switch (key) {
+        case 'abreviatura':     return (item as dynamic).abreviatura as V?;
+        case 'serie':           return (item as dynamic).serie?.toString() as V?;
+        case 'numeroSiguiente': return (item as dynamic).numeroSiguiente?.toString() as V?;
+        case 'tipo':            return (item as dynamic).tipo as V?;
+        case 'aplicaIgv':       return (item as dynamic).aplicaIgv as V?;
+        case 'dsctoPct':        return (item as dynamic).dsctoPct?.toString() as V?;
+        case 'dctoMto':         return (item as dynamic).dctoMto?.toString() as V?;
+        default:                return null;
+      }
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
@@ -188,7 +192,7 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     final data = <String, dynamic>{
-      'codigo': _codigoCtrl.text.trim(),
+      if (widget.item == null) 'codigo': _codigoCtrl.text.trim(),
       'descripcion': _descCtrl.text.trim(),
     };
     for (final f in widget.extraFields) {
