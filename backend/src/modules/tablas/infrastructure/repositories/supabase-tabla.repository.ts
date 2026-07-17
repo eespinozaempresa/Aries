@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
-import { TablaBase, Documento } from '../../domain/entities/tabla-base.entity';
+import { TablaBase, Documento, TipoLista } from '../../domain/entities/tabla-base.entity';
 import { ITablaRepository, TablaFilter } from '../../domain/ports/tabla.repository.port';
 
 function makeRepo<T extends TablaBase>(tableName: string, fromRow: (r: Record<string, unknown>) => T) {
@@ -51,6 +51,7 @@ function toRow(d: Record<string, unknown>): Record<string, unknown> {
     codigoEmpresa: 'codigo_empresa', descripcion: 'descripcion', codigo: 'codigo',
     activo: 'activo', abreviatura: 'abreviatura', serie: 'serie',
     numeroSiguiente: 'numero_siguiente', aplicaIgv: 'aplica_igv', tipo: 'tipo',
+    dsctoPct: 'dscto_pct', dctoMto: 'dcto_mto',
   };
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(d)) {
@@ -72,6 +73,12 @@ export const SupabaseLineaRepo    = makeRepo('lineas',    (r) => ({ ...base(r) }
 export const SupabaseMedidaRepo   = makeRepo('medidas',   (r) => ({ ...base(r) }));
 export const SupabaseBancoRepo    = makeRepo('bancos',    (r) => ({ ...base(r) }));
 export const SupabaseMarcaRepo    = makeRepo('marcas',    (r) => ({ ...base(r) }));
+export const SupabaseTipoListaRepo = makeRepo<TipoLista>('tipos_lista', (r) => ({
+  ...base(r),
+  dsctoPct: Number(r.dscto_pct ?? 0),
+  dctoMto:  Number(r.dcto_mto  ?? 0),
+}));
+
 export const SupabaseDocumentoRepo = makeRepo<Documento>('documentos', (r) => ({
   ...base(r),
   abreviatura:     r.abreviatura as string | undefined,

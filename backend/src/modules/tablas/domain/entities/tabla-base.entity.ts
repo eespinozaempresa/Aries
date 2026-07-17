@@ -18,3 +18,8 @@ export interface Documento extends TablaBase {
   aplicaIgv: boolean;
   tipo?: string;
 }
+
+export interface TipoLista extends TablaBase {
+  dsctoPct: number;
+  dctoMto: number;
+}

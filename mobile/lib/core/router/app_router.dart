@@ -70,6 +70,7 @@ class AppRouter {
 
       // Tablas
       GoRoute(path: '/tablas', builder: (_, __) => const TablasHubPage()),
+      GoRoute(path: '/tablas/tipos-lista', builder: (_, __) => TiposListaPage(bloc: getIt<TablaBloc<TipoLista>>())),
       GoRoute(path: '/tablas/lineas',     builder: (_, __) => LineasPage(bloc: getIt<TablaBloc<Linea>>())),
       GoRoute(path: '/tablas/medidas',    builder: (_, __) => MedidasPage(bloc: getIt<TablaBloc<Medida>>())),
       GoRoute(path: '/tablas/bancos',     builder: (_, __) => BancosPage(bloc: getIt<TablaBloc<Banco>>())),

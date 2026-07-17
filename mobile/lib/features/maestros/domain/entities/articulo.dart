@@ -9,6 +9,7 @@ class Articulo {
   final double precioCompraBase;
   final double precioCompra;
   final double utilidadPct;
+  final double precioVentaBase;
   final double precioVenta;
   final double stockMinimo;
   final double stockMaximo;
@@ -26,6 +27,7 @@ class Articulo {
     required this.precioCompraBase,
     required this.precioCompra,
     required this.utilidadPct,
+    required this.precioVentaBase,
     required this.precioVenta,
     required this.stockMinimo,
     required this.stockMaximo,

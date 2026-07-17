@@ -21,6 +21,24 @@ class Medida extends TablaBase { const Medida({required super.id, required super
 class Banco  extends TablaBase { const Banco({required super.id, required super.codigoEmpresa, required super.codigo, required super.descripcion, required super.activo}); }
 class Marca  extends TablaBase { const Marca({required super.id, required super.codigoEmpresa, required super.codigo, required super.descripcion, required super.activo}); }
 
+class TipoLista extends TablaBase {
+  final double dsctoPct;
+  final double dctoMto;
+
+  const TipoLista({
+    required super.id,
+    required super.codigoEmpresa,
+    required super.codigo,
+    required super.descripcion,
+    required super.activo,
+    required this.dsctoPct,
+    required this.dctoMto,
+  });
+
+  @override
+  String get subtitle => 'Dscto: ${dsctoPct.toStringAsFixed(1)}% / S/ ${dctoMto.toStringAsFixed(2)}';
+}
+
 class Documento extends TablaBase {
   final String? abreviatura;
   final String serie;

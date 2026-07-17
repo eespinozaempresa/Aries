@@ -5,14 +5,15 @@ import {
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
 import {
   ILineaRepository, IMedidaRepository, IBancoRepository,
-  IMarcaRepository, IDocumentoRepository,
+  IMarcaRepository, IDocumentoRepository, ITipoListaRepository,
 } from '../../domain/ports/tabla.repository.port';
 import { ListTablaUseCase, SaveTablaUseCase } from '../../application/use-cases/tabla.use-cases';
 import {
   CreateTablaDto, UpdateTablaDto,
   CreateDocumentoDto, UpdateDocumentoDto,
+  CreateTipoListaDto, UpdateTipoListaDto,
 } from '../dto/tabla.dto';
-import { Linea, Medida, Banco, Marca, Documento } from '../../domain/entities/tabla-base.entity';
+import { Linea, Medida, Banco, Marca, Documento, TipoLista } from '../../domain/entities/tabla-base.entity';
 
 function makeController<T extends import('../../domain/entities/tabla-base.entity').TablaBase>(
   path: string,
@@ -164,6 +165,32 @@ export class MarcasController {
     const found = all.find((i) => i.id === id);
     if (!found) throw new NotFoundException();
     return new SaveTablaUseCase<Marca>(this.repo).execute(req.user.empresa, { activo: !found.activo }, id);
+  }
+}
+
+@UseGuards(AuthGuard)
+@Controller('tablas/tipos-lista')
+export class TiposListaController {
+  constructor(private readonly repo: ITipoListaRepository) {}
+  @Get()
+  list(@Request() req: any, @Query('q') q?: string, @Query('activo') activo?: string) {
+    return new ListTablaUseCase<TipoLista>(this.repo).execute({ codigoEmpresa: req.user.empresa, q,
+      activo: activo === 'true' ? true : activo === 'false' ? false : undefined });
+  }
+  @Post()
+  create(@Body() dto: CreateTipoListaDto, @Request() req: any) {
+    return new SaveTablaUseCase<TipoLista>(this.repo).execute(req.user.empresa, dto as Partial<TipoLista>);
+  }
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateTipoListaDto, @Request() req: any) {
+    return new SaveTablaUseCase<TipoLista>(this.repo).execute(req.user.empresa, dto as Partial<TipoLista>, id);
+  }
+  @Patch(':id/toggle')
+  async toggle(@Param('id') id: string, @Request() req: any) {
+    const all = await this.repo.findAll({ codigoEmpresa: req.user.empresa });
+    const found = all.find((i) => i.id === id);
+    if (!found) throw new NotFoundException();
+    return new SaveTablaUseCase<TipoLista>(this.repo).execute(req.user.empresa, { activo: !found.activo }, id);
   }
 }
 

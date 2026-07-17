@@ -15,7 +15,16 @@ export class SupabaseVentaRepository implements IVentaRepository {
   async registrar(codigoEmpresa: string, d: RegistrarVentaData): Promise<Venta> {
     const numeroDocumento = await this.numeracion.siguiente(codigoEmpresa, d.codigoDocumento, d.serie);
 
-    const IGV = 0.18;
+    // IGV dinámico: leer de parametros y verificar aplica_igv del documento
+    const [paramRes, docRes] = await Promise.all([
+      this.supabase.db.from('parametros').select('igv')
+        .eq('codigo_empresa', codigoEmpresa).maybeSingle(),
+      this.supabase.db.from('documentos').select('aplica_igv')
+        .eq('codigo_empresa', codigoEmpresa)
+        .eq('codigo', d.codigoDocumento).maybeSingle(),
+    ]);
+    const aplicaIgv = docRes.data?.aplica_igv ?? true;
+    const igvRate   = aplicaIgv ? (Number(paramRes.data?.igv ?? 18) / 100) : 0;
 
     const lineasProc = d.lineas.map((l) => {
       const descPct  = l.descuentoPct ?? 0;
@@ -25,7 +34,7 @@ export class SupabaseVentaRepository implements IVentaRepository {
     });
 
     const subtotal = parseFloat(lineasProc.reduce((s, l) => s + l.importe, 0).toFixed(2));
-    const igv      = parseFloat((subtotal * IGV).toFixed(2));
+    const igv      = parseFloat((subtotal * igvRate).toFixed(2));
     const total    = parseFloat((subtotal + igv).toFixed(2));
 
     let fechaVencimiento = d.fechaVencimiento;

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsNumber, IsPositive, MaxLength, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsNumber, IsPositive, MaxLength, Min, IsUUID } from 'class-validator';
 
 export class CreateTablaDto {
   @IsString() @IsNotEmpty() @MaxLength(5)
@@ -34,6 +34,22 @@ export class CreateDocumentoDto extends CreateTablaDto {
 
   @IsString() @IsOptional() @MaxLength(15)
   tipo?: string;
+}
+
+export class CreateTipoListaDto extends CreateTablaDto {
+  @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @IsOptional()
+  dsctoPct?: number;
+
+  @IsNumber({ maxDecimalPlaces: 4 }) @Min(0) @IsOptional()
+  dctoMto?: number;
+}
+
+export class UpdateTipoListaDto extends UpdateTablaDto {
+  @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @IsOptional()
+  dsctoPct?: number;
+
+  @IsNumber({ maxDecimalPlaces: 4 }) @Min(0) @IsOptional()
+  dctoMto?: number;
 }
 
 export class UpdateDocumentoDto {

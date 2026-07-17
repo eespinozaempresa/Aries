@@ -7,6 +7,24 @@ class TablaModel {
     'activo': t.activo,
   };
 
+  static TipoLista tipoListaFromJson(Map<String, dynamic> j) => TipoLista(
+    id: j['id'] as String,
+    codigoEmpresa: j['codigoEmpresa'] as String,
+    codigo: j['codigo'] as String,
+    descripcion: j['descripcion'] as String,
+    activo: j['activo'] as bool? ?? true,
+    dsctoPct: (j['dsctoPct'] as num?)?.toDouble() ?? 0,
+    dctoMto: (j['dctoMto'] as num?)?.toDouble() ?? 0,
+  );
+
+  static Map<String, dynamic> tipoListaToJson(TipoLista t) => {
+    'codigo': t.codigo,
+    'descripcion': t.descripcion,
+    'dsctoPct': t.dsctoPct,
+    'dctoMto': t.dctoMto,
+    'activo': t.activo,
+  };
+
   static Linea lineaFromJson(Map<String, dynamic> j) => Linea(
     id: j['id'] as String,
     codigoEmpresa: j['codigoEmpresa'] as String,

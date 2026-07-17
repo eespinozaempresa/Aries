@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/utils/unique_id.dart';
 import '../../domain/entities/tabla_base.dart';
 import '../bloc/tabla_bloc.dart';
 import '../bloc/tabla_event.dart';
@@ -147,7 +148,8 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
   @override
   void initState() {
     super.initState();
-    _codigoCtrl = TextEditingController(text: widget.item?.codigo ?? '');
+    _codigoCtrl = TextEditingController(
+        text: widget.item?.codigo ?? uniqueId(5));
     _descCtrl   = TextEditingController(text: widget.item?.descripcion ?? '');
     for (final f in widget.extraFields) {
       if (f.isSwitch) {
@@ -162,11 +164,13 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
     final item = widget.item;
     if (item == null) return null;
     final map = {
-      'abreviatura': (item as dynamic).abreviatura,
-      'serie': (item as dynamic).serie,
+      'abreviatura'   : (item as dynamic).abreviatura,
+      'serie'         : (item as dynamic).serie,
       'numeroSiguiente': (item as dynamic).numeroSiguiente?.toString(),
-      'tipo': (item as dynamic).tipo,
-      'aplicaIgv': (item as dynamic).aplicaIgv,
+      'tipo'          : (item as dynamic).tipo,
+      'aplicaIgv'     : (item as dynamic).aplicaIgv,
+      'dsctoPct'      : (item as dynamic).dsctoPct?.toString(),
+      'dctoMto'       : (item as dynamic).dctoMto?.toString(),
     };
     return map[key] as V?;
   }
@@ -191,7 +195,13 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
       } else {
         final v = _extraCtrl[f.key]!.text.trim();
         if (v.isNotEmpty) {
-          data[f.key] = f.keyboardType == TextInputType.number ? int.tryParse(v) ?? v : v;
+          if (f.keyboardType == TextInputType.number) {
+            data[f.key] = int.tryParse(v) ?? v;
+          } else if (f.keyboardType == const TextInputType.numberWithOptions(decimal: true)) {
+            data[f.key] = double.tryParse(v) ?? v;
+          } else {
+            data[f.key] = v;
+          }
         }
       }
     }
@@ -217,8 +227,9 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _codigoCtrl,
-              decoration: const InputDecoration(labelText: 'Código'),
-              enabled: widget.item == null,
+              decoration: const InputDecoration(
+                  labelText: 'Código', filled: true),
+              enabled: false,
               validator: (v) => (v ?? '').isEmpty ? 'Requerido' : null,
               textCapitalization: TextCapitalization.characters,
             ),
@@ -256,6 +267,20 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
 }
 
 // ── Páginas concretas ────────────────────────────────────────────────────────
+
+class TiposListaPage extends StatelessWidget {
+  final TablaBloc<TipoLista> bloc;
+  const TiposListaPage({super.key, required this.bloc});
+  @override
+  Widget build(BuildContext context) => TablaListPage<TipoLista>(
+        title: 'Tipos de Lista',
+        bloc: bloc,
+        extraFields: const [
+          _ExtraField('dsctoPct', 'Descuento %',  keyboardType: TextInputType.numberWithOptions(decimal: true)),
+          _ExtraField('dctoMto',  'Descuento S/.', keyboardType: TextInputType.numberWithOptions(decimal: true)),
+        ],
+      );
+}
 
 class LineasPage extends StatelessWidget {
   final TablaBloc bloc;

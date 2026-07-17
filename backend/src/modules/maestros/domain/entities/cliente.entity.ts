@@ -9,6 +9,7 @@ export interface Cliente {
   celular?: string;
   email?: string;
   activo: boolean;
+  idTipoLista?: string;
   createdAt?: string;
   updatedAt?: string;
 }

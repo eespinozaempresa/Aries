@@ -158,7 +158,7 @@ class _LoginViewState extends State<_LoginView> {
         ),
         const SizedBox(height: 16),
         const Text(
-          'ARIES ERP',
+          'ARIES',
           style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.w800,

@@ -1,4 +1,4 @@
-import { TablaBase, Documento } from '../entities/tabla-base.entity';
+import { TablaBase, Documento, TipoLista } from '../entities/tabla-base.entity';
 
 export interface TablaFilter {
   codigoEmpresa: string;
@@ -17,3 +17,4 @@ export abstract class IMedidaRepository    extends ITablaRepository<import('../e
 export abstract class IBancoRepository     extends ITablaRepository<import('../entities/tabla-base.entity').Banco>  {}
 export abstract class IMarcaRepository     extends ITablaRepository<import('../entities/tabla-base.entity').Marca>  {}
 export abstract class IDocumentoRepository extends ITablaRepository<Documento> {}
+export abstract class ITipoListaRepository extends ITablaRepository<TipoLista> {}

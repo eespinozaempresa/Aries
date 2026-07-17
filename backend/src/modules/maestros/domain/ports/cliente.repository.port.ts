@@ -24,6 +24,7 @@ export interface SaveClienteData {
   celular?: string;
   email?: string;
   activo?: boolean;
+  idTipoLista?: string;
 }
 
 export abstract class IClienteRepository {

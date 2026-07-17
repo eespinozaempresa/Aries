@@ -4,6 +4,7 @@ import '../models/articulo_model.dart';
 import '../models/cliente_model.dart';
 import '../models/proveedor_model.dart';
 import '../models/almacen_model.dart';
+import '../../domain/entities/lista_precio.dart';
 
 class PageResult<T> {
   final List<T> data;
@@ -18,6 +19,7 @@ abstract class MaestrosRemoteDataSource {
   Future<ArticuloModel> saveArticulo(Map<String, dynamic> data, {String? id});
 
   Future<PageResult<ClienteModel>> searchClientes({String? q, bool? activo, int page = 1, int limit = 20});
+  Future<ClienteModel> getCliente(String id);
   Future<ClienteModel> saveCliente(Map<String, dynamic> data, {String? id});
 
   Future<PageResult<ProveedorModel>> searchProveedores({String? q, bool? activo, int page = 1, int limit = 20});
@@ -25,6 +27,11 @@ abstract class MaestrosRemoteDataSource {
 
   Future<List<AlmacenModel>> findAllAlmacenes({String? q, bool? activo});
   Future<AlmacenModel> saveAlmacen(Map<String, dynamic> data, {String? id});
+
+  Future<List<ListaPrecio>> listPrecios(String articuloId);
+  Future<ListaPrecio> saveListaPrecio(Map<String, dynamic> data, {String? id});
+  Future<void> deleteListaPrecio(String id);
+  Future<ListaPrecio?> getPrecioParaCliente(String articuloId, String tipoListaId);
 }
 
 class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
@@ -72,6 +79,14 @@ class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
         'limit': limit,
       });
       return _parsePage(res.data, ClienteModel.fromJson);
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<ClienteModel> getCliente(String id) async {
+    try {
+      final res = await _dio.get('/maestros/clientes/$id');
+      return ClienteModel.fromJson(res.data['data'] as Map<String, dynamic>);
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 
@@ -134,6 +149,50 @@ class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
           ? await _dio.put('/maestros/almacenes/$id', data: data)
           : await _dio.post('/maestros/almacenes', data: data);
       return AlmacenModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  // ── Lista de Precios ───────────────────────────────────────────────────────
+
+  @override
+  Future<List<ListaPrecio>> listPrecios(String articuloId) async {
+    try {
+      final res = await _dio.get('/maestros/lista-precios',
+          queryParameters: {'articuloId': articuloId});
+      return (res.data['data'] as List)
+          .map((e) => ListaPrecio.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<ListaPrecio> saveListaPrecio(Map<String, dynamic> data, {String? id}) async {
+    try {
+      final res = id != null
+          ? await _dio.put('/maestros/lista-precios/$id', data: data)
+          : await _dio.post('/maestros/lista-precios', data: data);
+      return ListaPrecio.fromJson(res.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<void> deleteListaPrecio(String id) async {
+    try {
+      await _dio.delete('/maestros/lista-precios/$id');
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<ListaPrecio?> getPrecioParaCliente(String articuloId, String tipoListaId) async {
+    try {
+      final res = await _dio.get('/maestros/lista-precios', queryParameters: {
+        'articuloId': articuloId,
+        'tipoListaId': tipoListaId,
+      });
+      final list = res.data['data'] as List;
+      if (list.isEmpty) return null;
+      final lp = ListaPrecio.fromJson(list.first as Map<String, dynamic>);
+      return lp.activo ? lp : null;
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 

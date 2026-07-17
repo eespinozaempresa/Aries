@@ -84,6 +84,10 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<TablasRemoteDataSource>(
     () => TablasRemoteDataSource(getIt<DioClient>().dio),
   );
+  getIt.registerFactory<TablaBloc<TipoLista>>(() => TablaBloc<TipoLista>(
+    ds: getIt(), path: 'tipos-lista',
+    fromJson: TablaModel.tipoListaFromJson, toJson: TablaModel.tipoListaToJson,
+  ));
   getIt.registerFactory<TablaBloc<Linea>>(() => TablaBloc<Linea>(
     ds: getIt(), path: 'lineas',
     fromJson: TablaModel.lineaFromJson, toJson: TablaModel.toJson,

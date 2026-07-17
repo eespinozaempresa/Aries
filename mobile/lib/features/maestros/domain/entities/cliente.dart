@@ -9,6 +9,7 @@ class Cliente {
   final String? celular;
   final String? email;
   final bool activo;
+  final String? idTipoLista;
 
   const Cliente({
     required this.id,
@@ -21,5 +22,6 @@ class Cliente {
     this.celular,
     this.email,
     required this.activo,
+    this.idTipoLista,
   });
 }

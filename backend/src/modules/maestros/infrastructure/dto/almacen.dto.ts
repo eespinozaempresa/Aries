@@ -7,6 +7,9 @@ export class CreateAlmacenDto {
   @IsString() @MinLength(1) @MaxLength(5)
   codigo: string;
 
+  @IsOptional() @IsBoolean()
+  activo?: boolean;
+
   @IsString() @MinLength(1) @MaxLength(60)
   descripcion: string;
 

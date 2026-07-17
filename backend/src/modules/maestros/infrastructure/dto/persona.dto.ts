@@ -1,11 +1,17 @@
 import {
-  IsString, IsOptional, IsBoolean, IsEmail,
+  IsString, IsOptional, IsBoolean, IsEmail, IsUUID,
   MaxLength, MinLength,
 } from 'class-validator';
 
 export class CreatePersonaDto {
   @IsString() @MinLength(1) @MaxLength(10)
   codigo: string;
+
+  @IsOptional() @IsBoolean()
+  activo?: boolean;
+
+  @IsOptional() @IsUUID()
+  idTipoLista?: string;
 
   @IsString() @MinLength(1) @MaxLength(100)
   razonSocial: string;
@@ -27,6 +33,9 @@ export class CreatePersonaDto {
 }
 
 export class UpdatePersonaDto {
+  @IsOptional() @IsUUID()
+  idTipoLista?: string;
+
   @IsOptional() @IsString() @MinLength(1) @MaxLength(100)
   razonSocial?: string;
 

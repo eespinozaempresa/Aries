@@ -65,6 +65,7 @@ export class SupabaseClienteRepository implements IClienteRepository {
         celular: d.celular,
         email: d.email,
         activo: d.activo ?? true,
+        id_tipo_lista: d.idTipoLista ?? null,
       })
       .select()
       .single();
@@ -74,13 +75,14 @@ export class SupabaseClienteRepository implements IClienteRepository {
 
   async update(id: string, codigoEmpresa: string, d: Partial<SaveClienteData>): Promise<Cliente> {
     const row: Record<string, unknown> = {};
-    if (d.razonSocial !== undefined) row.razon_social = d.razonSocial;
-    if (d.direccion !== undefined) row.direccion = d.direccion;
-    if (d.rucDni !== undefined) row.ruc_dni = d.rucDni;
-    if (d.telefono !== undefined) row.telefono = d.telefono;
-    if (d.celular !== undefined) row.celular = d.celular;
-    if (d.email !== undefined) row.email = d.email;
-    if (d.activo !== undefined) row.activo = d.activo;
+    if (d.razonSocial !== undefined)  row.razon_social  = d.razonSocial;
+    if (d.direccion   !== undefined)  row.direccion     = d.direccion;
+    if (d.rucDni      !== undefined)  row.ruc_dni       = d.rucDni;
+    if (d.telefono    !== undefined)  row.telefono      = d.telefono;
+    if (d.celular     !== undefined)  row.celular       = d.celular;
+    if (d.email       !== undefined)  row.email         = d.email;
+    if (d.activo      !== undefined)  row.activo        = d.activo;
+    if ('idTipoLista' in d)           row.id_tipo_lista = d.idTipoLista ?? null;
 
     const { data, error } = await this.supabase.db
       .from('clientes')
@@ -95,18 +97,19 @@ export class SupabaseClienteRepository implements IClienteRepository {
 
   private toEntity(row: Record<string, unknown>): Cliente {
     return {
-      id: row.id as string,
+      id:            row.id as string,
       codigoEmpresa: row.codigo_empresa as string,
-      codigo: row.codigo as string,
-      razonSocial: row.razon_social as string,
-      direccion: row.direccion as string | undefined,
-      rucDni: row.ruc_dni as string | undefined,
-      telefono: row.telefono as string | undefined,
-      celular: row.celular as string | undefined,
-      email: row.email as string | undefined,
-      activo: row.activo as boolean,
-      createdAt: row.created_at as string | undefined,
-      updatedAt: row.updated_at as string | undefined,
+      codigo:        row.codigo as string,
+      razonSocial:   row.razon_social as string,
+      direccion:     row.direccion as string | undefined,
+      rucDni:        row.ruc_dni as string | undefined,
+      telefono:      row.telefono as string | undefined,
+      celular:       row.celular as string | undefined,
+      email:         row.email as string | undefined,
+      activo:        row.activo as boolean,
+      idTipoLista:   row.id_tipo_lista as string | undefined,
+      createdAt:     row.created_at as string | undefined,
+      updatedAt:     row.updated_at as string | undefined,
     };
   }
 }

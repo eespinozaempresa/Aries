@@ -47,4 +47,20 @@ class VentasRemoteDataSource {
       return data is List ? data : (data['data'] as List);
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
+
+  Future<Map<String, dynamic>> getParametros() async {
+    try {
+      final res = await _dio.get('/utilitarios/parametros');
+      return res.data as Map<String, dynamic>;
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  Future<List<Map<String, dynamic>>> getDocumentos() async {
+    try {
+      final res = await _dio.get('/tablas/documentos');
+      final data = res.data;
+      return List<Map<String, dynamic>>.from(
+          data is List ? data : (data['data'] as List));
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
 }

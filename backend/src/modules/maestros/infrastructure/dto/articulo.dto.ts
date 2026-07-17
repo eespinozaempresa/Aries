@@ -7,6 +7,9 @@ export class CreateArticuloDto {
   @IsString() @MinLength(1) @MaxLength(10)
   codigo: string;
 
+  @IsOptional() @IsBoolean()
+  activo?: boolean;
+
   @IsString() @MinLength(1) @MaxLength(150)
   descripcion: string;
 

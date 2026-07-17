@@ -12,6 +12,7 @@ class ClienteModel extends Cliente {
     super.celular,
     super.email,
     required super.activo,
+    super.idTipoLista,
   });
 
   factory ClienteModel.fromJson(Map<String, dynamic> j) => ClienteModel(
@@ -25,5 +26,6 @@ class ClienteModel extends Cliente {
         celular: j['celular'] as String?,
         email: j['email'] as String?,
         activo: j['activo'] as bool? ?? true,
+        idTipoLista: j['idTipoLista'] as String?,
       );
 }

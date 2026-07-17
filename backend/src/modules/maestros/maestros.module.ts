@@ -1,15 +1,18 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { SupabaseModule } from '../../shared/infrastructure/supabase/supabase.module';
 
 import { IArticuloRepository } from './domain/ports/articulo.repository.port';
 import { IClienteRepository } from './domain/ports/cliente.repository.port';
 import { IProveedorRepository } from './domain/ports/proveedor.repository.port';
 import { IAlmacenRepository } from './domain/ports/almacen.repository.port';
+import { IListaPrecioRepository } from './domain/ports/lista-precio.repository.port';
 
 import { SupabaseArticuloRepository } from './infrastructure/repositories/supabase-articulo.repository';
 import { SupabaseClienteRepository } from './infrastructure/repositories/supabase-cliente.repository';
 import { SupabaseProveedorRepository } from './infrastructure/repositories/supabase-proveedor.repository';
 import { SupabaseAlmacenRepository } from './infrastructure/repositories/supabase-almacen.repository';
+import { SupabaseListaPrecioRepository } from './infrastructure/repositories/supabase-lista-precio.repository';
 
 import { SearchArticulosUseCase } from './application/use-cases/articulos/search-articulos.use-case';
 import { SaveArticuloUseCase } from './application/use-cases/articulos/save-articulo.use-case';
@@ -24,20 +27,23 @@ import { ArticulosController } from './infrastructure/controllers/articulos.cont
 import { ClientesController } from './infrastructure/controllers/clientes.controller';
 import { ProveedoresController } from './infrastructure/controllers/proveedores.controller';
 import { AlmacenesController } from './infrastructure/controllers/almacenes.controller';
+import { ListaPreciosController } from './infrastructure/controllers/lista-precios.controller';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, SupabaseModule],
   controllers: [
     ArticulosController,
     ClientesController,
     ProveedoresController,
     AlmacenesController,
+    ListaPreciosController,
   ],
   providers: [
-    { provide: IArticuloRepository,  useClass: SupabaseArticuloRepository },
-    { provide: IClienteRepository,   useClass: SupabaseClienteRepository },
-    { provide: IProveedorRepository, useClass: SupabaseProveedorRepository },
-    { provide: IAlmacenRepository,   useClass: SupabaseAlmacenRepository },
+    { provide: IArticuloRepository,    useClass: SupabaseArticuloRepository },
+    { provide: IClienteRepository,     useClass: SupabaseClienteRepository },
+    { provide: IProveedorRepository,   useClass: SupabaseProveedorRepository },
+    { provide: IAlmacenRepository,     useClass: SupabaseAlmacenRepository },
+    { provide: IListaPrecioRepository, useClass: SupabaseListaPrecioRepository },
     SearchArticulosUseCase, SaveArticuloUseCase,
     SearchClientesUseCase,  SaveClienteUseCase,
     SearchProveedoresUseCase, SaveProveedorUseCase,
