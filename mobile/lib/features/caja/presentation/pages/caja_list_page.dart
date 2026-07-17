@@ -38,8 +38,10 @@ class _State extends State<CajaListPage> {
         ),
         body: BlocConsumer<CajaBloc, CajaState>(
           listener: (c, s) {
-            if (s is CajaError) ScaffoldMessenger.of(c).showSnackBar(
+            if (s is CajaError) {
+              ScaffoldMessenger.of(c).showSnackBar(
               SnackBar(content: Text(s.message), backgroundColor: Colors.red));
+            }
             if (s is CajaAbierta) {
               ScaffoldMessenger.of(c).showSnackBar(const SnackBar(content: Text('Caja abierta')));
               ctx.read<CajaBloc>().add(CajaLoad(reset: true));

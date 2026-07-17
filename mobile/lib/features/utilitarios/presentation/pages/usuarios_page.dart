@@ -290,7 +290,7 @@ class _NuevoUsuarioSheetState extends State<_NuevoUsuarioSheet> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _nivel,
+              initialValue: _nivel,
               decoration: const InputDecoration(labelText: 'Nivel'),
               items: _niveles
                   .map((n) => DropdownMenuItem(value: n, child: Text(n)))

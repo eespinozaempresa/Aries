@@ -7,12 +7,12 @@ class TablasHubPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tiles = [
-      _Tile('Tipos de Lista', Icons.price_change_outlined, '/tablas/tipos-lista'),
-      _Tile('Líneas',         Icons.category_outlined,     '/tablas/lineas'),
-      _Tile('Medidas',        Icons.straighten,             '/tablas/medidas'),
-      _Tile('Bancos',         Icons.account_balance,        '/tablas/bancos'),
-      _Tile('Marcas',         Icons.label_outlined,         '/tablas/marcas'),
-      _Tile('Documentos',     Icons.description_outlined,   '/tablas/documentos'),
+      const _Tile('Tipos de Lista', Icons.price_change_outlined, '/tablas/tipos-lista'),
+      const _Tile('Líneas',         Icons.category_outlined,     '/tablas/lineas'),
+      const _Tile('Medidas',        Icons.straighten,             '/tablas/medidas'),
+      const _Tile('Bancos',         Icons.account_balance,        '/tablas/bancos'),
+      const _Tile('Marcas',         Icons.label_outlined,         '/tablas/marcas'),
+      const _Tile('Documentos',     Icons.description_outlined,   '/tablas/documentos'),
     ];
 
     return Scaffold(

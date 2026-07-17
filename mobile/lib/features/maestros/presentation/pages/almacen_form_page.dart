@@ -32,7 +32,9 @@ class _AlmacenFormPageState extends State<AlmacenFormPage> {
 
   @override
   void dispose() {
-    for (final c in [_codigoCtrl, _descCtrl, _abrCtrl, _ubCtrl]) c.dispose();
+    for (final c in [_codigoCtrl, _descCtrl, _abrCtrl, _ubCtrl]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -100,7 +102,7 @@ class _AlmacenFormPageState extends State<AlmacenFormPage> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: DropdownButtonFormField<String>(
-                  value: _tipo,
+                  initialValue: _tipo,
                   decoration: const InputDecoration(
                       labelText: 'Tipo',
                       border: OutlineInputBorder(),

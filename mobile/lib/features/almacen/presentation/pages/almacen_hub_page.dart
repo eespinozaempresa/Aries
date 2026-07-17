@@ -7,9 +7,9 @@ class AlmacenHubPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tiles = [
-      _Tile('Movimientos', 'Ingresos, Salidas y Traslados', Icons.swap_horiz, '/almacen/movimientos'),
-      _Tile('Kardex', 'Consulta de movimientos por artículo', Icons.receipt_long, '/almacen/kardex'),
-      _Tile('Stock', 'Inventario actual', Icons.inventory, '/almacen/stock'),
+      const _Tile('Movimientos', 'Ingresos, Salidas y Traslados', Icons.swap_horiz, '/almacen/movimientos'),
+      const _Tile('Kardex', 'Consulta de movimientos por artículo', Icons.receipt_long, '/almacen/kardex'),
+      const _Tile('Stock', 'Inventario actual', Icons.inventory, '/almacen/stock'),
     ];
 
     return Scaffold(

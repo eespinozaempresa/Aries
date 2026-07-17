@@ -193,7 +193,7 @@ class _LoginViewState extends State<_LoginView> {
               const SizedBox(height: 22),
 
               // Empresa — dropdown
-              _FieldLabel('Empresa'),
+              const _FieldLabel('Empresa'),
               _loadingEmpresas
                   ? const Center(child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 14),
@@ -201,7 +201,7 @@ class _LoginViewState extends State<_LoginView> {
                           child: CircularProgressIndicator(strokeWidth: 2)),
                     ))
                   : DropdownButtonFormField<_Empresa>(
-                      value: _empresa,
+                      initialValue: _empresa,
                       isExpanded: true,
                       decoration: const InputDecoration(
                         prefixIcon: Icon(Icons.domain, size: 20),
@@ -217,7 +217,7 @@ class _LoginViewState extends State<_LoginView> {
               const SizedBox(height: 16),
 
               // Usuario
-              _FieldLabel('Usuario'),
+              const _FieldLabel('Usuario'),
               TextFormField(
                 controller: _usuarioCtrl,
                 textCapitalization: TextCapitalization.characters,
@@ -230,7 +230,7 @@ class _LoginViewState extends State<_LoginView> {
               const SizedBox(height: 16),
 
               // Clave
-              _FieldLabel('Contraseña'),
+              const _FieldLabel('Contraseña'),
               TextFormField(
                 controller: _claveCtrl,
                 obscureText: _obscurePassword,
@@ -250,7 +250,7 @@ class _LoginViewState extends State<_LoginView> {
               const SizedBox(height: 16),
 
               // Captcha
-              _FieldLabel('Verificación'),
+              const _FieldLabel('Verificación'),
               Row(
                 children: [
                   Expanded(

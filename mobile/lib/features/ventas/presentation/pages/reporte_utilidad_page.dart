@@ -34,10 +34,16 @@ class _State extends State<ReporteUtilidadPage> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
     );
-    if (d != null) setState(() {
+    if (d != null) {
+      setState(() {
       final s = d.toIso8601String().substring(0, 10);
-      if (isDesde) _desde = s; else _hasta = s;
+      if (isDesde) {
+        _desde = s;
+      } else {
+        _hasta = s;
+      }
     });
+    }
   }
 
   double get _totalUtilidad => (_items ?? []).fold(0.0, (s, i) => s + ((i['utilidadTotal'] as num?)?.toDouble() ?? 0));

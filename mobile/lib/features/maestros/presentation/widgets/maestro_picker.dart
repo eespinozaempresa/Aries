@@ -155,9 +155,9 @@ class _MaestroPickerState<T> extends State<MaestroPicker<T>> {
                             ? Text(widget.itemSubtitle!(item))
                             : null,
                         trailing: inactive
-                            ? Chip(
-                                label: const Text('Inactivo'),
-                                labelStyle: const TextStyle(fontSize: 10),
+                            ? const Chip(
+                                label: Text('Inactivo'),
+                                labelStyle: TextStyle(fontSize: 10),
                                 padding: EdgeInsets.zero,
                               )
                             : null,

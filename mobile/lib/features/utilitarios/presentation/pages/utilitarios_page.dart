@@ -9,10 +9,10 @@ class UtilitariosPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tiles = [
-      _Tile('Cambiar contraseña',   'Actualiza tu clave de acceso',      Icons.lock_reset_outlined,       '/utilitarios/cambiar-clave',   false),
-      _Tile('Parámetros',           'IGV, plazos y configuración',       Icons.tune_outlined,              '/utilitarios/parametros',      true),
-      _Tile('Gestión de usuarios',  'Crear y administrar usuarios',      Icons.manage_accounts_outlined,   '/utilitarios/usuarios',        true),
-      _Tile('Auditoría',            'Historial de sesiones del sistema', Icons.history_outlined,           '/utilitarios/auditoria',       true),
+      const _Tile('Cambiar contraseña',   'Actualiza tu clave de acceso',      Icons.lock_reset_outlined,       '/utilitarios/cambiar-clave',   false),
+      const _Tile('Parámetros',           'IGV, plazos y configuración',       Icons.tune_outlined,              '/utilitarios/parametros',      true),
+      const _Tile('Gestión de usuarios',  'Crear y administrar usuarios',      Icons.manage_accounts_outlined,   '/utilitarios/usuarios',        true),
+      const _Tile('Auditoría',            'Historial de sesiones del sistema', Icons.history_outlined,           '/utilitarios/auditoria',       true),
     ];
 
     return Scaffold(
@@ -26,7 +26,7 @@ class UtilitariosPage extends StatelessWidget {
           return ListTile(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             tileColor: t.proximamente
-                ? Theme.of(ctx).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                ? Theme.of(ctx).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
                 : Theme.of(ctx).colorScheme.surfaceContainerHighest,
             leading: Icon(
               t.icon,
@@ -45,7 +45,7 @@ class UtilitariosPage extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Theme.of(ctx).colorScheme.outline.withOpacity(0.15),
+                      color: Theme.of(ctx).colorScheme.outline.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text('Próximamente',

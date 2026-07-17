@@ -88,8 +88,10 @@ class _State extends State<CxCListPage> {
         ),
         body: BlocConsumer<CxCBloc, CxCState>(
           listener: (c, s) {
-            if (s is CxCError) ScaffoldMessenger.of(c).showSnackBar(
+            if (s is CxCError) {
+              ScaffoldMessenger.of(c).showSnackBar(
               SnackBar(content: Text(s.message), backgroundColor: Colors.red));
+            }
           },
           builder: (c, s) {
             if (s is CxCLoading && (s is! CxCLoaded)) return const Center(child: CircularProgressIndicator());

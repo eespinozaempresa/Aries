@@ -179,7 +179,9 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
   void dispose() {
     _codigoCtrl.dispose();
     _descCtrl.dispose();
-    for (final c in _extraCtrl.values) c.dispose();
+    for (final c in _extraCtrl.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 

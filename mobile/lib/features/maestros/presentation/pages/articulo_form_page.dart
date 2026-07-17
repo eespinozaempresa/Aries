@@ -441,7 +441,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
     required void Function(String?) onChanged,
   }) =>
       DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         isExpanded: true,
         decoration: InputDecoration(
           labelText: label,
@@ -572,7 +572,7 @@ class _PrecioDialogState extends State<_PrecioDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<TipoLista>(
-                value: _selectedTipo,
+                initialValue: _selectedTipo,
                 isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Tipo de lista *',

@@ -107,11 +107,13 @@ class _FormState extends State<_Form> {
         TextButton(onPressed: () => Navigator.pop(context, true),  child: const Text('Agregar')),
       ],
     ));
-    if (ok == true) setState(() => _lineas.add(_LineaEntry(
+    if (ok == true) {
+      setState(() => _lineas.add(_LineaEntry(
       codigo: art.codigo, descripcion: art.descripcion,
       cantidad: double.tryParse(qCtrl.text) ?? 1,
       precio: double.tryParse(pCtrl.text) ?? 0,
     )));
+    }
   }
 
   void _submit() {

@@ -171,7 +171,7 @@ class _PersonaFormPageState extends State<PersonaFormPage> {
             if (_isCliente && _tiposLista.isNotEmpty) ...[
               const SizedBox(height: 4),
               DropdownButtonFormField<String>(
-                value: _selectedTipoLista,
+                initialValue: _selectedTipoLista,
                 isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Lista de precios',
