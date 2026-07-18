@@ -1,38 +1,14 @@
 -- ============================================================
--- Aries ERP — Funciones de Almacén (atómicas, transaccionales)
+-- Fix: precio_salida en kardex usa el precio real de la
+-- factura/documento en lugar del costo promedio ponderado.
 -- ============================================================
 
--- ──────────────────────────────────────────────────────────────
--- Auxiliar: stock actual de un artículo en un almacén
--- ──────────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION stock_actual(
-  p_empresa  TEXT,
-  p_almacen  TEXT,
-  p_articulo TEXT
-) RETURNS NUMERIC
-LANGUAGE sql STABLE AS $$
-  SELECT COALESCE(
-    stock_inicial + stock_compras + stock_entradas + stock_traslados_in
-    - stock_ventas - stock_salidas - stock_traslados_out,
-    0
-  )
-  FROM stock
-  WHERE codigo_empresa = p_empresa
-    AND codigo_almacen  = p_almacen
-    AND codigo_articulo = p_articulo;
-$$;
-
--- ──────────────────────────────────────────────────────────────
--- registrar_movimiento
--- Inserta cabecera + detalles, actualiza stock y kardex
--- Retorna el UUID del movimiento creado
--- ──────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION registrar_movimiento(
   p_empresa     TEXT,
   p_cod_doc     TEXT,
   p_num_doc     TEXT,
   p_fecha       DATE,
-  p_tipo        TEXT,          -- 'INGRESO' | 'SALIDA' | 'TRASLADO'
+  p_tipo        TEXT,
   p_alm_origen  TEXT,
   p_alm_dest    TEXT DEFAULT NULL,
   p_observacion TEXT DEFAULT NULL,
@@ -51,11 +27,9 @@ DECLARE
   v_qty           NUMERIC;
   v_precio        NUMERIC;
   v_importe       NUMERIC;
-
   v_stk_orig      NUMERIC;
   v_cost_orig     NUMERIC;
   v_new_cost_orig NUMERIC;
-
   v_stk_dest      NUMERIC;
   v_cost_dest     NUMERIC;
   v_new_cost_dest NUMERIC;
@@ -94,7 +68,7 @@ BEGIN
     VALUES (p_empresa, p_alm_origen, v_art)
     ON CONFLICT (codigo_empresa, codigo_almacen, codigo_articulo) DO NOTHING;
 
-    -- Leer stock+costo origen (con bloqueo)
+    -- Leer stock + costo origen (con bloqueo)
     SELECT
       stock_actual(p_empresa, p_alm_origen, v_art),
       costo_promedio
@@ -115,9 +89,9 @@ BEGIN
       END IF;
 
       UPDATE stock SET
-        stock_entradas    = stock_entradas + v_qty,
-        costo_promedio    = v_new_cost_orig,
-        importe_total     = ROUND((v_stk_orig + v_qty) * v_new_cost_orig, 2),
+        stock_entradas      = stock_entradas + v_qty,
+        costo_promedio      = v_new_cost_orig,
+        importe_total       = ROUND((v_stk_orig + v_qty) * v_new_cost_orig, 2),
         fecha_actualizacion = p_fecha
       WHERE codigo_empresa = p_empresa
         AND codigo_almacen  = p_alm_origen
@@ -137,12 +111,14 @@ BEGIN
       );
 
     -- ── SALIDA ───────────────────────────────────────────────
+    -- precio_salida = precio real del documento (factura de venta)
+    -- precio_stock  = costo promedio ponderado (sin cambio)
     ELSIF p_tipo = 'SALIDA' THEN
       v_new_cost_orig := v_cost_orig;
 
       UPDATE stock SET
-        stock_salidas     = stock_salidas + v_qty,
-        importe_total     = ROUND((v_stk_orig - v_qty) * v_cost_orig, 2),
+        stock_salidas       = stock_salidas + v_qty,
+        importe_total       = ROUND((v_stk_orig - v_qty) * v_cost_orig, 2),
         fecha_actualizacion = p_fecha
       WHERE codigo_empresa = p_empresa
         AND codigo_almacen  = p_alm_origen
@@ -165,7 +141,7 @@ BEGIN
     ELSIF p_tipo = 'TRASLADO' THEN
       v_new_cost_orig := v_cost_orig;
 
-      -- Origen: salida
+      -- Origen: salida al costo promedio
       UPDATE stock SET
         stock_traslados_out = stock_traslados_out + v_qty,
         importe_total       = ROUND((v_stk_orig - v_qty) * v_cost_orig, 2),
@@ -187,7 +163,7 @@ BEGIN
         ROUND((v_stk_orig - v_qty) * v_cost_orig, 2)
       );
 
-      -- Destino: entrada
+      -- Destino: entrada al costo promedio del origen
       INSERT INTO stock (codigo_empresa, codigo_almacen, codigo_articulo)
       VALUES (p_empresa, p_alm_dest, v_art)
       ON CONFLICT (codigo_empresa, codigo_almacen, codigo_articulo) DO NOTHING;
@@ -238,75 +214,5 @@ BEGIN
   UPDATE movimientos_almacen SET total = ROUND(v_total, 2) WHERE id = v_mov_id;
 
   RETURN v_mov_id;
-END;
-$$;
-
--- ──────────────────────────────────────────────────────────────
--- anular_movimiento
--- Revierte contadores de stock, elimina kardex, marca anulado
--- NOTA: costo_promedio NO se recalcula; usar recalcular_kardex
---       si se requiere exactitud después de anulaciones.
--- ──────────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION anular_movimiento(
-  p_empresa     TEXT,
-  p_mov_id      UUID,
-  p_cod_usuario TEXT DEFAULT NULL
-) RETURNS BOOLEAN
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_mov   RECORD;
-  v_linea RECORD;
-BEGIN
-  SELECT * INTO v_mov
-  FROM movimientos_almacen
-  WHERE id = p_mov_id
-    AND codigo_empresa = p_empresa
-    AND NOT anulado
-  FOR UPDATE;
-
-  IF NOT FOUND THEN RETURN FALSE; END IF;
-
-  FOR v_linea IN
-    SELECT codigo_articulo, cantidad
-    FROM detalle_movimientos
-    WHERE movimiento_id = p_mov_id
-      AND codigo_empresa = p_empresa
-  LOOP
-    IF v_mov.tipo = 'INGRESO' THEN
-      UPDATE stock SET stock_entradas = stock_entradas - v_linea.cantidad
-      WHERE codigo_empresa = p_empresa
-        AND codigo_almacen  = v_mov.codigo_almacen_origen
-        AND codigo_articulo = v_linea.codigo_articulo;
-
-    ELSIF v_mov.tipo = 'SALIDA' THEN
-      UPDATE stock SET stock_salidas = stock_salidas - v_linea.cantidad
-      WHERE codigo_empresa = p_empresa
-        AND codigo_almacen  = v_mov.codigo_almacen_origen
-        AND codigo_articulo = v_linea.codigo_articulo;
-
-    ELSIF v_mov.tipo = 'TRASLADO' THEN
-      UPDATE stock SET stock_traslados_out = stock_traslados_out - v_linea.cantidad
-      WHERE codigo_empresa = p_empresa
-        AND codigo_almacen  = v_mov.codigo_almacen_origen
-        AND codigo_articulo = v_linea.codigo_articulo;
-
-      UPDATE stock SET stock_traslados_in = stock_traslados_in - v_linea.cantidad
-      WHERE codigo_empresa = p_empresa
-        AND codigo_almacen  = v_mov.codigo_almacen_dest
-        AND codigo_articulo = v_linea.codigo_articulo;
-    END IF;
-  END LOOP;
-
-  -- Eliminar kardex de este documento
-  DELETE FROM kardex
-  WHERE codigo_empresa   = p_empresa
-    AND codigo_documento  = v_mov.codigo_documento
-    AND numero_documento  = v_mov.numero_documento;
-
-  UPDATE movimientos_almacen SET anulado = TRUE WHERE id = p_mov_id;
-
-  RETURN TRUE;
 END;
 $$;

@@ -12,11 +12,11 @@ export class SupabaseKardexRepository implements IKardexRepository {
       .from('kardex')
       .select('*')
       .eq('codigo_empresa', f.codigoEmpresa)
-      .eq('codigo_almacen', f.codigoAlmacen)
-      .eq('codigo_articulo', f.codigoArticulo)
       .order('fecha', { ascending: true })
       .order('id', { ascending: true });
 
+    if (f.codigoAlmacen)  q = q.eq('codigo_almacen',  f.codigoAlmacen);
+    if (f.codigoArticulo) q = q.eq('codigo_articulo', f.codigoArticulo);
     if (f.desde) q = q.gte('fecha', f.desde);
     if (f.hasta) q = q.lte('fecha', f.hasta);
 

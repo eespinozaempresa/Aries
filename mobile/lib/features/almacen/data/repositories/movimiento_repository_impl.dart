@@ -86,15 +86,15 @@ class MovimientoRepositoryImpl implements MovimientoRepository {
 
   @override
   Future<Either<ApiException, List<KardexItem>>> getKardex({
-    required String codigoAlmacen,
-    required String codigoArticulo,
+    String? codigoAlmacen,
+    String? codigoArticulo,
     String? desde,
     String? hasta,
   }) async {
     try {
       final list = await _ds.getKardex({
-        'almacen': codigoAlmacen,
-        'articulo': codigoArticulo,
+        if (codigoAlmacen != null) 'almacen': codigoAlmacen,
+        if (codigoArticulo != null) 'articulo': codigoArticulo,
         if (desde != null) 'desde': desde,
         if (hasta != null) 'hasta': hasta,
       });

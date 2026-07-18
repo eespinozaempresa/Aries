@@ -40,5 +40,6 @@ import { IStockRepository } from './domain/ports/stock.repository.port';
     GetStockUseCase,
     RecalcularKardexUseCase,
   ],
+  exports: [RecalcularKardexUseCase],
 })
 export class AlmacenModule {}

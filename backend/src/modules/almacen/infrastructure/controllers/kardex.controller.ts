@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Query, UseGuards, Request, NotFoundException,
+  Controller, Get, Post, Query, UseGuards, Request,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
 import { GetKardexUseCase } from '../../application/use-cases/get-kardex.use-case';
@@ -14,20 +14,17 @@ export class KardexController {
   ) {}
 
   @Get()
-  async get(
+  get(
     @Request() req: any,
-    @Query('almacen') codigoAlmacen: string,
-    @Query('articulo') codigoArticulo: string,
+    @Query('almacen') codigoAlmacen?: string,
+    @Query('articulo') codigoArticulo?: string,
     @Query('desde') desde?: string,
     @Query('hasta') hasta?: string,
   ) {
-    if (!codigoAlmacen || !codigoArticulo) {
-      throw new NotFoundException('Se requiere almacen y articulo');
-    }
     return this.getKardexUC.execute(
       req.user.empresa,
-      codigoAlmacen,
-      codigoArticulo,
+      codigoAlmacen || undefined,
+      codigoArticulo || undefined,
       desde,
       hasta,
     );

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { SupabaseModule } from '../../shared/infrastructure/supabase/supabase.module';
+import { AlmacenModule } from '../almacen/almacen.module';
 import { IVentaRepository } from './domain/ports/venta.repository.port';
 import { SupabaseVentaRepository } from './infrastructure/repositories/supabase-venta.repository';
 import { RegistrarVentaUseCase } from './application/use-cases/registrar-venta.use-case';
@@ -11,7 +12,7 @@ import { EliminarVentaUseCase } from './application/use-cases/eliminar-venta.use
 import { VentasController } from './infrastructure/controllers/ventas.controller';
 
 @Module({
-  imports: [SupabaseModule, AuthModule],
+  imports: [SupabaseModule, AuthModule, AlmacenModule],
   controllers: [VentasController],
   providers: [
     { provide: IVentaRepository, useClass: SupabaseVentaRepository },

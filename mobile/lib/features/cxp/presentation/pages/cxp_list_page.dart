@@ -102,7 +102,7 @@ class _State extends State<CxPListPage> {
               itemBuilder: (_, i) {
                 if (i == items.length) {
                   final loaded = s is CxPLoaded;
-                  return loaded && s.currentPage <= s.lastPage
+                  return loaded && s.currentPage < s.lastPage
                     ? const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()))
                     : const SizedBox();
                 }

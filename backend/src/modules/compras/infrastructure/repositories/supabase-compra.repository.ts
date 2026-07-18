@@ -140,6 +140,11 @@ export class SupabaseCompraRepository implements ICompraRepository {
         p_mov_id:      movRow.id,
         p_cod_usuario: codigoUsuario,
       });
+      // Eliminar registros físicamente para que movimientos_almacen quede limpio
+      await this.supabase.db.from('detalle_movimientos').delete()
+        .eq('movimiento_id', movRow.id).eq('codigo_empresa', codigoEmpresa);
+      await this.supabase.db.from('movimientos_almacen').delete()
+        .eq('id', movRow.id).eq('codigo_empresa', codigoEmpresa);
     }
 
     return this.toEntity(data, compra.detalles ?? []);

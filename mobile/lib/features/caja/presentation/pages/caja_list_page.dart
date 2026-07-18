@@ -60,7 +60,7 @@ class _State extends State<CajaListPage> {
               itemBuilder: (_, i) {
                 if (i == items.length) {
                   final loaded = s is CajaListLoaded;
-                  return loaded && s.currentPage <= s.lastPage
+                  return loaded && s.currentPage < s.lastPage
                     ? const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()))
                     : const SizedBox();
                 }

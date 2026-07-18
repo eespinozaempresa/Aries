@@ -8,8 +8,8 @@ export class GetKardexUseCase {
 
   execute(
     codigoEmpresa: string,
-    codigoAlmacen: string,
-    codigoArticulo: string,
+    codigoAlmacen?: string,
+    codigoArticulo?: string,
     desde?: string,
     hasta?: string,
   ): Promise<KardexItem[]> {
