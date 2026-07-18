@@ -58,7 +58,7 @@ export class RecalcularKardexUseCase {
         p_observacion: mov.observacion ?? null,
         p_concepto:    mov.concepto ?? null,
         p_cod_usuario: mov.codigo_usuario,
-        p_lineas:      JSON.stringify(lineas),
+        p_lineas:      lineas,
       });
     }
 

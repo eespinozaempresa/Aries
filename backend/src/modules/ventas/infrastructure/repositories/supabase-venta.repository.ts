@@ -93,11 +93,11 @@ export class SupabaseVentaRepository implements IVentaRepository {
       p_observacion: d.observacion ?? null,
       p_concepto:    'VENTA',
       p_cod_usuario: d.codigoUsuario,
-      p_lineas:      JSON.stringify(lineasProc.map((l) => ({
+      p_lineas:      lineasProc.map((l) => ({
         codigoArticulo: l.codigoArticulo,
         cantidad:       l.cantidad,
         precioUnitario: l.precioUnitario,
-      }))),
+      })),
     });
     if (rpcErr) throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
 
