@@ -94,6 +94,8 @@ class CxCBloc extends Bloc<CxCEvent, CxCState> {
       ));
     } on ApiException catch (ex) {
       emit(CxCError(ex.message));
+    } catch (ex) {
+      emit(CxCError(ex.toString()));
     }
   }
 

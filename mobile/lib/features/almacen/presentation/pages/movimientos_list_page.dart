@@ -89,17 +89,18 @@ class _MovimientosListViewState extends State<_MovimientosListView> {
               );
             },
           ),
-          PopupMenuButton<TipoMovimiento?>(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.filter_list),
-            onSelected: (tipo) {
+            onSelected: (value) {
+              final tipo = value == 'TODOS' ? null : TipoMovimiento.values.byName(value);
               setState(() => _tipoFiltro = tipo);
               context.read<MovimientoBloc>().add(MovimientoListLoad(tipo: tipo));
             },
-            itemBuilder: (_) => [
-              const PopupMenuItem(value: null, child: Text('Todos')),
-              const PopupMenuItem(value: TipoMovimiento.INGRESO, child: Text('Ingresos')),
-              const PopupMenuItem(value: TipoMovimiento.SALIDA, child: Text('Salidas')),
-              const PopupMenuItem(value: TipoMovimiento.TRASLADO, child: Text('Traslados')),
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'TODOS',    child: Text('Todos')),
+              PopupMenuItem(value: 'INGRESO',  child: Text('Ingresos')),
+              PopupMenuItem(value: 'SALIDA',   child: Text('Salidas')),
+              PopupMenuItem(value: 'TRASLADO', child: Text('Traslados')),
             ],
           ),
         ],

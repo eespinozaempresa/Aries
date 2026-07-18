@@ -16,6 +16,11 @@ class VentaModel {
     subtotal: (j['subtotal'] as num).toDouble(),
     igv: (j['igv'] as num).toDouble(),
     total: (j['total'] as num).toDouble(),
+    subtotalUsd: (j['subtotalUsd'] as num?)?.toDouble() ?? 0,
+    igvUsd: (j['igvUsd'] as num?)?.toDouble() ?? 0,
+    totalUsd: (j['totalUsd'] as num?)?.toDouble() ?? 0,
+    moneda: j['moneda'] as String? ?? 'PEN',
+    tipoCambio: (j['tipoCambio'] as num?)?.toDouble() ?? 1,
     tipoVenta: TipoVenta.values.byName(j['tipoVenta'] as String),
     plazoDias: (j['plazoDias'] as num?)?.toInt() ?? 0,
     fechaVencimiento: j['fechaVencimiento'] as String?,
@@ -24,6 +29,8 @@ class VentaModel {
     detalles: (j['detalles'] as List<dynamic>? ?? [])
         .map((d) => DetalleVentaModel.fromJson(d as Map<String, dynamic>))
         .toList(),
+    razonSocialCliente: j['razonSocialCliente'] as String?,
+    descripcionAlmacen: j['descripcionAlmacen'] as String?,
   );
 }
 
@@ -38,5 +45,7 @@ class DetalleVentaModel {
     precioUnitario: (j['precioUnitario'] as num).toDouble(),
     descuentoPct: (j['descuentoPct'] as num?)?.toDouble() ?? 0,
     importe: (j['importe'] as num).toDouble(),
+    precioUnitarioUsd: (j['precioUnitarioUsd'] as num?)?.toDouble() ?? 0,
+    importeUsd: (j['importeUsd'] as num?)?.toDouble() ?? 0,
   );
 }

@@ -43,6 +43,12 @@ export class RegistrarVentaDto {
   @IsInt() @Min(0) @IsOptional()
   plazoDias?: number;
 
+  @IsString() @IsOptional()
+  moneda?: string;
+
+  @IsNumber({ maxDecimalPlaces: 4 }) @Min(0.0001) @IsOptional()
+  tipoCambio?: number;
+
   @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) @Type(() => LineaVentaDto)
   lineas: LineaVentaDto[];
 }

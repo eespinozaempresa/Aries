@@ -8,4 +8,6 @@ export interface DetalleVenta {
   precioUnitario: number;
   descuentoPct: number;
   importe: number;
+  precioUnitarioUsd: number;
+  importeUsd: number;
 }

@@ -13,6 +13,7 @@ import '../../../maestros/presentation/widgets/maestro_picker.dart';
 import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
 import '../../../tablas/data/models/tabla_model.dart';
 import '../../../tablas/domain/entities/tabla_base.dart';
+import '../../../tipo_cambio/data/datasources/tipo_cambio_remote_datasource.dart';
 import '../../data/datasources/ventas_remote_datasource.dart';
 import '../../domain/entities/venta.dart';
 import '../bloc/venta_bloc.dart';
@@ -32,7 +33,7 @@ class _Linea {
   final String codigo;
   final String descripcion;
   double cantidad;
-  double precio;
+  double precio;   // siempre en la moneda seleccionada
   double descPct;
   _Linea({required this.codigo, required this.descripcion,
           required this.cantidad, required this.precio, this.descPct = 0});
@@ -49,19 +50,21 @@ class _Form extends StatefulWidget {
 class _FormState extends State<_Form> {
   final _formKey = GlobalKey<FormState>();
   final _obsCtrl = TextEditingController();
+  final _tcCtrl  = TextEditingController(text: '1.0000');
 
   List<Documento> _documentos = [];
   Documento? _documento;
   String _fecha  = DateTime.now().toIso8601String().substring(0, 10);
   TipoVenta _tipo = TipoVenta.CONTADO;
   int _plazo      = 30;
+  String _moneda  = 'PEN';
+  double _tipoCambio = 1.0;
 
   String? _almacen, _almNombre, _clienteCodigo, _cliNombre;
   String? _clienteTipoLista;
 
   final List<_Linea> _lineas = [];
 
-  // IGV dinámico
   double _igvPct    = 18.0;
   bool   _aplicaIgv = true;
 
@@ -72,7 +75,7 @@ class _FormState extends State<_Form> {
   }
 
   @override
-  void dispose() { _obsCtrl.dispose(); super.dispose(); }
+  void dispose() { _obsCtrl.dispose(); _tcCtrl.dispose(); super.dispose(); }
 
   Future<void> _loadConfiguracion() async {
     try {
@@ -94,17 +97,32 @@ class _FormState extends State<_Form> {
         });
       }
     } catch (_) {}
+    await _fetchTipoCambio();
   }
 
-  double get _subtotal => _lineas.fold(0, (s, l) => s + l.importe);
-  double get _igv      => _aplicaIgv ? _subtotal * (_igvPct / 100) : 0;
-  double get _total    => _subtotal + _igv;
+  Future<void> _fetchTipoCambio() async {
+    try {
+      final tc = await getIt<TipoCambioRemoteDataSource>().getByFecha(_fecha);
+      if (tc != null && mounted) {
+        setState(() {
+          _tipoCambio = tc.tipoCambio;
+          _tcCtrl.text = tc.tipoCambio.toStringAsFixed(4);
+        });
+      }
+    } catch (_) {}
+  }
+
+  double get _subtotalMoneda => _lineas.fold(0, (s, l) => s + l.importe);
+  double get _tc => _tipoCambio > 0 ? _tipoCambio : 1;
+  double get _subtotalPen => _moneda == 'USD' ? _subtotalMoneda * _tc : _subtotalMoneda;
+  double get _subtotalUsd => _moneda == 'USD' ? _subtotalMoneda : _subtotalMoneda / _tc;
+  double get _igvPen  => _aplicaIgv ? _subtotalPen * (_igvPct / 100) : 0;
+  double get _igvUsd  => _aplicaIgv ? _subtotalUsd * (_igvPct / 100) : 0;
+  double get _totalPen => _subtotalPen + _igvPen;
+  double get _totalUsd => _subtotalUsd + _igvUsd;
 
   void _onDocChanged(Documento? doc) {
-    setState(() {
-      _documento = doc;
-      _aplicaIgv = doc?.aplicaIgv ?? true;
-    });
+    setState(() { _documento = doc; _aplicaIgv = doc?.aplicaIgv ?? true; });
   }
 
   Future<void> _pickAlmacen() async {
@@ -130,7 +148,6 @@ class _FormState extends State<_Form> {
         _cliNombre        = r.razonSocial;
         _clienteTipoLista = r.idTipoLista;
       });
-      // Recargar cliente completo para obtener idTipoLista
       try {
         final cli = await getIt<MaestrosRemoteDataSource>().getCliente(r.id);
         if (mounted) setState(() => _clienteTipoLista = cli.idTipoLista);
@@ -146,17 +163,18 @@ class _FormState extends State<_Form> {
       }, itemTitle: (a) => a.descripcion, itemSubtitle: (a) => a.codigo);
     if (art == null || !mounted) return;
 
-    // Intentar obtener precio desde lista del cliente
-    double precioSugerido = art.precioVentaBase > 0
-        ? art.precioVentaBase
-        : art.precioVenta;
+    double precioSugerido = art.precioVentaBase > 0 ? art.precioVentaBase : art.precioVenta;
+    // Si moneda es USD, convertir precio sugerido
+    if (_moneda == 'USD' && _tipoCambio > 0) {
+      precioSugerido = precioSugerido / _tipoCambio;
+    }
 
     if (_clienteTipoLista != null) {
       try {
         final lp = await getIt<MaestrosRemoteDataSource>()
             .getPrecioParaCliente(art.id, _clienteTipoLista!);
         if (lp != null && lp.precioVenta > 0) {
-          precioSugerido = lp.precioVenta;
+          precioSugerido = _moneda == 'USD' ? lp.precioVenta / _tipoCambio : lp.precioVenta;
         }
       } catch (_) {}
     }
@@ -168,11 +186,11 @@ class _FormState extends State<_Form> {
     final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
       title: Text(art.descripcion),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        TextFormField(controller: qCtrl,   keyboardType: TextInputType.number,
+        TextFormField(controller: qCtrl, keyboardType: TextInputType.number,
             decoration: const InputDecoration(labelText: 'Cantidad')),
         const SizedBox(height: 8),
-        TextFormField(controller: pCtrl,   keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Precio unitario')),
+        TextFormField(controller: pCtrl, keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: 'Precio unitario ($_moneda)')),
         const SizedBox(height: 8),
         TextFormField(controller: dscCtrl, keyboardType: TextInputType.number,
             decoration: const InputDecoration(labelText: 'Descuento %')),
@@ -216,12 +234,14 @@ class _FormState extends State<_Form> {
       'tipoVenta'      : _tipo.name,
       if (_tipo == TipoVenta.CREDITO) 'plazoDias': _plazo,
       if (_obsCtrl.text.trim().isNotEmpty) 'observacion': _obsCtrl.text.trim(),
-      'codigoAlmacen': _almacen,
-      'codigoCliente': _clienteCodigo,
+      'codigoAlmacen'  : _almacen,
+      'codigoCliente'  : _clienteCodigo,
+      'moneda'         : _moneda,
+      'tipoCambio'     : _tipoCambio,
       'lineas': _lineas.map((l) => {
         'codigoArticulo': l.codigo,
-        'cantidad'       : l.cantidad,
-        'precioUnitario' : l.precio,
+        'cantidad'      : l.cantidad,
+        'precioUnitario': l.precio,
         if (l.descPct > 0) 'descuentoPct': l.descPct,
       }).toList(),
     }));
@@ -229,6 +249,7 @@ class _FormState extends State<_Form> {
 
   @override
   Widget build(BuildContext context) {
+    final currLabel = _moneda == 'USD' ? 'USD' : 'S/';
     return Scaffold(
       appBar: AppBar(title: const Text('Nueva Venta')),
       body: BlocConsumer<VentaBloc, VentaState>(
@@ -237,7 +258,7 @@ class _FormState extends State<_Form> {
             final nro = '${state.venta.codigoDocumento}-${state.venta.serie}-${state.venta.numeroDocumento}';
             ScaffoldMessenger.of(ctx).showSnackBar(
                 SnackBar(content: Text('Venta registrada · $nro'), backgroundColor: Colors.green));
-            ctx.pop();
+            ctx.pop(true);
           }
           if (state is VentaError) {
             ScaffoldMessenger.of(ctx).showSnackBar(
@@ -248,6 +269,7 @@ class _FormState extends State<_Form> {
           final saving = state is VentaSaving;
           return Stack(children: [
             Form(key: _formKey, child: ListView(padding: const EdgeInsets.all(16), children: [
+              // Documento
               DropdownButtonFormField<Documento>(
                 value: _documento,
                 decoration: const InputDecoration(labelText: 'Documento *', border: OutlineInputBorder(), isDense: true),
@@ -259,6 +281,7 @@ class _FormState extends State<_Form> {
                 validator: (v) => v == null ? 'Seleccione un documento' : null,
               ),
               const SizedBox(height: 12),
+              // Fecha
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text('Fecha: $_fecha'),
@@ -269,21 +292,21 @@ class _FormState extends State<_Form> {
                       initialDate: DateTime.parse(_fecha),
                       firstDate: DateTime(2000),
                       lastDate: DateTime.now());
-                  if (d != null) setState(() => _fecha = d.toIso8601String().substring(0, 10));
+                  if (d != null) {
+                    setState(() => _fecha = d.toIso8601String().substring(0, 10));
+                    await _fetchTipoCambio();
+                  }
                 },
               ),
               const Divider(),
+              // Tipo venta
               Row(children: [
                 const Text('Tipo venta:'),
                 const SizedBox(width: 12),
-                ChoiceChip(
-                    label: const Text('Contado'),
-                    selected: _tipo == TipoVenta.CONTADO,
+                ChoiceChip(label: const Text('Contado'), selected: _tipo == TipoVenta.CONTADO,
                     onSelected: (_) => setState(() => _tipo = TipoVenta.CONTADO)),
                 const SizedBox(width: 8),
-                ChoiceChip(
-                    label: const Text('Crédito'),
-                    selected: _tipo == TipoVenta.CREDITO,
+                ChoiceChip(label: const Text('Crédito'), selected: _tipo == TipoVenta.CREDITO,
                     onSelected: (_) => setState(() => _tipo = TipoVenta.CREDITO)),
                 if (_tipo == TipoVenta.CREDITO) ...[
                   const SizedBox(width: 12),
@@ -294,53 +317,81 @@ class _FormState extends State<_Form> {
                       onChanged: (v) => _plazo = int.tryParse(v) ?? 30)),
                 ],
               ]),
+              const SizedBox(height: 12),
+              // Moneda y Tipo de Cambio
+              Row(children: [
+                const Text('Moneda:'),
+                const SizedBox(width: 12),
+                ChoiceChip(label: const Text('PEN'), selected: _moneda == 'PEN',
+                    onSelected: (_) => setState(() => _moneda = 'PEN')),
+                const SizedBox(width: 8),
+                ChoiceChip(label: const Text('USD'), selected: _moneda == 'USD',
+                    onSelected: (_) => setState(() => _moneda = 'USD')),
+                const SizedBox(width: 12),
+                Expanded(child: TextFormField(
+                  controller: _tcCtrl,
+                  decoration: const InputDecoration(labelText: 'Tipo de Cambio', isDense: true),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (v) => setState(() => _tipoCambio = double.tryParse(v) ?? 1.0),
+                )),
+              ]),
               const Divider(),
-              ListTile(
-                  contentPadding: EdgeInsets.zero,
+              // Almacén y cliente
+              ListTile(contentPadding: EdgeInsets.zero,
                   title: Text(_almNombre ?? 'Seleccionar almacén'),
-                  trailing: const Icon(Icons.warehouse),
-                  onTap: _pickAlmacen),
-              ListTile(
-                  contentPadding: EdgeInsets.zero,
+                  trailing: const Icon(Icons.warehouse), onTap: _pickAlmacen),
+              ListTile(contentPadding: EdgeInsets.zero,
                   title: Text(_cliNombre ?? 'Seleccionar cliente'),
-                  trailing: const Icon(Icons.person),
-                  onTap: _pickCliente),
-              TextFormField(
-                  controller: _obsCtrl,
+                  trailing: const Icon(Icons.person), onTap: _pickCliente),
+              TextFormField(controller: _obsCtrl,
                   decoration: const InputDecoration(labelText: 'Observación (opcional)')),
               const Divider(),
+              // Artículos
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 Text('Artículos', style: Theme.of(context).textTheme.titleMedium),
-                TextButton.icon(
-                    onPressed: _addLinea,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Agregar')),
+                TextButton.icon(onPressed: _addLinea, icon: const Icon(Icons.add), label: const Text('Agregar')),
               ]),
               ..._lineas.asMap().entries.map((e) => ListTile(
                 dense: true,
                 title: Text(e.value.descripcion),
-                subtitle: Text('${e.value.cantidad} × ${e.value.precio.toStringAsFixed(4)}'
-                    '${e.value.descPct > 0 ? " (-${e.value.descPct}%)" : ""}'
-                    ' = S/ ${e.value.importe.toStringAsFixed(2)}'),
+                subtitle: Text(
+                  '${e.value.cantidad} × $currLabel ${e.value.precio.toStringAsFixed(4)}'
+                  '${e.value.descPct > 0 ? " (-${e.value.descPct}%)" : ""}'
+                  ' = $currLabel ${e.value.importe.toStringAsFixed(2)}',
+                ),
                 trailing: IconButton(
                     icon: const Icon(Icons.remove_circle, color: Colors.red),
                     onPressed: () => setState(() => _lineas.removeAt(e.key))),
               )),
               const Divider(),
-              _TRow('Subtotal', _subtotal),
-              if (_aplicaIgv)
-                _TRow('IGV (${_igvPct.toStringAsFixed(0)}%)', _igv)
-              else
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 2),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.end,
-                      children: [Text('Sin IGV', style: TextStyle(color: Colors.grey))]),
-                ),
-              _TRow('Total', _total, bold: true),
+              // Totales en la moneda seleccionada
+              if (_moneda == 'PEN') ...[
+                _TRow('Subtotal', _subtotalPen, 'S/'),
+                if (_aplicaIgv)
+                  _TRow('IGV (${_igvPct.toStringAsFixed(0)}%)', _igvPen, 'S/')
+                else
+                  const Padding(padding: EdgeInsets.symmetric(vertical: 2),
+                      child: Row(mainAxisAlignment: MainAxisAlignment.end,
+                          children: [Text('Sin IGV', style: TextStyle(color: Colors.grey))])),
+                _TRow('Total', _totalPen, 'S/', bold: true),
+                if (_tc != 1.0) ...[
+                  const SizedBox(height: 4),
+                  _TRow('≈ Equivalente USD', _totalUsd, 'USD', color: Colors.blue.shade700),
+                ],
+              ] else ...[
+                _TRow('Subtotal', _subtotalUsd, 'USD'),
+                if (_aplicaIgv)
+                  _TRow('IGV (${_igvPct.toStringAsFixed(0)}%)', _igvUsd, 'USD')
+                else
+                  const Padding(padding: EdgeInsets.symmetric(vertical: 2),
+                      child: Row(mainAxisAlignment: MainAxisAlignment.end,
+                          children: [Text('Sin IGV', style: TextStyle(color: Colors.grey))])),
+                _TRow('Total', _totalUsd, 'USD', bold: true),
+                const SizedBox(height: 4),
+                _TRow('≈ Equivalente S/', _totalPen, 'S/', color: Colors.orange.shade700),
+              ],
               const SizedBox(height: 24),
-              ElevatedButton(
-                  onPressed: saving ? null : _submit,
-                  child: const Text('Registrar Venta')),
+              ElevatedButton(onPressed: saving ? null : _submit, child: const Text('Registrar Venta')),
               const SizedBox(height: 40),
             ])),
             if (saving) const Positioned.fill(
@@ -354,17 +405,25 @@ class _FormState extends State<_Form> {
 }
 
 class _TRow extends StatelessWidget {
-  final String label; final double value; final bool bold;
-  const _TRow(this.label, this.value, {this.bold = false});
+  final String label;
+  final double value;
+  final String currency;
+  final bool bold;
+  final Color? color;
+  const _TRow(this.label, this.value, this.currency, {this.bold = false, this.color});
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 2),
     child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-      Text(label, style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
+      Text(label, style: TextStyle(
+          fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+          color: color)),
       const SizedBox(width: 16),
-      SizedBox(width: 90, child: Text('S/ ${value.toStringAsFixed(2)}',
+      SizedBox(width: 110, child: Text('$currency ${value.toStringAsFixed(2)}',
           textAlign: TextAlign.right,
-          style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal))),
+          style: TextStyle(
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+              color: color))),
     ]),
   );
 }

@@ -115,7 +115,7 @@ class _State extends State<CxCListPage> {
                   DateTime.tryParse(cxc.fechaVencimiento!)?.isBefore(DateTime.now()) == true &&
                   cxc.pendiente;
                 return ListTile(
-                  onTap: () => ctx.go('/cxc/${cxc.id}'),
+                  onTap: () => ctx.push('/cxc/${cxc.id}'),
                   leading: CircleAvatar(
                     backgroundColor: vencida ? Colors.red[100] : cxc.pendiente ? Colors.orange[100] : Colors.green[100],
                     child: Icon(

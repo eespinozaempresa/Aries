@@ -6,6 +6,7 @@ import { SupabaseCompraRepository } from './infrastructure/repositories/supabase
 import { RegistrarCompraUseCase } from './application/use-cases/registrar-compra.use-case';
 import { AnularCompraUseCase } from './application/use-cases/anular-compra.use-case';
 import { ListComprasUseCase } from './application/use-cases/list-compras.use-case';
+import { EliminarCompraUseCase } from './application/use-cases/eliminar-compra.use-case';
 import { ComprasController } from './infrastructure/controllers/compras.controller';
 
 @Module({
@@ -15,6 +16,7 @@ import { ComprasController } from './infrastructure/controllers/compras.controll
     { provide: ICompraRepository, useClass: SupabaseCompraRepository },
     RegistrarCompraUseCase,
     AnularCompraUseCase,
+    EliminarCompraUseCase,
     ListComprasUseCase,
   ],
   exports: [ICompraRepository],

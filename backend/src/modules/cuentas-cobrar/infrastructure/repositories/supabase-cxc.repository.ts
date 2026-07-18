@@ -103,8 +103,14 @@ export class SupabaseCxCRepository implements ICxCRepository {
       .eq('id', d.cuentaCobrarId).eq('codigo_empresa', codigoEmpresa);
 
     // Crear nueva con el saldo + interés
-    const numProvStr = await this.numeracion.siguiente(codigoEmpresa, 'CXC', '0001');
-    const numProv    = parseInt(numProvStr, 10);
+    const { data: maxRow } = await this.supabase.db
+      .from('cuentas_cobrar')
+      .select('numero_provision')
+      .eq('codigo_empresa', codigoEmpresa)
+      .order('numero_provision', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const numProv = (maxRow?.numero_provision ?? 0) + 1;
     const interes   = d.interes ?? 0;
     const nuevoMonto = parseFloat((original.saldo + interes).toFixed(2));
 
@@ -139,8 +145,8 @@ export class SupabaseCxCRepository implements ICxCRepository {
       tipo: r.tipo as CuentaCobrar['tipo'],
       codigoDocumento: r.codigo_documento as string,
       numeroDocumento: r.numero_documento as string,
-      numeroCuota: Number(r.numero_cuota),
-      totalCuotas: Number(r.total_cuotas),
+      numeroCuota: Number(r.numero_cuota ?? 1),
+      totalCuotas: Number(r.total_cuotas ?? 1),
       montoTotal: Number(r.monto_total),
       montoPagado: Number(r.monto_pagado),
       saldo: Number(r.saldo),

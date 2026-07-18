@@ -18,6 +18,7 @@ class VentaBloc extends Bloc<VentaEvent, VentaState> {
     on<VentaRegistrar>(_onRegistrar);
     on<VentaAnular>(_onAnular);
     on<VentaLoadDetail>(_onDetail);
+    on<VentaEliminar>(_onEliminar);
   }
 
   Map<String, dynamic> _params(int page) => {
@@ -69,5 +70,13 @@ class VentaBloc extends Bloc<VentaEvent, VentaState> {
     emit(VentaDetailLoading());
     try { emit(VentaDetailLoaded(await _ds.findById(e.id))); }
     on ApiException catch (e) { emit(VentaError(e.message)); }
+  }
+
+  Future<void> _onEliminar(VentaEliminar e, Emitter<VentaState> emit) async {
+    emit(VentaSaving());
+    try {
+      await _ds.eliminar(e.id);
+      emit(VentaEliminada(e.id));
+    } on ApiException catch (e) { emit(VentaError(e.message)); }
   }
 }

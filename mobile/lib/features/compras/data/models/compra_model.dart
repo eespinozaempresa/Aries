@@ -29,6 +29,8 @@ class CompraModel {
     detalles: (j['detalles'] as List<dynamic>? ?? [])
         .map((d) => DetalleCompraModel.fromJson(d as Map<String, dynamic>))
         .toList(),
+    razonSocialProveedor: j['razonSocialProveedor'] as String?,
+    descripcionAlmacen: j['descripcionAlmacen'] as String?,
   );
 }
 

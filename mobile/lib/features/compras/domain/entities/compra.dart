@@ -27,6 +27,8 @@ class Compra {
   final bool anulado;
   final String? createdAt;
   final List<DetalleCompra> detalles;
+  final String? razonSocialProveedor;
+  final String? descripcionAlmacen;
 
   const Compra({
     required this.id,
@@ -53,5 +55,7 @@ class Compra {
     required this.anulado,
     this.createdAt,
     this.detalles = const [],
+    this.razonSocialProveedor,
+    this.descripcionAlmacen,
   });
 }

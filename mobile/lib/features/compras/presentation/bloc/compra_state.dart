@@ -9,4 +9,5 @@ class CompraDetailLoaded  extends CompraState { final Compra compra; CompraDetai
 class CompraSaving        extends CompraState {}
 class CompraSaved         extends CompraState { final Compra compra; CompraSaved(this.compra); }
 class CompraAnulado       extends CompraState { final Compra compra; CompraAnulado(this.compra); }
+class CompraEliminada     extends CompraState { final String id; CompraEliminada(this.id); }
 class CompraError         extends CompraState { final String message; CompraError(this.message); }

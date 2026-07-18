@@ -101,8 +101,14 @@ export class SupabaseCxPRepository implements ICxPRepository {
     await this.supabase.db.from('cuentas_pagar').update({ pendiente: false })
       .eq('id', d.cuentaPagarId).eq('codigo_empresa', codigoEmpresa);
 
-    const numProvStr = await this.numeracion.siguiente(codigoEmpresa, 'CXP', '0001');
-    const numProv    = parseInt(numProvStr, 10);
+    const { data: maxRow } = await this.supabase.db
+      .from('cuentas_pagar')
+      .select('numero_provision')
+      .eq('codigo_empresa', codigoEmpresa)
+      .order('numero_provision', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const numProv = (maxRow?.numero_provision ?? 0) + 1;
     const interes    = d.interes ?? 0;
     const nuevoMonto = parseFloat((original.saldo + interes).toFixed(2));
 

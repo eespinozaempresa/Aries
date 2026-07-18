@@ -26,3 +26,8 @@ class CompraLoadDetail extends CompraEvent {
   final String id;
   CompraLoadDetail(this.id);
 }
+
+class CompraEliminar extends CompraEvent {
+  final String id;
+  CompraEliminar(this.id);
+}

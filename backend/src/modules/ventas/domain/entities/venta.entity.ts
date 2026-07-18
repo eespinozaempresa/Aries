@@ -16,10 +16,17 @@ export interface Venta {
   subtotal: number;
   igv: number;
   total: number;
+  subtotalUsd: number;
+  igvUsd: number;
+  totalUsd: number;
+  moneda: string;
+  tipoCambio: number;
   tipoVenta: TipoVenta;
   plazoDias: number;
   fechaVencimiento?: string;
   anulado: boolean;
   createdAt?: string;
   detalles?: DetalleVenta[];
+  razonSocialCliente?: string;
+  descripcionAlmacen?: string;
 }

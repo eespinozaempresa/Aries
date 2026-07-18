@@ -24,18 +24,28 @@ export class SupabaseVentaRepository implements IVentaRepository {
         .eq('codigo', d.codigoDocumento).maybeSingle(),
     ]);
     const aplicaIgv = docRes.data?.aplica_igv ?? true;
-    const igvRate   = aplicaIgv ? (Number(paramRes.data?.igv ?? 18) / 100) : 0;
+    const igvRate    = aplicaIgv ? (Number(paramRes.data?.igv ?? 18) / 100) : 0;
+    const moneda     = d.moneda ?? 'PEN';
+    const tipoCambio = d.tipoCambio ?? 1;
 
     const lineasProc = d.lineas.map((l) => {
-      const descPct  = l.descuentoPct ?? 0;
-      const base     = l.cantidad * l.precioUnitario;
-      const importe  = parseFloat((base * (1 - descPct / 100)).toFixed(2));
-      return { ...l, importe, descuentoPct: descPct };
+      const descPct     = l.descuentoPct ?? 0;
+      const base        = l.cantidad * l.precioUnitario;
+      const importeMon  = parseFloat((base * (1 - descPct / 100)).toFixed(2));
+
+      const importePen  = moneda === 'USD' ? parseFloat((importeMon * tipoCambio).toFixed(2)) : importeMon;
+      const importeUsd  = moneda === 'USD' ? importeMon : parseFloat((importeMon / tipoCambio).toFixed(2));
+      const precUsd     = moneda === 'USD' ? l.precioUnitario : parseFloat((l.precioUnitario / tipoCambio).toFixed(4));
+
+      return { ...l, importe: importePen, importeUsd, descuentoPct: descPct, precioUnitarioUsd: precUsd };
     });
 
-    const subtotal = parseFloat(lineasProc.reduce((s, l) => s + l.importe, 0).toFixed(2));
-    const igv      = parseFloat((subtotal * igvRate).toFixed(2));
-    const total    = parseFloat((subtotal + igv).toFixed(2));
+    const subtotal    = parseFloat(lineasProc.reduce((s, l) => s + l.importe, 0).toFixed(2));
+    const igv         = parseFloat((subtotal * igvRate).toFixed(2));
+    const total       = parseFloat((subtotal + igv).toFixed(2));
+    const subtotalUsd = parseFloat(lineasProc.reduce((s, l) => s + l.importeUsd, 0).toFixed(2));
+    const igvUsd      = parseFloat((subtotalUsd * igvRate).toFixed(2));
+    const totalUsd    = parseFloat((subtotalUsd + igvUsd).toFixed(2));
 
     let fechaVencimiento = d.fechaVencimiento;
     if (d.tipoVenta === 'CREDITO' && !fechaVencimiento && d.plazoDias) {
@@ -57,6 +67,11 @@ export class SupabaseVentaRepository implements IVentaRepository {
         codigo_cliente:    d.codigoCliente,
         codigo_usuario:    d.codigoUsuario,
         subtotal, igv, total,
+        subtotal_usd: subtotalUsd,
+        igv_usd:      igvUsd,
+        total_usd:    totalUsd,
+        moneda,
+        tipo_cambio:  tipoCambio,
         tipo_venta:        d.tipoVenta,
         plazo_dias:        d.plazoDias ?? 0,
         fecha_vencimiento: fechaVencimiento ?? null,
@@ -71,13 +86,15 @@ export class SupabaseVentaRepository implements IVentaRepository {
     const { error: detErr } = await this.supabase.db
       .from('detalle_ventas')
       .insert(lineasProc.map((l) => ({
-        venta_id:        venta.id,
-        codigo_empresa:  codigoEmpresa,
-        codigo_articulo: l.codigoArticulo,
-        cantidad:        l.cantidad,
-        precio_unitario: l.precioUnitario,
-        descuento_pct:   l.descuentoPct,
-        importe:         l.importe,
+        venta_id:             venta.id,
+        codigo_empresa:       codigoEmpresa,
+        codigo_articulo:      l.codigoArticulo,
+        cantidad:             l.cantidad,
+        precio_unitario:      moneda === 'USD' ? parseFloat((l.precioUnitario * tipoCambio).toFixed(4)) : l.precioUnitario,
+        descuento_pct:        l.descuentoPct,
+        importe:              l.importe,
+        precio_unitario_usd:  l.precioUnitarioUsd,
+        importe_usd:          l.importeUsd,
       })));
     if (detErr) throw new InternalServerErrorException(detErr.message);
 
@@ -103,8 +120,14 @@ export class SupabaseVentaRepository implements IVentaRepository {
 
     // CxC automática para ventas a crédito
     if (d.tipoVenta === 'CREDITO') {
-      const numProvStr = await this.numeracion.siguiente(codigoEmpresa, 'CXC', '0001');
-      const numProv = parseInt(numProvStr, 10);
+      const { data: maxRow } = await this.supabase.db
+        .from('cuentas_cobrar')
+        .select('numero_provision')
+        .eq('codigo_empresa', codigoEmpresa)
+        .order('numero_provision', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const numProv = (maxRow?.numero_provision ?? 0) + 1;
 
       await this.supabase.db.from('cuentas_cobrar').insert({
         codigo_empresa:    codigoEmpresa,
@@ -162,6 +185,19 @@ export class SupabaseVentaRepository implements IVentaRepository {
     return this.toEntity(data, venta.detalles ?? []);
   }
 
+  async eliminar(codigoEmpresa: string, id: string): Promise<void> {
+    const venta = await this.findById(id, codigoEmpresa);
+    if (!venta) throw new InternalServerErrorException('Venta no encontrada');
+    if (!venta.anulado) throw new InternalServerErrorException('Solo se pueden eliminar ventas anuladas');
+
+    await this.supabase.db.from('detalle_ventas').delete()
+      .eq('venta_id', id).eq('codigo_empresa', codigoEmpresa);
+
+    const { error } = await this.supabase.db.from('ventas').delete()
+      .eq('id', id).eq('codigo_empresa', codigoEmpresa);
+    if (error) throw new InternalServerErrorException(error.message);
+  }
+
   async list(f: VentaFilter): Promise<VentaListResult> {
     const page  = f.page ?? 1;
     const limit = Math.min(f.limit ?? 20, 100);
@@ -183,9 +219,28 @@ export class SupabaseVentaRepository implements IVentaRepository {
     const { data, error, count } = await q;
     if (error) throw new InternalServerErrorException(error.message);
 
+    const rows = data ?? [];
+    const clienteCodes = [...new Set(rows.map((r) => r.codigo_cliente as string))];
+    const almacenCodes = [...new Set(rows.map((r) => r.codigo_almacen as string))];
+
+    const [{ data: clientes }, { data: almacenes }] = await Promise.all([
+      clienteCodes.length
+        ? this.supabase.db.from('clientes').select('codigo, razon_social').eq('codigo_empresa', f.codigoEmpresa).in('codigo', clienteCodes)
+        : Promise.resolve({ data: [] }),
+      almacenCodes.length
+        ? this.supabase.db.from('almacenes').select('codigo, descripcion').eq('codigo_empresa', f.codigoEmpresa).in('codigo', almacenCodes)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const clienteMap = new Map((clientes ?? []).map((c) => [c.codigo, c.razon_social]));
+    const almacenMap = new Map((almacenes ?? []).map((a) => [a.codigo, a.descripcion]));
+
     const total = count ?? 0;
     return {
-      data: (data ?? []).map((r) => this.toEntity(r, [])),
+      data: rows.map((r) => this.toEntity(r, [], {
+        razonSocialCliente: clienteMap.get(r.codigo_cliente as string),
+        descripcionAlmacen: almacenMap.get(r.codigo_almacen as string),
+      })),
       total, page, lastPage: Math.ceil(total / limit) || 1,
     };
   }
@@ -196,10 +251,19 @@ export class SupabaseVentaRepository implements IVentaRepository {
       .eq('id', id).eq('codigo_empresa', codigoEmpresa).maybeSingle();
     if (error) throw new InternalServerErrorException(error.message);
     if (!data) return null;
-    return this.toEntity(data, (data.detalle_ventas ?? []).map(this.toDetalle));
+
+    const [{ data: cliente }, { data: almacen }] = await Promise.all([
+      this.supabase.db.from('clientes').select('razon_social').eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_cliente).maybeSingle(),
+      this.supabase.db.from('almacenes').select('descripcion').eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_almacen).maybeSingle(),
+    ]);
+
+    return this.toEntity(data, (data.detalle_ventas ?? []).map(this.toDetalle), {
+      razonSocialCliente: cliente?.razon_social,
+      descripcionAlmacen: almacen?.descripcion,
+    });
   }
 
-  private toEntity(r: Record<string, unknown>, detalles: DetalleVenta[]): Venta {
+  private toEntity(r: Record<string, unknown>, detalles: DetalleVenta[], extras: { razonSocialCliente?: string; descripcionAlmacen?: string } = {}): Venta {
     return {
       id: r.id as string,
       codigoEmpresa: r.codigo_empresa as string,
@@ -214,12 +278,19 @@ export class SupabaseVentaRepository implements IVentaRepository {
       subtotal: Number(r.subtotal),
       igv: Number(r.igv),
       total: Number(r.total),
+      subtotalUsd: Number(r.subtotal_usd ?? 0),
+      igvUsd: Number(r.igv_usd ?? 0),
+      totalUsd: Number(r.total_usd ?? 0),
+      moneda: (r.moneda as string) ?? 'PEN',
+      tipoCambio: Number(r.tipo_cambio ?? 1),
       tipoVenta: r.tipo_venta as Venta['tipoVenta'],
       plazoDias: Number(r.plazo_dias),
       fechaVencimiento: r.fecha_vencimiento as string | undefined,
       anulado: r.anulado as boolean,
       createdAt: r.created_at as string | undefined,
       detalles,
+      razonSocialCliente: extras.razonSocialCliente,
+      descripcionAlmacen: extras.descripcionAlmacen,
     };
   }
 
@@ -235,6 +306,8 @@ export class SupabaseVentaRepository implements IVentaRepository {
       precioUnitario: Number(r.precio_unitario),
       descuentoPct: Number(r.descuento_pct),
       importe: Number(r.importe),
+      precioUnitarioUsd: Number(r.precio_unitario_usd ?? 0),
+      importeUsd: Number(r.importe_usd ?? 0),
     };
   }
 }

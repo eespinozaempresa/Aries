@@ -1,10 +1,11 @@
 import {
-  Controller, Post, Get, Patch, Body, Param, Query,
-  UseGuards, Request, ParseIntPipe, DefaultValuePipe, NotFoundException,
+  Controller, Post, Get, Patch, Delete, Body, Param, Query,
+  UseGuards, Request, ParseIntPipe, DefaultValuePipe, NotFoundException, HttpCode,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
 import { RegistrarVentaUseCase } from '../../application/use-cases/registrar-venta.use-case';
 import { AnularVentaUseCase } from '../../application/use-cases/anular-venta.use-case';
+import { EliminarVentaUseCase } from '../../application/use-cases/eliminar-venta.use-case';
 import { ListVentasUseCase } from '../../application/use-cases/list-ventas.use-case';
 import { ReporteUtilidadUseCase } from '../../application/use-cases/reporte-utilidad.use-case';
 import { IVentaRepository } from '../../domain/ports/venta.repository.port';
@@ -16,6 +17,7 @@ export class VentasController {
   constructor(
     private readonly registrarUC: RegistrarVentaUseCase,
     private readonly anularUC: AnularVentaUseCase,
+    private readonly eliminarUC: EliminarVentaUseCase,
     private readonly listUC: ListVentasUseCase,
     private readonly utilidadUC: ReporteUtilidadUseCase,
     private readonly repo: IVentaRepository,
@@ -65,5 +67,11 @@ export class VentasController {
   @Patch(':id/anular')
   anular(@Param('id') id: string, @Request() req: any) {
     return this.anularUC.execute(req.user.empresa, id, req.user.codigo);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  eliminar(@Param('id') id: string, @Request() req: any) {
+    return this.eliminarUC.execute(req.user.empresa, id);
   }
 }

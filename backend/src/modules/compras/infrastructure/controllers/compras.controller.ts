@@ -1,10 +1,11 @@
 import {
-  Controller, Post, Get, Patch, Body, Param, Query,
-  UseGuards, Request, ParseIntPipe, DefaultValuePipe, NotFoundException,
+  Controller, Post, Get, Patch, Delete, Body, Param, Query,
+  UseGuards, Request, ParseIntPipe, DefaultValuePipe, NotFoundException, HttpCode,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
 import { RegistrarCompraUseCase } from '../../application/use-cases/registrar-compra.use-case';
 import { AnularCompraUseCase } from '../../application/use-cases/anular-compra.use-case';
+import { EliminarCompraUseCase } from '../../application/use-cases/eliminar-compra.use-case';
 import { ListComprasUseCase } from '../../application/use-cases/list-compras.use-case';
 import { ICompraRepository } from '../../domain/ports/compra.repository.port';
 import { RegistrarCompraDto } from '../dto/compra.dto';
@@ -15,6 +16,7 @@ export class ComprasController {
   constructor(
     private readonly registrarUC: RegistrarCompraUseCase,
     private readonly anularUC: AnularCompraUseCase,
+    private readonly eliminarUC: EliminarCompraUseCase,
     private readonly listUC: ListComprasUseCase,
     private readonly repo: ICompraRepository,
   ) {}
@@ -53,5 +55,11 @@ export class ComprasController {
   @Patch(':id/anular')
   anular(@Param('id') id: string, @Request() req: any) {
     return this.anularUC.execute(req.user.empresa, id, req.user.codigo);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  eliminar(@Param('id') id: string, @Request() req: any) {
+    return this.eliminarUC.execute(req.user.empresa, id);
   }
 }

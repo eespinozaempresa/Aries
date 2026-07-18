@@ -34,4 +34,10 @@ class ComprasRemoteDataSource {
       return CompraModel.fromJson(res.data as Map<String, dynamic>);
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
+
+  Future<void> eliminar(String id) async {
+    try {
+      await _dio.delete('/compras/$id');
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
 }

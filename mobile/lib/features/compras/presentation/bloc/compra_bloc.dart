@@ -23,6 +23,7 @@ class CompraBloc extends Bloc<CompraEvent, CompraState> {
     on<CompraRegistrar>(_onRegistrar);
     on<CompraAnular>(_onAnular);
     on<CompraLoadDetail>(_onDetail);
+    on<CompraEliminar>(_onEliminar);
   }
 
   Future<void> _onLoad(CompraListLoad e, Emitter<CompraState> emit) async {
@@ -71,6 +72,14 @@ class CompraBloc extends Bloc<CompraEvent, CompraState> {
     try {
       final c = await _ds.findById(e.id);
       emit(CompraDetailLoaded(c));
+    } on ApiException catch (e) { emit(CompraError(e.message)); }
+  }
+
+  Future<void> _onEliminar(CompraEliminar e, Emitter<CompraState> emit) async {
+    emit(CompraSaving());
+    try {
+      await _ds.eliminar(e.id);
+      emit(CompraEliminada(e.id));
     } on ApiException catch (e) { emit(CompraError(e.message)); }
   }
 

@@ -37,6 +37,7 @@ import '../../features/utilitarios/presentation/pages/cambiar_clave_page.dart';
 import '../../features/utilitarios/presentation/pages/parametros_page.dart';
 import '../../features/utilitarios/presentation/pages/usuarios_page.dart';
 import '../../features/utilitarios/presentation/pages/auditoria_page.dart';
+import '../../features/tipo_cambio/presentation/pages/tipo_cambio_list_page.dart';
 import '../di/injection.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 
@@ -173,6 +174,7 @@ class AppRouter {
         builder: (_, __) => const UtilitariosPage(),
         routes: [
           GoRoute(path: 'cambiar-clave', builder: (_, __) => const CambiarClavePage()),
+          GoRoute(path: 'tipo-cambio',   builder: (_, __) => const TipoCambioListPage()),
           GoRoute(path: 'parametros',    builder: (_, __) => const ParametrosPage()),
           GoRoute(path: 'usuarios',      builder: (_, __) => const UsuariosPage()),
           GoRoute(path: 'auditoria',     builder: (_, __) => const AuditoriaPage()),

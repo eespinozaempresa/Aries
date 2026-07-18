@@ -7,6 +7,7 @@ import { RegistrarVentaUseCase } from './application/use-cases/registrar-venta.u
 import { AnularVentaUseCase } from './application/use-cases/anular-venta.use-case';
 import { ListVentasUseCase } from './application/use-cases/list-ventas.use-case';
 import { ReporteUtilidadUseCase } from './application/use-cases/reporte-utilidad.use-case';
+import { EliminarVentaUseCase } from './application/use-cases/eliminar-venta.use-case';
 import { VentasController } from './infrastructure/controllers/ventas.controller';
 
 @Module({
@@ -16,6 +17,7 @@ import { VentasController } from './infrastructure/controllers/ventas.controller
     { provide: IVentaRepository, useClass: SupabaseVentaRepository },
     RegistrarVentaUseCase,
     AnularVentaUseCase,
+    EliminarVentaUseCase,
     ListVentasUseCase,
     ReporteUtilidadUseCase,
   ],

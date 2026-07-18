@@ -42,6 +42,7 @@ export interface CompraListResult {
 export abstract class ICompraRepository {
   abstract registrar(codigoEmpresa: string, data: RegistrarCompraData): Promise<Compra>;
   abstract anular(codigoEmpresa: string, compraId: string, codigoUsuario: string): Promise<Compra>;
+  abstract eliminar(codigoEmpresa: string, id: string): Promise<void>;
   abstract list(filter: CompraFilter): Promise<CompraListResult>;
   abstract findById(id: string, codigoEmpresa: string): Promise<Compra | null>;
 }

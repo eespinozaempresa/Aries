@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/di/injection.dart';
 import '../../data/datasources/compras_remote_datasource.dart';
 import '../../domain/entities/compra.dart';
@@ -28,6 +29,10 @@ class _View extends StatelessWidget {
       body: BlocConsumer<CompraBloc, CompraState>(
         listener: (ctx, state) {
           if (state is CompraAnulado) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Compra anulada'), backgroundColor: Colors.orange));
+          if (state is CompraEliminada) {
+            ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Compra eliminada'), backgroundColor: Colors.red));
+            ctx.pop(true);
+          }
           if (state is CompraError) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.red));
         },
         builder: (ctx, state) {
@@ -41,8 +46,8 @@ class _View extends StatelessWidget {
           return ListView(padding: const EdgeInsets.all(16), children: [
             _card('Documento',   '${c.codigoDocumento} ${c.numeroDocumento}'),
             _card('Fecha',       c.fecha),
-            _card('Proveedor',   c.codigoProveedor),
-            _card('Almacén',     c.codigoAlmacen),
+            _card('Proveedor',   c.razonSocialProveedor ?? c.codigoProveedor),
+            _card('Almacén',     c.descripcionAlmacen ?? c.codigoAlmacen),
             _card('Forma pago',  c.formaPago.name),
             if (c.formaPago == FormaPago.CREDITO) _card('Vencimiento', c.fechaVencimiento ?? '-'),
             _card('Moneda',      '${c.moneda} (T.C. ${c.tipoCambio.toStringAsFixed(4)})'),
@@ -51,16 +56,33 @@ class _View extends StatelessWidget {
             const SizedBox(height: 16),
             Text('Detalle', style: Theme.of(ctx).textTheme.titleMedium),
             const SizedBox(height: 8),
-            ...c.detalles.map((d) => ListTile(
-              dense: true,
-              title: Text(d.descripcionArticulo ?? d.codigoArticulo),
-              subtitle: Text('${d.codigoArticulo}  |  ${d.cantidad} × ${d.precioUnitario.toStringAsFixed(4)}'),
-              trailing: Text('S/ ${d.importe.toStringAsFixed(2)}'),
-            )),
+            ...c.detalles.map((d) {
+              final precio  = c.moneda == 'USD' ? d.precioUnitarioUsd : d.precioUnitario;
+              final importe = c.moneda == 'USD' ? d.importeUsd : d.importe;
+              final cur     = c.moneda == 'USD' ? 'USD' : 'S/';
+              return ListTile(
+                dense: true,
+                title: Text(d.descripcionArticulo ?? d.codigoArticulo),
+                subtitle: Text('${d.codigoArticulo}  |  ${d.cantidad} × ${precio.toStringAsFixed(4)}'),
+                trailing: Text('$cur ${importe.toStringAsFixed(2)}'),
+              );
+            }),
             const Divider(),
-            _totRow(ctx, 'Subtotal', c.subtotal),
-            _totRow(ctx, 'IGV', c.igv),
-            _totRow(ctx, 'Total', c.total, bold: true),
+            if (c.moneda == 'PEN') ...[
+              _totRow('Subtotal', c.subtotal, 'S/'),
+              _totRow('IGV',      c.igv,      'S/'),
+              _totRow('Total',    c.total,    'S/', bold: true),
+              if (c.tipoCambio != 1.0) ...[
+                const SizedBox(height: 4),
+                _totRow('≈ Equivalente USD', c.totalUsd, 'USD', color: Colors.blue.shade700),
+              ],
+            ] else ...[
+              _totRow('Subtotal', c.subtotalUsd, 'USD'),
+              _totRow('IGV',      c.igvUsd,      'USD'),
+              _totRow('Total',    c.totalUsd,    'USD', bold: true),
+              const SizedBox(height: 4),
+              _totRow('≈ Equivalente S/', c.total, 'S/', color: Colors.orange.shade700),
+            ],
             const SizedBox(height: 24),
             if (!c.anulado)
               OutlinedButton.icon(
@@ -69,6 +91,15 @@ class _View extends StatelessWidget {
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                 onPressed: () => _confirm(ctx, c.id),
               ),
+            if (c.anulado) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.delete_forever),
+                label: const Text('Eliminar compra'),
+                style: OutlinedButton.styleFrom(foregroundColor: Colors.red.shade900),
+                onPressed: () => _confirmEliminar(ctx, c.id),
+              ),
+            ],
           ]);
         },
       ),
@@ -83,13 +114,13 @@ class _View extends StatelessWidget {
     ]),
   );
 
-  Widget _totRow(BuildContext ctx, String label, double v, {bool bold = false}) => Padding(
+  Widget _totRow(String label, double v, String cur, {bool bold = false, Color? color}) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 2),
     child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-      Text(label, style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
+      Text(label, style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal, color: color)),
       const SizedBox(width: 16),
-      SizedBox(width: 90, child: Text('S/ ${v.toStringAsFixed(2)}', textAlign: TextAlign.right,
-          style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal))),
+      SizedBox(width: 110, child: Text('$cur ${v.toStringAsFixed(2)}', textAlign: TextAlign.right,
+          style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal, color: color))),
     ]),
   );
 
@@ -102,5 +133,16 @@ class _View extends StatelessWidget {
         TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Anular', style: TextStyle(color: Colors.red))),
       ],
     )).then((ok) { if (ok == true && context.mounted) context.read<CompraBloc>().add(CompraAnular(id)); });
+  }
+
+  void _confirmEliminar(BuildContext context, String id) {
+    showDialog<bool>(context: context, builder: (_) => AlertDialog(
+      title: const Text('Eliminar compra'),
+      content: const Text('Esta acción es irreversible. Se eliminará permanentemente la compra y su detalle. ¿Desea continuar?'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
+      ],
+    )).then((ok) { if (ok == true && context.mounted) context.read<CompraBloc>().add(CompraEliminar(id)); });
   }
 }

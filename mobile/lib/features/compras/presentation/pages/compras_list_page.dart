@@ -79,7 +79,12 @@ class _ViewState extends State<_View> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/compras/nueva'),
+        onPressed: () async {
+          final saved = await context.push<bool>('/compras/nueva');
+          if (saved == true && context.mounted) {
+            context.read<CompraBloc>().add(CompraListLoad());
+          }
+        },
         child: const Icon(Icons.add),
       ),
       body: BlocBuilder<CompraBloc, CompraState>(
@@ -105,18 +110,25 @@ class _ViewState extends State<_View> {
                       : const SizedBox.shrink();
                 }
                 final c = items[i];
+                final cur   = c.moneda == 'USD' ? '\$' : 'S/';
+                final monto = c.moneda == 'USD' ? c.totalUsd : c.total;
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: c.anulado ? Colors.grey.shade200 : Colors.blue.shade50,
                     child: Text(c.codigoDocumento, style: const TextStyle(fontSize: 10)),
                   ),
                   title: Text('${c.codigoDocumento}-${c.serie}-${c.numeroDocumento}'),
-                  subtitle: Text('${c.fecha} · ${c.codigoProveedor}'),
+                  subtitle: Text('${c.fecha} · ${c.razonSocialProveedor ?? c.codigoProveedor}'),
                   trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    Text('S/ ${c.total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('$cur ${monto.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
                     if (c.anulado) const Text('ANULADA', style: TextStyle(color: Colors.red, fontSize: 10)),
                   ]),
-                  onTap: () => ctx.push('/compras/${c.id}'),
+                  onTap: () async {
+                    final deleted = await ctx.push<bool>('/compras/${c.id}');
+                    if (deleted == true && ctx.mounted) {
+                      ctx.read<CompraBloc>().add(CompraListLoad());
+                    }
+                  },
                 );
               },
             ),

@@ -38,6 +38,16 @@ class _View extends StatelessWidget {
         },
         builder: (ctx, s) {
           if (s is CxCLoading || s is CxCSaving) return const Center(child: CircularProgressIndicator());
+          if (s is CxCError) return Center(child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 48),
+              const SizedBox(height: 12),
+              Text(s.message, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              ElevatedButton(onPressed: () => ctx.read<CxCBloc>().add(CxCLoadDetail(cxcId)), child: const Text('Reintentar')),
+            ]),
+          ));
           if (s is! CxCDetailLoaded) return const Center(child: CircularProgressIndicator());
           final cxc = s.cxc;
           final cobros = s.cobros;

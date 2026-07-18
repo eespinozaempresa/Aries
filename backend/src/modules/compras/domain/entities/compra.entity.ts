@@ -27,4 +27,6 @@ export interface Compra {
   anulado: boolean;
   createdAt?: string;
   detalles?: DetalleCompra[];
+  razonSocialProveedor?: string;
+  descripcionAlmacen?: string;
 }

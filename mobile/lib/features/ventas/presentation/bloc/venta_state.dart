@@ -8,4 +8,5 @@ class VentaDetailLoaded  extends VentaState { final Venta venta; VentaDetailLoad
 class VentaSaving        extends VentaState {}
 class VentaSaved         extends VentaState { final Venta venta; VentaSaved(this.venta); }
 class VentaAnulada       extends VentaState { final Venta venta; VentaAnulada(this.venta); }
+class VentaEliminada     extends VentaState { final String id; VentaEliminada(this.id); }
 class VentaError         extends VentaState { final String message; VentaError(this.message); }

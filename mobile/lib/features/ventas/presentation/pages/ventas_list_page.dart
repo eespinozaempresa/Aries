@@ -81,7 +81,12 @@ class _ViewState extends State<_View> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/ventas/nueva'),
+        onPressed: () async {
+          final saved = await context.push<bool>('/ventas/nueva');
+          if (saved == true && context.mounted) {
+            context.read<VentaBloc>().add(VentaListLoad());
+          }
+        },
         child: const Icon(Icons.add),
       ),
       body: BlocBuilder<VentaBloc, VentaState>(
@@ -105,19 +110,26 @@ class _ViewState extends State<_View> {
                       : const SizedBox.shrink();
                 }
                 final v = items[i];
+                final cur    = v.moneda == 'USD' ? '\$' : 'S/';
+                final monto  = v.moneda == 'USD' ? v.totalUsd : v.total;
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: v.anulado ? Colors.grey.shade200 : Colors.green.shade50,
                     child: Icon(Icons.receipt, color: v.anulado ? Colors.grey : Colors.green, size: 20),
                   ),
                   title: Text('${v.codigoDocumento}-${v.serie}-${v.numeroDocumento}'),
-                  subtitle: Text('${v.fecha} · ${v.codigoCliente}'),
+                  subtitle: Text('${v.fecha} · ${v.razonSocialCliente ?? v.codigoCliente}'),
                   trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    Text('S/ ${v.total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('$cur ${monto.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
                     if (v.anulado) const Text('ANULADA', style: TextStyle(color: Colors.red, fontSize: 10)),
                     if (v.tipoVenta == TipoVenta.CREDITO && !v.anulado) const Text('CRÉDITO', style: TextStyle(color: Colors.orange, fontSize: 10)),
                   ]),
-                  onTap: () => ctx.push('/ventas/${v.id}'),
+                  onTap: () async {
+                    final deleted = await ctx.push<bool>('/ventas/${v.id}');
+                    if (deleted == true && ctx.mounted) {
+                      ctx.read<VentaBloc>().add(VentaListLoad());
+                    }
+                  },
                 );
               },
             ),

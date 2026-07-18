@@ -9,7 +9,8 @@ class UtilitariosPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tiles = [
-      const _Tile('Cambiar contraseña',   'Actualiza tu clave de acceso',      Icons.lock_reset_outlined,       '/utilitarios/cambiar-clave',   false),
+      const _Tile('Cambiar contraseña',   'Actualiza tu clave de acceso',      Icons.lock_reset_outlined,       '/utilitarios/cambiar-clave',    false),
+      const _Tile('Tipo de Cambio',       'Historial de tipos de cambio USD',  Icons.currency_exchange_outlined, '/utilitarios/tipo-cambio',     false),
       const _Tile('Parámetros',           'IGV, plazos y configuración',       Icons.tune_outlined,              '/utilitarios/parametros',      true),
       const _Tile('Gestión de usuarios',  'Crear y administrar usuarios',      Icons.manage_accounts_outlined,   '/utilitarios/usuarios',        true),
       const _Tile('Auditoría',            'Historial de sesiones del sistema', Icons.history_outlined,           '/utilitarios/auditoria',       true),

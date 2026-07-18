@@ -8,6 +8,8 @@ class DetalleVenta {
   final double precioUnitario;
   final double descuentoPct;
   final double importe;
+  final double precioUnitarioUsd;
+  final double importeUsd;
 
   const DetalleVenta({
     required this.id,
@@ -19,5 +21,7 @@ class DetalleVenta {
     required this.precioUnitario,
     required this.descuentoPct,
     required this.importe,
+    this.precioUnitarioUsd = 0,
+    this.importeUsd = 0,
   });
 }

@@ -35,6 +35,12 @@ class VentasRemoteDataSource {
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 
+  Future<void> eliminar(String id) async {
+    try {
+      await _dio.delete('/ventas/$id');
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
   Future<List<dynamic>> reporteUtilidad({String? almacen, String? desde, String? hasta}) async {
     try {
       final params = <String, dynamic>{

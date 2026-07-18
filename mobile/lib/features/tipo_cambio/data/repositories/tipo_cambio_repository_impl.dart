@@ -21,8 +21,35 @@ class TipoCambioRepositoryImpl implements TipoCambioRepository {
   @override
   Future<Either<ApiException, TipoCambio>> registrar(double tipoCambio) async {
     try {
-      final result = await _remote.registrar(tipoCambio);
-      return Right(result);
+      return Right(await _remote.registrar(tipoCambio));
+    } on ApiException catch (e) {
+      return Left(e);
+    }
+  }
+
+  @override
+  Future<Either<ApiException, Map<String, dynamic>>> list({int page = 1, int limit = 20}) async {
+    try {
+      return Right(await _remote.list(page: page, limit: limit));
+    } on ApiException catch (e) {
+      return Left(e);
+    }
+  }
+
+  @override
+  Future<Either<ApiException, TipoCambio>> update(String id, double tipoCambio) async {
+    try {
+      return Right(await _remote.update(id, tipoCambio));
+    } on ApiException catch (e) {
+      return Left(e);
+    }
+  }
+
+  @override
+  Future<Either<ApiException, void>> delete(String id) async {
+    try {
+      await _remote.delete(id);
+      return const Right(null);
     } on ApiException catch (e) {
       return Left(e);
     }

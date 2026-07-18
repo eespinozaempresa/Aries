@@ -12,6 +12,7 @@ import '../../../maestros/presentation/widgets/maestro_picker.dart';
 import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
 import '../../../tablas/data/models/tabla_model.dart';
 import '../../../tablas/domain/entities/tabla_base.dart';
+import '../../../tipo_cambio/data/datasources/tipo_cambio_remote_datasource.dart';
 import '../../data/datasources/compras_remote_datasource.dart';
 import '../../domain/entities/compra.dart';
 import '../bloc/compra_bloc.dart';
@@ -78,14 +79,29 @@ class _FormState extends State<_Form> {
         });
       }
     } catch (_) {}
+    await _fetchTipoCambio();
+  }
+
+  Future<void> _fetchTipoCambio() async {
+    try {
+      final tc = await getIt<TipoCambioRemoteDataSource>().getByFecha(_fecha);
+      if (tc != null && mounted) {
+        setState(() => _tcCtrl.text = tc.tipoCambio.toStringAsFixed(4));
+      }
+    } catch (_) {}
   }
 
   @override
   void dispose() { _obsCtrl.dispose(); _tcCtrl.dispose(); super.dispose(); }
 
-  double get _subtotal => _lineas.fold(0, (s, l) => s + l.importe);
-  double get _igv      => _subtotal * 0.18;
-  double get _total    => _subtotal + _igv;
+  double get _tc         => double.tryParse(_tcCtrl.text) ?? 1.0;
+  double get _subtotalMon => _lineas.fold(0, (s, l) => s + l.importe);
+  double get _subtotalPen => _moneda == 'USD' ? _subtotalMon * _tc : _subtotalMon;
+  double get _subtotalUsd => _moneda == 'USD' ? _subtotalMon : _subtotalMon / (_tc > 0 ? _tc : 1);
+  double get _igv        => _subtotalPen * 0.18;
+  double get _igvUsd     => _subtotalUsd * 0.18;
+  double get _total      => _subtotalPen + _igv;
+  double get _totalUsd   => _subtotalUsd + _igvUsd;
 
   Future<void> _pickAlmacen() async {
     final repo = getIt<maestro.AlmacenRepository>();
@@ -180,7 +196,7 @@ class _FormState extends State<_Form> {
           if (state is CompraSaved) {
             final nro = '${state.compra.codigoDocumento}-${state.compra.serie}-${state.compra.numeroDocumento}';
             ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Compra registrada · $nro'), backgroundColor: Colors.green));
-            ctx.pop();
+            ctx.pop(true);
           }
           if (state is CompraError) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.red));
         },
@@ -204,7 +220,10 @@ class _FormState extends State<_Form> {
               ListTile(contentPadding: EdgeInsets.zero, title: Text('Fecha: $_fecha'), trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
                   final d = await showDatePicker(context: context, initialDate: DateTime.parse(_fecha), firstDate: DateTime(2000), lastDate: DateTime.now());
-                  if (d != null) setState(() => _fecha = d.toIso8601String().substring(0, 10));
+                  if (d != null) {
+                    setState(() => _fecha = d.toIso8601String().substring(0, 10));
+                    await _fetchTipoCambio();
+                  }
                 }),
               const Divider(),
               // Forma de pago
@@ -242,14 +261,26 @@ class _FormState extends State<_Form> {
               ..._lineas.asMap().entries.map((e) => ListTile(
                 dense: true,
                 title: Text(e.value.descripcion),
-                subtitle: Text('${e.value.cantidad} × ${e.value.precio.toStringAsFixed(4)} = S/ ${e.value.importe.toStringAsFixed(2)}'),
+                subtitle: Text('${e.value.cantidad} × $_moneda ${e.value.precio.toStringAsFixed(4)} = $_moneda ${e.value.importe.toStringAsFixed(2)}'),
                 trailing: IconButton(icon: const Icon(Icons.remove_circle, color: Colors.red), onPressed: () => setState(() => _lineas.removeAt(e.key))),
               )),
               const Divider(),
-              // Totales
-              _TotalesRow('Subtotal', _subtotal),
-              _TotalesRow('IGV (18%)', _igv),
-              _TotalesRow('Total', _total, bold: true),
+              // Totales en la moneda seleccionada
+              if (_moneda == 'PEN') ...[
+                _TotalesRow('Subtotal', _subtotalPen, 'S/'),
+                _TotalesRow('IGV (18%)', _igv, 'S/'),
+                _TotalesRow('Total', _total, 'S/', bold: true),
+                if (_tc != 1.0 && _tc > 0) ...[
+                  const SizedBox(height: 4),
+                  _TotalesRow('≈ Equivalente USD', _totalUsd, 'USD', color: Colors.blue.shade700),
+                ],
+              ] else ...[
+                _TotalesRow('Subtotal', _subtotalUsd, 'USD'),
+                _TotalesRow('IGV (18%)', _igvUsd, 'USD'),
+                _TotalesRow('Total', _totalUsd, 'USD', bold: true),
+                const SizedBox(height: 4),
+                _TotalesRow('≈ Equivalente S/', _total, 'S/', color: Colors.orange.shade700),
+              ],
               const SizedBox(height: 24),
               ElevatedButton(onPressed: saving ? null : _submit, child: const Text('Registrar Compra')),
               const SizedBox(height: 40),
@@ -265,17 +296,21 @@ class _FormState extends State<_Form> {
 class _TotalesRow extends StatelessWidget {
   final String label;
   final double value;
+  final String currency;
   final bool bold;
-  const _TotalesRow(this.label, this.value, {this.bold = false});
+  final Color? color;
+  const _TotalesRow(this.label, this.value, this.currency, {this.bold = false, this.color});
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 2),
     child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-      Text(label, style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
+      Text(label, style: TextStyle(
+          fontWeight: bold ? FontWeight.bold : FontWeight.normal, color: color)),
       const SizedBox(width: 16),
-      SizedBox(width: 90, child: Text('S/ ${value.toStringAsFixed(2)}',
+      SizedBox(width: 110, child: Text('$currency ${value.toStringAsFixed(2)}',
         textAlign: TextAlign.right,
-        style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal))),
+        style: TextStyle(
+            fontWeight: bold ? FontWeight.bold : FontWeight.normal, color: color))),
     ]),
   );
 }

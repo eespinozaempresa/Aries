@@ -145,6 +145,19 @@ export class SupabaseCompraRepository implements ICompraRepository {
     return this.toEntity(data, compra.detalles ?? []);
   }
 
+  async eliminar(codigoEmpresa: string, id: string): Promise<void> {
+    const compra = await this.findById(id, codigoEmpresa);
+    if (!compra) throw new InternalServerErrorException('Compra no encontrada');
+    if (!compra.anulado) throw new InternalServerErrorException('Solo se pueden eliminar compras anuladas');
+
+    await this.supabase.db.from('detalle_compras').delete()
+      .eq('compra_id', id).eq('codigo_empresa', codigoEmpresa);
+
+    const { error } = await this.supabase.db.from('compras').delete()
+      .eq('id', id).eq('codigo_empresa', codigoEmpresa);
+    if (error) throw new InternalServerErrorException(error.message);
+  }
+
   async list(f: CompraFilter): Promise<CompraListResult> {
     const page  = f.page ?? 1;
     const limit = Math.min(f.limit ?? 20, 100);
@@ -167,9 +180,28 @@ export class SupabaseCompraRepository implements ICompraRepository {
     const { data, error, count } = await q;
     if (error) throw new InternalServerErrorException(error.message);
 
+    const rows = data ?? [];
+    const proveedorCodes = [...new Set(rows.map((r) => r.codigo_proveedor as string))];
+    const almacenCodes   = [...new Set(rows.map((r) => r.codigo_almacen as string))];
+
+    const [{ data: proveedores }, { data: almacenes }] = await Promise.all([
+      proveedorCodes.length
+        ? this.supabase.db.from('proveedores').select('codigo, razon_social').eq('codigo_empresa', f.codigoEmpresa).in('codigo', proveedorCodes)
+        : Promise.resolve({ data: [] }),
+      almacenCodes.length
+        ? this.supabase.db.from('almacenes').select('codigo, descripcion').eq('codigo_empresa', f.codigoEmpresa).in('codigo', almacenCodes)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const proveedorMap = new Map((proveedores ?? []).map((p) => [p.codigo, p.razon_social]));
+    const almacenMap   = new Map((almacenes ?? []).map((a) => [a.codigo, a.descripcion]));
+
     const total = count ?? 0;
     return {
-      data: (data ?? []).map((r) => this.toEntity(r, [])),
+      data: rows.map((r) => this.toEntity(r, [], {
+        razonSocialProveedor: proveedorMap.get(r.codigo_proveedor as string),
+        descripcionAlmacen:   almacenMap.get(r.codigo_almacen as string),
+      })),
       total,
       page,
       lastPage: Math.ceil(total / limit) || 1,
@@ -185,10 +217,19 @@ export class SupabaseCompraRepository implements ICompraRepository {
       .maybeSingle();
     if (error) throw new InternalServerErrorException(error.message);
     if (!data) return null;
-    return this.toEntity(data, (data.detalle_compras ?? []).map(this.toDetalle));
+
+    const [{ data: proveedor }, { data: almacen }] = await Promise.all([
+      this.supabase.db.from('proveedores').select('razon_social').eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_proveedor).maybeSingle(),
+      this.supabase.db.from('almacenes').select('descripcion').eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_almacen).maybeSingle(),
+    ]);
+
+    return this.toEntity(data, (data.detalle_compras ?? []).map(this.toDetalle), {
+      razonSocialProveedor: proveedor?.razon_social,
+      descripcionAlmacen:   almacen?.descripcion,
+    });
   }
 
-  private toEntity(r: Record<string, unknown>, detalles: DetalleCompra[]): Compra {
+  private toEntity(r: Record<string, unknown>, detalles: DetalleCompra[], extras: { razonSocialProveedor?: string; descripcionAlmacen?: string } = {}): Compra {
     return {
       id: r.id as string,
       codigoEmpresa: r.codigo_empresa as string,
@@ -214,6 +255,8 @@ export class SupabaseCompraRepository implements ICompraRepository {
       anulado: r.anulado as boolean,
       createdAt: r.created_at as string | undefined,
       detalles,
+      razonSocialProveedor: extras.razonSocialProveedor,
+      descripcionAlmacen:   extras.descripcionAlmacen,
     };
   }
 

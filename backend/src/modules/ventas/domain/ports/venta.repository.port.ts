@@ -11,6 +11,8 @@ export interface RegistrarVentaData {
   tipoVenta: TipoVenta;
   plazoDias?: number;
   fechaVencimiento?: string;
+  moneda?: string;
+  tipoCambio?: number;
   lineas: Array<{
     codigoArticulo: string;
     cantidad: number;
@@ -40,6 +42,7 @@ export interface VentaListResult {
 export abstract class IVentaRepository {
   abstract registrar(codigoEmpresa: string, data: RegistrarVentaData): Promise<Venta>;
   abstract anular(codigoEmpresa: string, ventaId: string, codigoUsuario: string): Promise<Venta>;
+  abstract eliminar(codigoEmpresa: string, id: string): Promise<void>;
   abstract list(filter: VentaFilter): Promise<VentaListResult>;
   abstract findById(id: string, codigoEmpresa: string): Promise<Venta | null>;
 }
