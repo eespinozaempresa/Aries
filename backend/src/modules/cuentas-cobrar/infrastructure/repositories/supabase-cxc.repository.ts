@@ -36,15 +36,16 @@ export class SupabaseCxCRepository implements ICxCRepository {
     const rows    = data ?? [];
     const docCodes = [...new Set(rows.map((r) => r.codigo_documento as string))];
     const { data: documentos } = docCodes.length
-      ? await this.supabase.db.from('documentos').select('codigo, abreviatura').eq('codigo_empresa', f.codigoEmpresa).in('codigo', docCodes)
+      ? await this.supabase.db.from('documentos').select('codigo, abreviatura, serie').eq('codigo_empresa', f.codigoEmpresa).in('codigo', docCodes)
       : { data: [] };
-    const docMap = new Map((documentos ?? []).map((d: any) => [d.codigo, d.abreviatura]));
+    const docMap = new Map((documentos ?? []).map((d: any) => [d.codigo, { abreviatura: d.abreviatura, serie: d.serie }]));
 
     const total = count ?? 0;
     return {
       data: rows.map((r) => ({
         ...this.toCxC(r),
-        abreviaturaDocumento: docMap.get(r.codigo_documento as string) as string | undefined,
+        abreviaturaDocumento: (docMap.get(r.codigo_documento as string) as any)?.abreviatura as string | undefined,
+        serieDocumento:       (docMap.get(r.codigo_documento as string) as any)?.serie        as string | undefined,
       })),
       total,
       page,
@@ -60,10 +61,14 @@ export class SupabaseCxCRepository implements ICxCRepository {
     if (!data) return null;
 
     const { data: doc } = await this.supabase.db
-      .from('documentos').select('abreviatura')
+      .from('documentos').select('abreviatura, serie')
       .eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_documento as string).maybeSingle();
 
-    return { ...this.toCxC(data), abreviaturaDocumento: (doc as any)?.abreviatura as string | undefined };
+    return {
+      ...this.toCxC(data),
+      abreviaturaDocumento: (doc as any)?.abreviatura as string | undefined,
+      serieDocumento:       (doc as any)?.serie        as string | undefined,
+    };
   }
 
   async registrarCobro(codigoEmpresa: string, d: RegistrarCobroData): Promise<Cobro> {
@@ -115,16 +120,15 @@ export class SupabaseCxCRepository implements ICxCRepository {
     return (data ?? []).map(this.toCobro);
   }
 
-  async renovar(codigoEmpresa: string, d: RenovarCxCData): Promise<CuentaCobrar> {
+  async renovar(codigoEmpresa: string, d: RenovarCxCData): Promise<CuentaCobrar[]> {
     const original = await this.findById(d.cuentaCobrarId, codigoEmpresa);
     if (!original) throw new BadRequestException('Cuenta por cobrar no encontrada');
     if (!original.pendiente) throw new BadRequestException('La cuenta ya está cancelada');
+    if (!d.cuotas.length) throw new BadRequestException('Debe indicar al menos una cuota');
 
-    // Cerrar la original
     await this.supabase.db.from('cuentas_cobrar').update({ pendiente: false })
       .eq('id', d.cuentaCobrarId).eq('codigo_empresa', codigoEmpresa);
 
-    // Crear nueva con el saldo + interés
     const { data: maxRow } = await this.supabase.db
       .from('cuentas_cobrar')
       .select('numero_provision')
@@ -132,30 +136,35 @@ export class SupabaseCxCRepository implements ICxCRepository {
       .order('numero_provision', { ascending: false })
       .limit(1)
       .maybeSingle();
-    const numProv = (maxRow?.numero_provision ?? 0) + 1;
-    const interes   = d.interes ?? 0;
-    const nuevoMonto = parseFloat((original.saldo + interes).toFixed(2));
+    const baseProvision = (maxRow?.numero_provision ?? 0) + 1;
 
-    const { data: nueva, error } = await this.supabase.db
-      .from('cuentas_cobrar').insert({
-        codigo_empresa:           codigoEmpresa,
-        numero_provision:         numProv,
-        numero_provision_origen:  original.numeroProvision,
-        tipo:                     'RENOVACION',
-        codigo_documento:         d.codigoDocumento,
-        numero_documento:         d.numeroDocumento,
-        monto_total:              nuevoMonto,
-        monto_pagado:             0,
-        saldo:                    nuevoMonto,
-        interes,
-        fecha_emision:            new Date().toISOString().substring(0, 10),
-        fecha_vencimiento:        d.nuevaFechaVencimiento,
-        codigo_cliente:           original.codigoCliente,
-        pendiente:                true,
-        referencia:               `Renovación de prov. ${original.numeroProvision}`,
-      }).select().single();
+    const today = new Date().toISOString().substring(0, 10);
+    const totalCuotas = d.cuotas.length;
+
+    const records = d.cuotas.map((c, i) => ({
+      codigo_empresa:          codigoEmpresa,
+      numero_provision:        baseProvision + i,
+      numero_provision_origen: original.numeroProvision,
+      tipo:                    'RENOVACION',
+      codigo_documento:        original.codigoDocumento,
+      numero_documento:        c.numeroLetra,
+      numero_cuota:            c.numeroCuota,
+      total_cuotas:            totalCuotas,
+      monto_total:             c.monto,
+      monto_pagado:            0,
+      saldo:                   c.monto,
+      interes:                 0,
+      fecha_emision:           today,
+      fecha_vencimiento:       c.fechaVencimiento,
+      codigo_cliente:          original.codigoCliente,
+      pendiente:               true,
+      referencia:              'RENOVACION',
+    }));
+
+    const { data: nuevas, error } = await this.supabase.db
+      .from('cuentas_cobrar').insert(records).select();
     if (error) throw new InternalServerErrorException(error.message);
-    return this.toCxC(nueva);
+    return (nuevas ?? []).map((r) => this.toCxC(r));
   }
 
   private toCxC(r: Record<string, unknown>): CuentaCobrar {

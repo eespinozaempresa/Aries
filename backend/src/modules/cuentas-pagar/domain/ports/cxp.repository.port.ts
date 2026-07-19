@@ -28,12 +28,16 @@ export interface RegistrarPagoData {
   codigoUsuario: string;
 }
 
+export interface CuotaRenovacion {
+  numeroCuota: number;
+  numeroLetra: string;
+  fechaVencimiento: string;
+  monto: number;
+}
+
 export interface RenovarCxPData {
   cuentaPagarId: string;
-  nuevaFechaVencimiento: string;
-  interes?: number;
-  codigoDocumento: string;
-  numeroDocumento: string;
+  cuotas: CuotaRenovacion[];
   codigoUsuario: string;
 }
 
@@ -42,5 +46,5 @@ export abstract class ICxPRepository {
   abstract findById(id: string, codigoEmpresa: string): Promise<CuentaPagar | null>;
   abstract registrarPago(codigoEmpresa: string, data: RegistrarPagoData): Promise<Pago>;
   abstract getPagos(codigoEmpresa: string, cuentaPagarId: string): Promise<Pago[]>;
-  abstract renovar(codigoEmpresa: string, data: RenovarCxPData): Promise<CuentaPagar>;
+  abstract renovar(codigoEmpresa: string, data: RenovarCxPData): Promise<CuentaPagar[]>;
 }

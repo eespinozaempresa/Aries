@@ -18,6 +18,7 @@ export interface CuentaCobrar {
   fechaVencimiento?: string;
   codigoCliente: string;
   abreviaturaDocumento?: string;
+  serieDocumento?: string;
   descripcion?: string;
   pendiente: boolean;
   referencia?: string;

@@ -121,7 +121,7 @@ class _State extends State<CxPListPage> {
                     ),
                   ),
                   title: Text('Prov. ${cxp.numeroProvision} — ${cxp.razonSocialProveedor ?? cxp.codigoProveedor}'),
-                  subtitle: Text('${cxp.abreviaturaDocumento ?? cxp.codigoDocumento} ${cxp.numeroDocumento} | ${cxp.fechaEmision}'),
+                  subtitle: Text('${cxp.abreviaturaDocumento ?? cxp.codigoDocumento}-${cxp.serieDocumento ?? '0001'}-${cxp.numeroDocumento} | ${cxp.fechaEmision}'),
                   trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
                     Text('S/ ${cxp.saldo.toStringAsFixed(2)}',
                       style: TextStyle(fontWeight: FontWeight.bold, color: cxp.pendiente ? Colors.deepOrange : Colors.grey)),

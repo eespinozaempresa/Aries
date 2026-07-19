@@ -1,4 +1,5 @@
-import { IsString, IsNumber, IsEnum, IsOptional, IsDateString, Min } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsOptional, IsDateString, IsArray, ValidateNested, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class RegistrarPagoDto {
   @IsString() cuentaPagarId: string;
@@ -10,9 +11,16 @@ export class RegistrarPagoDto {
   @IsNumber() @Min(0.01) monto: number;
 }
 
+export class CuotaRenovacionDto {
+  @IsNumber() numeroCuota: number;
+  @IsString() numeroLetra: string;
+  @IsDateString() fechaVencimiento: string;
+  @IsNumber() @Min(0.01) monto: number;
+}
+
 export class RenovarCxPDto {
-  @IsDateString() nuevaFechaVencimiento: string;
-  @IsOptional() @IsNumber() @Min(0) interes?: number;
-  @IsString() codigoDocumento: string;
-  @IsString() numeroDocumento: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CuotaRenovacionDto)
+  cuotas: CuotaRenovacionDto[];
 }

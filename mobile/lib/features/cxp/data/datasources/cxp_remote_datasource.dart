@@ -69,21 +69,13 @@ class CxPRemoteDataSource {
     }
   }
 
-  Future<Map<String, dynamic>> renovar({
+  Future<List<dynamic>> renovar({
     required String id,
-    required String nuevaFechaVencimiento,
-    double? interes,
-    required String codigoDocumento,
-    required String numeroDocumento,
+    required List<Map<String, dynamic>> cuotas,
   }) async {
     try {
-      final r = await _dio.post('/cxp/$id/renovar', data: {
-        'nuevaFechaVencimiento': nuevaFechaVencimiento,
-        if (interes != null) 'interes': interes,
-        'codigoDocumento': codigoDocumento,
-        'numeroDocumento': numeroDocumento,
-      });
-      return r.data as Map<String, dynamic>;
+      final r = await _dio.post('/cxp/$id/renovar', data: {'cuotas': cuotas});
+      return r.data as List<dynamic>;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

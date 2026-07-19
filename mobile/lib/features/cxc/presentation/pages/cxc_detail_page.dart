@@ -32,7 +32,10 @@ class _View extends StatelessWidget {
             ctx.read<CxCBloc>().add(CxCLoadDetail(cxcId));
           }
           if (s is CxCRenovada) {
-            ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('CxC renovada'), backgroundColor: Colors.blue));
+            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+              content: Text('Renovación generada: ${s.nuevas.length} letra(s)'),
+              backgroundColor: Colors.blue,
+            ));
             Navigator.of(ctx).pop();
           }
         },
@@ -96,10 +99,11 @@ class _View extends StatelessWidget {
       ]),
       const Divider(),
       _row('Cliente', cxc.codigoCliente),
-      _row('Documento', '${cxc.abreviaturaDocumento ?? cxc.codigoDocumento} ${cxc.numeroDocumento}'),
+      _row('Documento', '${cxc.abreviaturaDocumento ?? cxc.codigoDocumento}-${cxc.serieDocumento ?? '0001'}-${cxc.numeroDocumento}'),
       _row('Tipo', cxc.tipo.name),
       _row('Emisión', cxc.fechaEmision),
       if (cxc.fechaVencimiento != null) _row('Vencimiento', cxc.fechaVencimiento!),
+      if (cxc.numeroCuota > 0 && cxc.totalCuotas > 1) _row('Cuota', '${cxc.numeroCuota} / ${cxc.totalCuotas}'),
       const Divider(),
       _row('Total', 'S/ ${cxc.montoTotal.toStringAsFixed(2)}'),
       _row('Pagado', 'S/ ${cxc.montoPagado.toStringAsFixed(2)}'),
@@ -176,47 +180,211 @@ class _View extends StatelessWidget {
   }
 
   void _showRenovarDialog(BuildContext ctx, CuentaCobrar cxc) {
-    DateTime nuevaFecha = DateTime.now().add(const Duration(days: 30));
-    final interesCtrl  = TextEditingController(text: '0');
-    final docCtrl      = TextEditingController(text: cxc.codigoDocumento);
-    final numDocCtrl   = TextEditingController(text: cxc.numeroDocumento);
+    int step = 0;
+    final letraBaseCtrl  = TextEditingController(text: 'L-001');
+    final tasaCtrl       = TextEditingController(text: '0');
+    final cuotasCtrl     = TextEditingController(text: '3');
+    final plazoDiasCtrl  = TextEditingController(text: '30');
+    DateTime fechaInicio = DateTime.now().add(const Duration(days: 30));
+    List<_CuotaRen> cronograma = [];
 
-    showDialog(context: ctx, builder: (dctx) => StatefulBuilder(builder: (dctx, setSt) => AlertDialog(
-      title: const Text('Renovar CxC'),
-      content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('Saldo actual: S/ ${cxc.saldo.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey)),
-        const SizedBox(height: 8),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text('Nueva venc.: ${nuevaFecha.toIso8601String().substring(0, 10)}'),
-          trailing: const Icon(Icons.calendar_today),
-          onTap: () async {
-            final d = await showDatePicker(context: dctx, initialDate: nuevaFecha,
-              firstDate: DateTime.now(), lastDate: DateTime(2030));
-            if (d != null) setSt(() => nuevaFecha = d);
-          },
-        ),
-        TextField(controller: interesCtrl, keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Interés (S/)')),
-        TextField(controller: docCtrl, decoration: const InputDecoration(labelText: 'Código documento')),
-        TextField(controller: numDocCtrl, decoration: const InputDecoration(labelText: 'N° documento')),
-      ])),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(dctx);
-            ctx.read<CxCBloc>().add(CxCRenovar(
-              id: cxc.id,
-              nuevaFechaVencimiento: nuevaFecha.toIso8601String().substring(0, 10),
-              interes: double.tryParse(interesCtrl.text),
-              codigoDocumento: docCtrl.text.trim(),
-              numeroDocumento: numDocCtrl.text.trim(),
-            ));
-          },
-          child: const Text('Renovar'),
-        ),
-      ],
-    )));
+    List<_CuotaRen> generarCronograma() {
+      final tasa      = double.tryParse(tasaCtrl.text) ?? 0;
+      final numCuotas = (int.tryParse(cuotasCtrl.text) ?? 1).clamp(1, 120);
+      final plazo     = (int.tryParse(plazoDiasCtrl.text) ?? 30).clamp(1, 3650);
+      final total     = double.parse((cxc.saldo * (1 + tasa / 100)).toStringAsFixed(2));
+      final montoBase = double.parse((total / numCuotas).toStringAsFixed(2));
+      final letraBase = letraBaseCtrl.text.trim().isEmpty ? 'L' : letraBaseCtrl.text.trim();
+      final result    = <_CuotaRen>[];
+      double acumulado = 0;
+      for (int i = 0; i < numCuotas; i++) {
+        final esUltima = i == numCuotas - 1;
+        final monto = esUltima
+          ? double.parse((total - acumulado).toStringAsFixed(2))
+          : montoBase;
+        acumulado = double.parse((acumulado + monto).toStringAsFixed(2));
+        result.add(_CuotaRen(
+          numeroCuota: i + 1,
+          letraCtrl: TextEditingController(
+            text: '$letraBase-${(i + 1).toString().padLeft(3, '0')}'),
+          fechaVencimiento: fechaInicio
+            .add(Duration(days: plazo * i))
+            .toIso8601String().substring(0, 10),
+          monto: monto,
+        ));
+      }
+      return result;
+    }
+
+    showDialog(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (dctx) => StatefulBuilder(builder: (dctx, setSt) {
+        final titles = ['Configuración', 'Cronograma', 'Resumen'];
+
+        Widget buildStep0() => Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('Saldo a renovar: S/ ${cxc.saldo.toStringAsFixed(2)}',
+            style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          const SizedBox(height: 12),
+          TextField(controller: letraBaseCtrl,
+            decoration: const InputDecoration(labelText: 'Base N° Letra (ej. L-001)', isDense: true)),
+          const SizedBox(height: 8),
+          TextField(controller: tasaCtrl, keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Tasa de interés (%)', isDense: true)),
+          const SizedBox(height: 4),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            title: Text('Fecha inicio: ${fechaInicio.toIso8601String().substring(0, 10)}'),
+            trailing: const Icon(Icons.calendar_today, size: 18),
+            onTap: () async {
+              final d = await showDatePicker(
+                context: dctx, initialDate: fechaInicio,
+                firstDate: DateTime.now(), lastDate: DateTime(2035));
+              if (d != null) setSt(() => fechaInicio = d);
+            },
+          ),
+          TextField(controller: cuotasCtrl, keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Cantidad de cuotas', isDense: true)),
+          const SizedBox(height: 8),
+          TextField(controller: plazoDiasCtrl, keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Plazo entre cuotas (días)', isDense: true)),
+        ]);
+
+        Widget buildStep1() => Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text('Edita el N° de letra si es necesario:',
+            style: TextStyle(color: Colors.grey, fontSize: 12)),
+          const SizedBox(height: 8),
+          ...cronograma.map((c) => Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(children: [
+              SizedBox(width: 20,
+                child: Text('${c.numeroCuota}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+              const SizedBox(width: 6),
+              Expanded(flex: 3, child: TextField(
+                controller: c.letraCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'N° Letra', isDense: true,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6)),
+              )),
+              const SizedBox(width: 6),
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                Text(c.fechaVencimiento, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                Text('S/ ${c.monto.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              ]),
+            ]),
+          )),
+        ]);
+
+        Widget buildStep2() {
+          final total = cronograma.fold(0.0, (s, c) => s + c.monto);
+          return Column(mainAxisSize: MainAxisSize.min, children: [
+            _sumRow('Cuotas', '${cronograma.length}'),
+            _sumRow('Saldo original', 'S/ ${cxc.saldo.toStringAsFixed(2)}'),
+            _sumRow('Total letras', 'S/ ${total.toStringAsFixed(2)}'),
+            _sumRow('Venc. final', cronograma.isNotEmpty ? cronograma.last.fechaVencimiento : '-'),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.orange[50],
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: const Text(
+                'Al confirmar, la deuda original quedará cancelada y se crearán las letras indicadas.',
+                style: TextStyle(fontSize: 11, color: Colors.deepOrange),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ]);
+        }
+
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440, maxHeight: 580),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Renovar CxC — ${titles[step]}',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Divider(height: 16),
+                  Flexible(child: SingleChildScrollView(
+                    child: step == 0 ? buildStep0()
+                      : step == 1 ? buildStep1()
+                      : buildStep2(),
+                  )),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      step > 0
+                        ? TextButton(
+                            onPressed: () => setSt(() => step--),
+                            child: const Text('Atrás'))
+                        : TextButton(
+                            onPressed: () => Navigator.pop(dctx),
+                            child: const Text('Cancelar')),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (step == 0) {
+                            final nc = int.tryParse(cuotasCtrl.text) ?? 0;
+                            if (nc <= 0) return;
+                            setSt(() {
+                              cronograma = generarCronograma();
+                              step = 1;
+                            });
+                          } else if (step == 1) {
+                            setSt(() => step = 2);
+                          } else {
+                            Navigator.pop(dctx);
+                            ctx.read<CxCBloc>().add(CxCRenovar(
+                              id: cxc.id,
+                              cuotas: cronograma.map((c) => {
+                                'numeroCuota': c.numeroCuota,
+                                'numeroLetra': c.letraCtrl.text.trim(),
+                                'fechaVencimiento': c.fechaVencimiento,
+                                'monto': c.monto,
+                              }).toList(),
+                            ));
+                          }
+                        },
+                        child: Text(step < 2 ? 'Siguiente' : 'Renovar'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }),
+    );
   }
+
+  Widget _sumRow(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      Text(label, style: const TextStyle(color: Colors.grey)),
+      Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+    ]),
+  );
+}
+
+class _CuotaRen {
+  final int numeroCuota;
+  final TextEditingController letraCtrl;
+  final String fechaVencimiento;
+  final double monto;
+  _CuotaRen({
+    required this.numeroCuota,
+    required this.letraCtrl,
+    required this.fechaVencimiento,
+    required this.monto,
+  });
 }

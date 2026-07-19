@@ -19,6 +19,7 @@ export interface CuentaPagar {
   codigoProveedor: string;
   razonSocialProveedor?: string;
   abreviaturaDocumento?: string;
+  serieDocumento?: string;
   descripcion?: string;
   pendiente: boolean;
   referencia?: string;

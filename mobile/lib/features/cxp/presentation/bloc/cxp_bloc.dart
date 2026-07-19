@@ -23,12 +23,9 @@ class CxPRegistrarPago extends CxPEvent {
   });
 }
 class CxPRenovar extends CxPEvent {
-  final String id, nuevaFechaVencimiento, codigoDocumento, numeroDocumento;
-  final double? interes;
-  CxPRenovar({
-    required this.id, required this.nuevaFechaVencimiento,
-    required this.codigoDocumento, required this.numeroDocumento, this.interes,
-  });
+  final String id;
+  final List<Map<String, dynamic>> cuotas;
+  CxPRenovar({required this.id, required this.cuotas});
 }
 
 // ── States ───────────────────────────────────────────────────────────────────
@@ -47,7 +44,7 @@ class CxPDetailLoaded extends CxPState {
 }
 class CxPSaving extends CxPState {}
 class CxPPagoRegistrado extends CxPState { final Pago pago; CxPPagoRegistrado(this.pago); }
-class CxPRenovada extends CxPState { final CuentaPagar nueva; CxPRenovada(this.nueva); }
+class CxPRenovada extends CxPState { final List<CuentaPagar> nuevas; CxPRenovada(this.nuevas); }
 class CxPError extends CxPState { final String message; CxPError(this.message); }
 
 // ── BLoC ─────────────────────────────────────────────────────────────────────
@@ -118,14 +115,10 @@ class CxPBloc extends Bloc<CxPEvent, CxPState> {
   Future<void> _onRenovar(CxPRenovar e, Emitter<CxPState> emit) async {
     emit(CxPSaving());
     try {
-      final nueva = await _ds.renovar(
-        id: e.id,
-        nuevaFechaVencimiento: e.nuevaFechaVencimiento,
-        interes: e.interes,
-        codigoDocumento: e.codigoDocumento,
-        numeroDocumento: e.numeroDocumento,
-      );
-      emit(CxPRenovada(CuentaPagar.fromJson(nueva)));
+      final nuevasList = await _ds.renovar(id: e.id, cuotas: e.cuotas);
+      emit(CxPRenovada(
+        nuevasList.map((j) => CuentaPagar.fromJson(j as Map<String, dynamic>)).toList(),
+      ));
     } on ApiException catch (ex) {
       emit(CxPError(ex.message));
     }

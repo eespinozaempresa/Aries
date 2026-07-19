@@ -19,6 +19,7 @@ class CuentaPagar {
   final String codigoProveedor;
   final String? razonSocialProveedor;
   final String? abreviaturaDocumento;
+  final String? serieDocumento;
   final String? descripcion;
   final bool pendiente;
   final String? referencia;
@@ -42,6 +43,7 @@ class CuentaPagar {
     required this.codigoProveedor,
     this.razonSocialProveedor,
     this.abreviaturaDocumento,
+    this.serieDocumento,
     this.descripcion,
     required this.pendiente,
     this.referencia,
@@ -66,6 +68,7 @@ class CuentaPagar {
     codigoProveedor: j['codigoProveedor'] as String,
     razonSocialProveedor: j['razonSocialProveedor'] as String?,
     abreviaturaDocumento: j['abreviaturaDocumento'] as String?,
+    serieDocumento: j['serieDocumento'] as String?,
     descripcion: j['descripcion'] as String?,
     pendiente: j['pendiente'] as bool,
     referencia: j['referencia'] as String?,
