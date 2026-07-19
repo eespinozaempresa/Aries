@@ -3,6 +3,8 @@ export interface StockItem {
   codigoEmpresa: string;
   codigoAlmacen: string;
   codigoArticulo: string;
+  descripcionAlmacen?: string;
+  descripcionArticulo?: string;
   stockInicial: number;
   stockCompras: number;
   stockVentas: number;

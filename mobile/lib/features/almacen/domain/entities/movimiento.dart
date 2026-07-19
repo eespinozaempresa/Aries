@@ -12,6 +12,8 @@ class Movimiento {
   final TipoMovimiento tipo;
   final String codigoAlmacenOrigen;
   final String? codigoAlmacenDest;
+  final String? descripcionAlmacenOrigen;
+  final String? descripcionAlmacenDest;
   final String? observacion;
   final String? concepto;
   final String codigoUsuario;
@@ -30,6 +32,8 @@ class Movimiento {
     required this.tipo,
     required this.codigoAlmacenOrigen,
     this.codigoAlmacenDest,
+    this.descripcionAlmacenOrigen,
+    this.descripcionAlmacenDest,
     this.observacion,
     this.concepto,
     required this.codigoUsuario,

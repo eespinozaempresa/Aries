@@ -97,8 +97,8 @@ class _KardexPageState extends State<KardexPage> {
                   'E.Cant', 'E.Precio', 'S.Cant', 'S.Precio', 'Stock', 'Costo',
                 ],
                 rows: _items!.map((k) => [
-                  if (showAlmacenCol) k.codigoAlmacen,
-                  if (showArticuloCol) k.codigoArticulo,
+                  if (showAlmacenCol) k.descripcionAlmacen ?? k.codigoAlmacen,
+                  if (showArticuloCol) k.descripcionArticulo ?? k.codigoArticulo,
                   k.fecha.substring(0, 10),
                   '${k.codigoDocumento} ${k.numeroDocumento}',
                   k.tipo,
@@ -223,8 +223,8 @@ class _KardexTable extends StatelessWidget {
             const DataColumn(label: Text('Costo'), numeric: true),
           ],
           rows: items.map((k) => DataRow(cells: [
-            if (showAlmacenCol) DataCell(Text(k.codigoAlmacen, style: const TextStyle(fontSize: 11))),
-            if (showArticuloCol) DataCell(Text(k.codigoArticulo, style: const TextStyle(fontSize: 11))),
+            if (showAlmacenCol) DataCell(Text(k.descripcionAlmacen ?? k.codigoAlmacen, style: const TextStyle(fontSize: 11))),
+            if (showArticuloCol) DataCell(Text(k.descripcionArticulo ?? k.codigoArticulo, style: const TextStyle(fontSize: 11))),
             DataCell(Text(k.fecha.substring(0, 10))),
             DataCell(Text('${k.codigoDocumento} ${k.numeroDocumento}', style: const TextStyle(fontSize: 11))),
             DataCell(Text(k.tipo)),

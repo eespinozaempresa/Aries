@@ -111,7 +111,7 @@ class _State extends State<CxPListPage> {
                   DateTime.tryParse(cxp.fechaVencimiento!)?.isBefore(DateTime.now()) == true &&
                   cxp.pendiente;
                 return ListTile(
-                  onTap: () => ctx.go('/cxp/${cxp.id}'),
+                  onTap: () => ctx.push('/cxp/${cxp.id}'),
                   leading: CircleAvatar(
                     backgroundColor: vencida ? Colors.red[100] : cxp.pendiente ? Colors.orange[100] : Colors.green[100],
                     child: Icon(
@@ -120,8 +120,8 @@ class _State extends State<CxPListPage> {
                       size: 20,
                     ),
                   ),
-                  title: Text('Prov. ${cxp.numeroProvision} — ${cxp.codigoProveedor}'),
-                  subtitle: Text('${cxp.codigoDocumento} ${cxp.numeroDocumento} | ${cxp.fechaEmision}'),
+                  title: Text('Prov. ${cxp.numeroProvision} — ${cxp.razonSocialProveedor ?? cxp.codigoProveedor}'),
+                  subtitle: Text('${cxp.abreviaturaDocumento ?? cxp.codigoDocumento} ${cxp.numeroDocumento} | ${cxp.fechaEmision}'),
                   trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
                     Text('S/ ${cxp.saldo.toStringAsFixed(2)}',
                       style: TextStyle(fontWeight: FontWeight.bold, color: cxp.pendiente ? Colors.deepOrange : Colors.grey)),

@@ -32,8 +32,24 @@ export class SupabaseCxCRepository implements ICxCRepository {
 
     const { data, error, count } = await q;
     if (error) throw new InternalServerErrorException(error.message);
+
+    const rows    = data ?? [];
+    const docCodes = [...new Set(rows.map((r) => r.codigo_documento as string))];
+    const { data: documentos } = docCodes.length
+      ? await this.supabase.db.from('documentos').select('codigo, abreviatura').eq('codigo_empresa', f.codigoEmpresa).in('codigo', docCodes)
+      : { data: [] };
+    const docMap = new Map((documentos ?? []).map((d: any) => [d.codigo, d.abreviatura]));
+
     const total = count ?? 0;
-    return { data: (data ?? []).map(this.toCxC), total, page, lastPage: Math.ceil(total / limit) || 1 };
+    return {
+      data: rows.map((r) => ({
+        ...this.toCxC(r),
+        abreviaturaDocumento: docMap.get(r.codigo_documento as string) as string | undefined,
+      })),
+      total,
+      page,
+      lastPage: Math.ceil(total / limit) || 1,
+    };
   }
 
   async findById(id: string, codigoEmpresa: string): Promise<CuentaCobrar | null> {
@@ -41,7 +57,13 @@ export class SupabaseCxCRepository implements ICxCRepository {
       .from('cuentas_cobrar').select('*')
       .eq('id', id).eq('codigo_empresa', codigoEmpresa).maybeSingle();
     if (error) throw new InternalServerErrorException(error.message);
-    return data ? this.toCxC(data) : null;
+    if (!data) return null;
+
+    const { data: doc } = await this.supabase.db
+      .from('documentos').select('abreviatura')
+      .eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_documento as string).maybeSingle();
+
+    return { ...this.toCxC(data), abreviaturaDocumento: (doc as any)?.abreviatura as string | undefined };
   }
 
   async registrarCobro(codigoEmpresa: string, d: RegistrarCobroData): Promise<Cobro> {

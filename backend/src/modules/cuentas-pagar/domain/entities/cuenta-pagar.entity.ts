@@ -17,6 +17,8 @@ export interface CuentaPagar {
   fechaEmision: string;
   fechaVencimiento?: string;
   codigoProveedor: string;
+  razonSocialProveedor?: string;
+  abreviaturaDocumento?: string;
   descripcion?: string;
   pendiente: boolean;
   referencia?: string;

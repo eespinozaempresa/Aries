@@ -22,7 +22,30 @@ export class SupabaseKardexRepository implements IKardexRepository {
 
     const { data, error } = await q;
     if (error) throw new InternalServerErrorException(error.message);
-    return (data ?? []).map(this.toEntity);
+
+    const items = (data ?? []).map(this.toEntity);
+
+    // Lookup descriptions in parallel
+    const almacenCodes = [...new Set(items.map((i) => i.codigoAlmacen))];
+    const articuloCodes = [...new Set(items.map((i) => i.codigoArticulo))];
+
+    const [{ data: almacenes }, { data: articulos }] = await Promise.all([
+      almacenCodes.length
+        ? this.supabase.db.from('almacenes').select('codigo, descripcion').eq('codigo_empresa', f.codigoEmpresa).in('codigo', almacenCodes)
+        : Promise.resolve({ data: [] }),
+      articuloCodes.length
+        ? this.supabase.db.from('articulos').select('codigo, descripcion').eq('codigo_empresa', f.codigoEmpresa).in('codigo', articuloCodes)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const almacenMap = new Map((almacenes ?? []).map((a: any) => [a.codigo, a.descripcion]));
+    const articuloMap = new Map((articulos ?? []).map((a: any) => [a.codigo, a.descripcion]));
+
+    return items.map((item) => ({
+      ...item,
+      descripcionAlmacen: almacenMap.get(item.codigoAlmacen) as string | undefined,
+      descripcionArticulo: articuloMap.get(item.codigoArticulo) as string | undefined,
+    }));
   }
 
   async deleteByEmpresa(codigoEmpresa: string): Promise<void> {

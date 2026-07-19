@@ -96,7 +96,7 @@ class _View extends StatelessWidget {
       ]),
       const Divider(),
       _row('Cliente', cxc.codigoCliente),
-      _row('Documento', '${cxc.codigoDocumento} ${cxc.numeroDocumento}'),
+      _row('Documento', '${cxc.abreviaturaDocumento ?? cxc.codigoDocumento} ${cxc.numeroDocumento}'),
       _row('Tipo', cxc.tipo.name),
       _row('Emisión', cxc.fechaEmision),
       if (cxc.fechaVencimiento != null) _row('Vencimiento', cxc.fechaVencimiento!),

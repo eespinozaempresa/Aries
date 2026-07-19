@@ -3,6 +3,8 @@ class KardexItem {
   final String codigoEmpresa;
   final String codigoAlmacen;
   final String codigoArticulo;
+  final String? descripcionAlmacen;
+  final String? descripcionArticulo;
   final String fecha;
   final String codigoDocumento;
   final String numeroDocumento;
@@ -22,6 +24,8 @@ class KardexItem {
     required this.codigoEmpresa,
     required this.codigoAlmacen,
     required this.codigoArticulo,
+    this.descripcionAlmacen,
+    this.descripcionArticulo,
     required this.fecha,
     required this.codigoDocumento,
     required this.numeroDocumento,

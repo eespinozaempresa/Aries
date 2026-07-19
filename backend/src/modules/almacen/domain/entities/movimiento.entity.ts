@@ -12,6 +12,8 @@ export interface Movimiento {
   tipo: TipoMovimiento;
   codigoAlmacenOrigen: string;
   codigoAlmacenDest?: string;
+  descripcionAlmacenOrigen?: string;
+  descripcionAlmacenDest?: string;
   observacion?: string;
   concepto?: string;
   codigoUsuario: string;

@@ -3,6 +3,8 @@ export interface KardexItem {
   codigoEmpresa: string;
   codigoAlmacen: string;
   codigoArticulo: string;
+  descripcionAlmacen?: string;
+  descripcionArticulo?: string;
   fecha: string;
   codigoDocumento: string;
   numeroDocumento: string;

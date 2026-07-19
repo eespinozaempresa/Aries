@@ -25,6 +25,12 @@ class _StockPageState extends State<StockPage> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
   void dispose() {
     _qCtrl.dispose();
     super.dispose();
@@ -78,8 +84,8 @@ class _StockPageState extends State<StockPage> {
                 title: 'Stock',
                 columns: const ['Artículo', 'Almacén', 'Stock', 'Costo Prom.'],
                 rows: _items!.map((s) => [
-                  s.codigoArticulo,
-                  s.codigoAlmacen,
+                  s.descripcionArticulo ?? s.codigoArticulo,
+                  s.descripcionAlmacen ?? s.codigoAlmacen,
                   s.stockActual.toStringAsFixed(2),
                   s.costoPromedio.toStringAsFixed(4),
                 ]).toList(),
@@ -147,8 +153,8 @@ class _StockPageState extends State<StockPage> {
                         final s = _items![i];
                         return ListTile(
                           dense: true,
-                          title: Text(s.codigoArticulo),
-                          subtitle: Text('Almacén: ${s.codigoAlmacen}'),
+                          title: Text(s.descripcionArticulo ?? s.codigoArticulo),
+                          subtitle: Text('Almacén: ${s.descripcionAlmacen ?? s.codigoAlmacen}'),
                           trailing: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.end,

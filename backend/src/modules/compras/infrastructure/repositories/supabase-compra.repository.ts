@@ -15,7 +15,12 @@ export class SupabaseCompraRepository implements ICompraRepository {
   async registrar(codigoEmpresa: string, d: RegistrarCompraData): Promise<Compra> {
     const numeroDocumento = await this.numeracion.siguiente(codigoEmpresa, d.codigoDocumento, d.serie);
 
-    const igvRate = 0.18;
+    const [paramRes, docRes] = await Promise.all([
+      this.supabase.db.from('parametros').select('igv').eq('codigo_empresa', codigoEmpresa).maybeSingle(),
+      this.supabase.db.from('documentos').select('aplica_igv').eq('codigo_empresa', codigoEmpresa).eq('codigo', d.codigoDocumento).maybeSingle(),
+    ]);
+    const aplicaIgv = docRes.data?.aplica_igv ?? true;
+    const igvRate   = aplicaIgv ? (Number(paramRes.data?.igv ?? 18) / 100) : 0;
     const tipoCambio = d.tipoCambio ?? 1;
 
     // Calcular totales
@@ -107,6 +112,40 @@ export class SupabaseCompraRepository implements ICompraRepository {
 
     if (rpcErr) throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
 
+    // Crear cuenta por pagar para compras al crédito
+    if (d.formaPago === 'CREDITO') {
+      const { data: maxProv } = await this.supabase.db
+        .from('cuentas_pagar')
+        .select('numero_provision')
+        .eq('codigo_empresa', codigoEmpresa)
+        .order('numero_provision', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const numProv = ((maxProv?.numero_provision as number) ?? 0) + 1;
+
+      const { error: cxpErr } = await this.supabase.db.from('cuentas_pagar').insert({
+        codigo_empresa:    codigoEmpresa,
+        numero_provision:  numProv,
+        tipo:              'COMPRA',
+        codigo_documento:  d.codigoDocumento,
+        numero_documento:  numeroDocumento,
+        numero_cuota:      1,
+        total_cuotas:      1,
+        monto_total:       total,
+        monto_pagado:      0,
+        saldo:             total,
+        interes:           0,
+        fecha_emision:     d.fecha,
+        fecha_vencimiento: fechaVencimiento ?? null,
+        codigo_proveedor:  d.codigoProveedor,
+        descripcion:       `Compra ${d.codigoDocumento} ${numeroDocumento}`,
+        referencia:        d.observacion ?? null,
+        pendiente:         true,
+      });
+      if (cxpErr) throw new InternalServerErrorException(`CXP error: ${cxpErr.message}`);
+    }
+
     return this.toEntity(compra, []);
   }
 
@@ -146,6 +185,14 @@ export class SupabaseCompraRepository implements ICompraRepository {
       await this.supabase.db.from('movimientos_almacen').delete()
         .eq('id', movRow.id).eq('codigo_empresa', codigoEmpresa);
     }
+
+    // Cancelar la cuenta por pagar asociada (si existe)
+    await this.supabase.db.from('cuentas_pagar')
+      .update({ pendiente: false })
+      .eq('codigo_empresa', codigoEmpresa)
+      .eq('tipo', 'COMPRA')
+      .eq('codigo_documento', compra.codigoDocumento)
+      .eq('numero_documento', compra.numeroDocumento);
 
     return this.toEntity(data, compra.detalles ?? []);
   }

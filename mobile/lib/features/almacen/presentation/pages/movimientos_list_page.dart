@@ -81,7 +81,7 @@ class _MovimientosListViewState extends State<_MovimientosListView> {
                   columns: const ['Doc', 'Serie', 'Número', 'Fecha', 'Tipo', 'Almacén', 'Total', 'Estado'],
                   rows: items.map((m) => [
                     m.codigoDocumento, m.serie, m.numeroDocumento, m.fecha,
-                    m.tipo.name, m.codigoAlmacenOrigen,
+                    m.tipo.name, m.descripcionAlmacenOrigen ?? m.codigoAlmacenOrigen,
                     m.total.toStringAsFixed(2),
                     m.anulado ? 'Anulado' : 'Vigente',
                   ]).toList(),
@@ -147,7 +147,7 @@ class _MovimientosListViewState extends State<_MovimientosListView> {
                     child: Icon(_tipoIcon(mov.tipo), color: _tipoColor(mov.tipo), size: 20),
                   ),
                   title: Text('${mov.codigoDocumento}-${mov.serie}-${mov.numeroDocumento}'),
-                  subtitle: Text('${mov.fecha} · ${mov.codigoAlmacenOrigen}'),
+                  subtitle: Text('${mov.fecha} · ${mov.descripcionAlmacenOrigen ?? mov.codigoAlmacenOrigen}'),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,

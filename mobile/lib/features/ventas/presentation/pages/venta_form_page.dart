@@ -255,7 +255,8 @@ class _FormState extends State<_Form> {
       body: BlocConsumer<VentaBloc, VentaState>(
         listener: (ctx, state) {
           if (state is VentaSaved) {
-            final nro = '${state.venta.codigoDocumento}-${state.venta.serie}-${state.venta.numeroDocumento}';
+            final docLabel = _documento?.abreviatura ?? state.venta.codigoDocumento;
+            final nro = '$docLabel-${state.venta.serie}-${state.venta.numeroDocumento}';
             ScaffoldMessenger.of(ctx).showSnackBar(
                 SnackBar(content: Text('Venta registrada · $nro'), backgroundColor: Colors.green));
             ctx.pop(true);
@@ -275,7 +276,7 @@ class _FormState extends State<_Form> {
                 decoration: const InputDecoration(labelText: 'Documento *', border: OutlineInputBorder(), isDense: true),
                 items: _documentos.map((d) => DropdownMenuItem(
                   value: d,
-                  child: Text('${d.codigo} · ${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
+                  child: Text('${d.abreviatura ?? d.codigo} · ${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
                 )).toList(),
                 onChanged: _onDocChanged,
                 validator: (v) => v == null ? 'Seleccione un documento' : null,

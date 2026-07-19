@@ -125,7 +125,7 @@ class _State extends State<CxCListPage> {
                     ),
                   ),
                   title: Text('Prov. ${cxc.numeroProvision} — ${cxc.codigoCliente}'),
-                  subtitle: Text('${cxc.codigoDocumento} ${cxc.numeroDocumento} | ${cxc.fechaEmision}'),
+                  subtitle: Text('${cxc.abreviaturaDocumento ?? cxc.codigoDocumento} ${cxc.numeroDocumento} | ${cxc.fechaEmision}'),
                   trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
                     Text('S/ ${cxc.saldo.toStringAsFixed(2)}',
                       style: TextStyle(fontWeight: FontWeight.bold, color: cxc.pendiente ? Colors.deepOrange : Colors.grey)),

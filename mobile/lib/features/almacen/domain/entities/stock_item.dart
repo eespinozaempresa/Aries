@@ -3,6 +3,8 @@ class StockItem {
   final String codigoEmpresa;
   final String codigoAlmacen;
   final String codigoArticulo;
+  final String? descripcionAlmacen;
+  final String? descripcionArticulo;
   final double stockInicial;
   final double stockCompras;
   final double stockVentas;
@@ -20,6 +22,8 @@ class StockItem {
     required this.codigoEmpresa,
     required this.codigoAlmacen,
     required this.codigoArticulo,
+    this.descripcionAlmacen,
+    this.descripcionArticulo,
     required this.stockInicial,
     required this.stockCompras,
     required this.stockVentas,

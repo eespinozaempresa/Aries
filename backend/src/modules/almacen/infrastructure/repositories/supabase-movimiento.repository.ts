@@ -72,9 +72,22 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
     const { data, error, count } = await q;
     if (error) throw new InternalServerErrorException(error.message);
 
+    const rows = data ?? [];
+    const almacenCodes = [...new Set(rows.map((r) => r.codigo_almacen_origen as string))];
+
+    const { data: almacenes } = almacenCodes.length
+      ? await this.supabase.db.from('almacenes').select('codigo, descripcion').eq('codigo_empresa', f.codigoEmpresa).in('codigo', almacenCodes)
+      : { data: [] };
+
+    const almacenMap = new Map((almacenes ?? []).map((a: any) => [a.codigo, a.descripcion]));
+
     const total = count ?? 0;
     return {
-      data: (data ?? []).map(this.toEntity),
+      data: rows.map((r) => {
+        const mov = this.toEntity(r);
+        mov.descripcionAlmacenOrigen = almacenMap.get(r.codigo_almacen_origen as string) as string | undefined;
+        return mov;
+      }),
       total,
       page,
       lastPage: Math.ceil(total / limit) || 1,
@@ -90,7 +103,23 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
       .maybeSingle();
     if (error) throw new InternalServerErrorException(error.message);
     if (!data) return null;
+
+    const almacenCodes = [data.codigo_almacen_origen as string];
+    if (data.codigo_almacen_dest) almacenCodes.push(data.codigo_almacen_dest as string);
+
+    const { data: almacenes } = await this.supabase.db
+      .from('almacenes')
+      .select('codigo, descripcion')
+      .eq('codigo_empresa', codigoEmpresa)
+      .in('codigo', almacenCodes);
+
+    const almacenMap = new Map((almacenes ?? []).map((a: any) => [a.codigo, a.descripcion]));
+
     const mov = this.toEntity(data);
+    mov.descripcionAlmacenOrigen = almacenMap.get(data.codigo_almacen_origen as string) as string | undefined;
+    if (data.codigo_almacen_dest) {
+      mov.descripcionAlmacenDest = almacenMap.get(data.codigo_almacen_dest as string) as string | undefined;
+    }
     mov.detalles = (data.detalle_movimientos ?? []).map(this.toDetalle);
     return mov;
   }

@@ -32,8 +32,34 @@ export class SupabaseCxPRepository implements ICxPRepository {
 
     const { data, error, count } = await q;
     if (error) throw new InternalServerErrorException(error.message);
+
+    const rows = data ?? [];
+    const proveedorCodes = [...new Set(rows.map((r) => r.codigo_proveedor as string))];
+    const docCodes       = [...new Set(rows.map((r) => r.codigo_documento as string))];
+
+    const [{ data: proveedores }, { data: documentos }] = await Promise.all([
+      proveedorCodes.length
+        ? this.supabase.db.from('proveedores').select('codigo, razon_social').eq('codigo_empresa', f.codigoEmpresa).in('codigo', proveedorCodes)
+        : Promise.resolve({ data: [] }),
+      docCodes.length
+        ? this.supabase.db.from('documentos').select('codigo, abreviatura').eq('codigo_empresa', f.codigoEmpresa).in('codigo', docCodes)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const provMap = new Map((proveedores ?? []).map((p: any) => [p.codigo, p.razon_social]));
+    const docMap  = new Map((documentos  ?? []).map((d: any) => [d.codigo, d.abreviatura]));
+
     const total = count ?? 0;
-    return { data: (data ?? []).map(this.toCxP), total, page, lastPage: Math.ceil(total / limit) || 1 };
+    return {
+      data: rows.map((r) => ({
+        ...this.toCxP(r),
+        razonSocialProveedor: provMap.get(r.codigo_proveedor as string) as string | undefined,
+        abreviaturaDocumento: docMap.get(r.codigo_documento as string)  as string | undefined,
+      })),
+      total,
+      page,
+      lastPage: Math.ceil(total / limit) || 1,
+    };
   }
 
   async findById(id: string, codigoEmpresa: string): Promise<CuentaPagar | null> {
@@ -41,7 +67,20 @@ export class SupabaseCxPRepository implements ICxPRepository {
       .from('cuentas_pagar').select('*')
       .eq('id', id).eq('codigo_empresa', codigoEmpresa).maybeSingle();
     if (error) throw new InternalServerErrorException(error.message);
-    return data ? this.toCxP(data) : null;
+    if (!data) return null;
+
+    const [{ data: prov }, { data: doc }] = await Promise.all([
+      this.supabase.db.from('proveedores').select('razon_social')
+        .eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_proveedor as string).maybeSingle(),
+      this.supabase.db.from('documentos').select('abreviatura')
+        .eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_documento as string).maybeSingle(),
+    ]);
+
+    return {
+      ...this.toCxP(data),
+      razonSocialProveedor: (prov as any)?.razon_social   as string | undefined,
+      abreviaturaDocumento: (doc  as any)?.abreviatura     as string | undefined,
+    };
   }
 
   async registrarPago(codigoEmpresa: string, d: RegistrarPagoData): Promise<Pago> {
