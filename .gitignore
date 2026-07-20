@@ -17,6 +17,10 @@ mobile/windows/
 mobile/.packages
 mobile/pubspec.lock
 
+# Firebase
+.firebase/
+firebase-debug.log
+
 # IDE
 .vscode/
 .idea/
