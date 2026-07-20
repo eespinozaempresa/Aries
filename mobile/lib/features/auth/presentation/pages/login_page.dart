@@ -220,7 +220,6 @@ class _LoginViewState extends State<_LoginView> {
               const _FieldLabel('Usuario'),
               TextFormField(
                 controller: _usuarioCtrl,
-                textCapitalization: TextCapitalization.characters,
                 decoration: const InputDecoration(
                   hintText: 'Código de usuario',
                   prefixIcon: Icon(Icons.person_outline, size: 20),

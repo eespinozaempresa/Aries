@@ -16,6 +16,13 @@ class AlmacenRepositoryImpl implements AlmacenRepository {
   }
 
   @override
+  Future<Either<ApiException, Almacen>> getById(String id) async {
+    try {
+      return Right(await _remote.getAlmacen(id));
+    } on ApiException catch (e) { return Left(e); }
+  }
+
+  @override
   Future<Either<ApiException, Almacen>> save(Map<String, dynamic> data, {String? id}) async {
     try {
       return Right(await _remote.saveAlmacen(data, id: id));

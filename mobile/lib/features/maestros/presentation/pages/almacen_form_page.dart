@@ -16,6 +16,7 @@ class AlmacenFormPage extends StatefulWidget {
 class _AlmacenFormPageState extends State<AlmacenFormPage> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  bool _loading = false;
   bool _activo = true;
   String _tipo = 'ALMACEN';
 
@@ -27,7 +28,32 @@ class _AlmacenFormPageState extends State<AlmacenFormPage> {
   @override
   void initState() {
     super.initState();
-    if (!widget.isEdit) _codigoCtrl.text = uniqueId(5);
+    if (widget.isEdit) {
+      _loadAlmacen();
+    } else {
+      _codigoCtrl.text = uniqueId(5);
+    }
+  }
+
+  Future<void> _loadAlmacen() async {
+    setState(() => _loading = true);
+    final result = await getIt<AlmacenRepository>().getById(widget.almacenId!);
+    if (!mounted) return;
+    result.fold(
+      (e) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message),
+            backgroundColor: Theme.of(context).colorScheme.error),
+      ),
+      (almacen) {
+        _codigoCtrl.text = almacen.codigo;
+        _descCtrl.text   = almacen.descripcion;
+        _abrCtrl.text    = almacen.abreviatura ?? '';
+        _ubCtrl.text     = almacen.ubicacion ?? '';
+        _tipo   = almacen.tipo;
+        _activo = almacen.activo;
+      },
+    );
+    setState(() => _loading = false);
   }
 
   @override
@@ -81,7 +107,9 @@ class _AlmacenFormPageState extends State<AlmacenFormPage> {
             ),
           ],
         ),
-        body: Form(
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.all(16),

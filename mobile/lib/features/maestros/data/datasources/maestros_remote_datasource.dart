@@ -27,6 +27,7 @@ abstract class MaestrosRemoteDataSource {
   Future<ProveedorModel> saveProveedor(Map<String, dynamic> data, {String? id});
 
   Future<List<AlmacenModel>> findAllAlmacenes({String? q, bool? activo});
+  Future<AlmacenModel> getAlmacen(String id);
   Future<AlmacenModel> saveAlmacen(Map<String, dynamic> data, {String? id});
 
   Future<List<ListaPrecio>> listPrecios(String articuloId);
@@ -148,6 +149,14 @@ class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
       return (res.data['data'] as List)
           .map((e) => AlmacenModel.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<AlmacenModel> getAlmacen(String id) async {
+    try {
+      final res = await _dio.get('/maestros/almacenes/$id');
+      return AlmacenModel.fromJson(res.data['data'] as Map<String, dynamic>);
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 
