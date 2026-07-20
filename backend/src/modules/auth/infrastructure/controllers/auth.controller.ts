@@ -69,6 +69,7 @@ export class AuthController {
       refreshToken: dto.refreshToken,
       codigoEmpresa: user.empresa,
       usuarioId: user.sub,
+      usuarioCodigo: user.codigo,
       ip: req.ip,
       dispositivo: req.headers['user-agent'],
     });

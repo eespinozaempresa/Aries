@@ -21,9 +21,10 @@ class CajaRegistrarMovimiento extends CajaEvent {
   final String sesionCajaId, tipo, concepto, fecha;
   final double monto;
   final String? referencia;
+  final String? tipoPago;
   CajaRegistrarMovimiento({
     required this.sesionCajaId, required this.tipo, required this.concepto,
-    required this.monto, required this.fecha, this.referencia,
+    required this.monto, required this.fecha, this.referencia, this.tipoPago,
   });
 }
 
@@ -113,6 +114,7 @@ class CajaBloc extends Bloc<CajaEvent, CajaState> {
         monto: e.monto,
         fecha: e.fecha,
         referencia: e.referencia,
+        tipoPago: e.tipoPago,
       );
       emit(CajaMovimientoRegistrado(MovimientoCaja.fromJson(json)));
     } on ApiException catch (ex) {

@@ -6,6 +6,7 @@ class Movimiento {
   final String id;
   final String codigoEmpresa;
   final String codigoDocumento;
+  final String? abreviaturaDocumento;
   final String serie;
   final String numeroDocumento;
   final String fecha;
@@ -26,6 +27,7 @@ class Movimiento {
     required this.id,
     required this.codigoEmpresa,
     required this.codigoDocumento,
+    this.abreviaturaDocumento,
     this.serie = '0001',
     required this.numeroDocumento,
     required this.fecha,

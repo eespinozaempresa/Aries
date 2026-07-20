@@ -26,25 +26,31 @@ export class SupabaseKardexRepository implements IKardexRepository {
     const items = (data ?? []).map(this.toEntity);
 
     // Lookup descriptions in parallel
-    const almacenCodes = [...new Set(items.map((i) => i.codigoAlmacen))];
+    const almacenCodes  = [...new Set(items.map((i) => i.codigoAlmacen))];
     const articuloCodes = [...new Set(items.map((i) => i.codigoArticulo))];
+    const documentoCodes = [...new Set(items.map((i) => i.codigoDocumento))];
 
-    const [{ data: almacenes }, { data: articulos }] = await Promise.all([
+    const [{ data: almacenes }, { data: articulos }, { data: documentos }] = await Promise.all([
       almacenCodes.length
         ? this.supabase.db.from('almacenes').select('codigo, descripcion').eq('codigo_empresa', f.codigoEmpresa).in('codigo', almacenCodes)
         : Promise.resolve({ data: [] }),
       articuloCodes.length
         ? this.supabase.db.from('articulos').select('codigo, descripcion').eq('codigo_empresa', f.codigoEmpresa).in('codigo', articuloCodes)
         : Promise.resolve({ data: [] }),
+      documentoCodes.length
+        ? this.supabase.db.from('documentos').select('codigo, abreviatura').eq('codigo_empresa', f.codigoEmpresa).in('codigo', documentoCodes)
+        : Promise.resolve({ data: [] }),
     ]);
 
-    const almacenMap = new Map((almacenes ?? []).map((a: any) => [a.codigo, a.descripcion]));
-    const articuloMap = new Map((articulos ?? []).map((a: any) => [a.codigo, a.descripcion]));
+    const almacenMap  = new Map((almacenes  ?? []).map((a: any) => [a.codigo, a.descripcion]));
+    const articuloMap = new Map((articulos  ?? []).map((a: any) => [a.codigo, a.descripcion]));
+    const documentoMap = new Map((documentos ?? []).map((d: any) => [d.codigo, d.abreviatura]));
 
     return items.map((item) => ({
       ...item,
-      descripcionAlmacen: almacenMap.get(item.codigoAlmacen) as string | undefined,
-      descripcionArticulo: articuloMap.get(item.codigoArticulo) as string | undefined,
+      descripcionAlmacen:   almacenMap.get(item.codigoAlmacen)   as string | undefined,
+      descripcionArticulo:  articuloMap.get(item.codigoArticulo)  as string | undefined,
+      abreviaturaDocumento: documentoMap.get(item.codigoDocumento) as string | undefined,
     }));
   }
 
@@ -64,6 +70,7 @@ export class SupabaseKardexRepository implements IKardexRepository {
       codigoArticulo: row.codigo_articulo as string,
       fecha: row.fecha as string,
       codigoDocumento: row.codigo_documento as string,
+      serie: (row.serie as string) ?? '0001',
       numeroDocumento: row.numero_documento as string,
       tipo: row.tipo as string,
       cantEntrada: Number(row.cant_entrada),

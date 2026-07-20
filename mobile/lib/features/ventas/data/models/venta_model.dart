@@ -6,6 +6,7 @@ class VentaModel {
     id: j['id'] as String,
     codigoEmpresa: j['codigoEmpresa'] as String,
     codigoDocumento: j['codigoDocumento'] as String,
+    abreviaturaDocumento: j['abreviaturaDocumento'] as String?,
     serie: j['serie'] as String? ?? '0001',
     numeroDocumento: j['numeroDocumento'] as String,
     fecha: j['fecha'] as String,

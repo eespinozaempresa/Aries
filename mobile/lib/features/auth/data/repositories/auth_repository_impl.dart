@@ -7,6 +7,7 @@ import '../datasources/auth_remote_datasource.dart';
 import '../models/usuario_model.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/services/menu_permission_service.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remote;
@@ -34,6 +35,7 @@ class AuthRepositoryImpl implements AuthRepository {
         captchaAnswer: captchaAnswer,
       );
       await _persistSession(data.accessToken, data.refreshToken, data.usuario);
+      MenuPermissionService.instance.load(data.usuario.menus, data.usuario.nivel);
       return Right((
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
@@ -52,6 +54,7 @@ class AuthRepositoryImpl implements AuthRepository {
       // Fire-and-forget: clear local even if request fails
     }
     await _storage.deleteAll();
+    MenuPermissionService.instance.clear();
     return const Right(null);
   }
 
@@ -59,7 +62,9 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Usuario?> getCachedUsuario() async {
     final json = await _storage.read(key: ApiConstants.kUsuario);
     if (json == null) return null;
-    return UsuarioModel.fromJson(jsonDecode(json) as Map<String, dynamic>);
+    final usuario = UsuarioModel.fromJson(jsonDecode(json) as Map<String, dynamic>);
+    MenuPermissionService.instance.load(usuario.menus, usuario.nivel);
+    return usuario;
   }
 
   @override

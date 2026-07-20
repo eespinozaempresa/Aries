@@ -16,7 +16,7 @@ export class SupabaseCxCRepository implements ICxCRepository {
 
   async list(f: CxCFilter): Promise<CxCListResult> {
     const page  = f.page ?? 1;
-    const limit = Math.min(f.limit ?? 20, 100);
+    const limit = Math.min(f.limit ?? 20, 500);
     const from  = (page - 1) * limit;
 
     let q = this.supabase.db
@@ -33,12 +33,21 @@ export class SupabaseCxCRepository implements ICxCRepository {
     const { data, error, count } = await q;
     if (error) throw new InternalServerErrorException(error.message);
 
-    const rows    = data ?? [];
-    const docCodes = [...new Set(rows.map((r) => r.codigo_documento as string))];
-    const { data: documentos } = docCodes.length
-      ? await this.supabase.db.from('documentos').select('codigo, abreviatura, serie').eq('codigo_empresa', f.codigoEmpresa).in('codigo', docCodes)
-      : { data: [] };
-    const docMap = new Map((documentos ?? []).map((d: any) => [d.codigo, { abreviatura: d.abreviatura, serie: d.serie }]));
+    const rows        = data ?? [];
+    const docCodes    = [...new Set(rows.map((r) => r.codigo_documento as string))];
+    const clientCodes = [...new Set(rows.map((r) => r.codigo_cliente as string))];
+
+    const [{ data: documentos }, { data: clientes }] = await Promise.all([
+      docCodes.length
+        ? this.supabase.db.from('documentos').select('codigo, abreviatura, serie').eq('codigo_empresa', f.codigoEmpresa).in('codigo', docCodes)
+        : Promise.resolve({ data: [] }),
+      clientCodes.length
+        ? this.supabase.db.from('clientes').select('codigo, razon_social').eq('codigo_empresa', f.codigoEmpresa).in('codigo', clientCodes)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const docMap     = new Map((documentos ?? []).map((d: any) => [d.codigo as string, { abreviatura: d.abreviatura, serie: d.serie }]));
+    const clienteMap = new Map((clientes ?? []).map((c: any) => [c.codigo as string, c.razon_social as string]));
 
     const total = count ?? 0;
     return {
@@ -46,6 +55,7 @@ export class SupabaseCxCRepository implements ICxCRepository {
         ...this.toCxC(r),
         abreviaturaDocumento: (docMap.get(r.codigo_documento as string) as any)?.abreviatura as string | undefined,
         serieDocumento:       (docMap.get(r.codigo_documento as string) as any)?.serie        as string | undefined,
+        razonSocialCliente:  clienteMap.get(r.codigo_cliente as string),
       })),
       total,
       page,
@@ -60,14 +70,18 @@ export class SupabaseCxCRepository implements ICxCRepository {
     if (error) throw new InternalServerErrorException(error.message);
     if (!data) return null;
 
-    const { data: doc } = await this.supabase.db
-      .from('documentos').select('abreviatura, serie')
-      .eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_documento as string).maybeSingle();
+    const [{ data: doc }, { data: cliente }] = await Promise.all([
+      this.supabase.db.from('documentos').select('abreviatura, serie')
+        .eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_documento as string).maybeSingle(),
+      this.supabase.db.from('clientes').select('razon_social')
+        .eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_cliente as string).maybeSingle(),
+    ]);
 
     return {
       ...this.toCxC(data),
       abreviaturaDocumento: (doc as any)?.abreviatura as string | undefined,
       serieDocumento:       (doc as any)?.serie        as string | undefined,
+      razonSocialCliente:  (cliente as any)?.razon_social as string | undefined,
     };
   }
 

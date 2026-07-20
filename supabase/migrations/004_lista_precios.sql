@@ -1,5 +1,5 @@
 -- ============================================================
--- Aries ERP — Lista de Precios
+-- Aries — Lista de Precios
 -- ============================================================
 
 -- tipos_lista: categorías de lista de precios con descuentos por defecto

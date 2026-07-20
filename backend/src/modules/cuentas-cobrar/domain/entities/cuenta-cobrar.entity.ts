@@ -17,6 +17,7 @@ export interface CuentaCobrar {
   fechaEmision: string;
   fechaVencimiento?: string;
   codigoCliente: string;
+  razonSocialCliente?: string;
   abreviaturaDocumento?: string;
   serieDocumento?: string;
   descripcion?: string;

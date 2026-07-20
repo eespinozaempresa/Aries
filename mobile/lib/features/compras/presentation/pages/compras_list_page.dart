@@ -63,10 +63,10 @@ class _ViewState extends State<_View> {
                   title: 'Compras',
                   columns: const ['Doc', 'Serie', 'Número', 'Fecha', 'Proveedor', 'Total', 'Moneda', 'Estado'],
                   rows: items.map((c) => [
-                    c.codigoDocumento,
+                    c.abreviaturaDocumento ?? c.codigoDocumento,
                     c.serie,
                     c.numeroDocumento,
-                    c.fecha,
+                    ExportService.fmtDate(c.fecha),
                     c.codigoProveedor,
                     c.total.toStringAsFixed(2),
                     c.moneda,
@@ -115,9 +115,9 @@ class _ViewState extends State<_View> {
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: c.anulado ? Colors.grey.shade200 : Colors.blue.shade50,
-                    child: Text(c.codigoDocumento, style: const TextStyle(fontSize: 10)),
+                    child: Text(c.abreviaturaDocumento ?? c.codigoDocumento, style: const TextStyle(fontSize: 10)),
                   ),
-                  title: Text('${c.codigoDocumento}-${c.serie}-${c.numeroDocumento}'),
+                  title: Text('${c.abreviaturaDocumento ?? c.codigoDocumento}-${c.serie}-${c.numeroDocumento}'),
                   subtitle: Text('${c.fecha} · ${c.razonSocialProveedor ?? c.codigoProveedor}'),
                   trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
                     Text('$cur ${monto.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),

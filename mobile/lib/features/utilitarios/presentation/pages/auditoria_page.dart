@@ -34,7 +34,7 @@ class _AuditoriaPageState extends State<AuditoriaPage> {
       final dio      = getIt<DioClient>().dio;
       final response = await dio.get(
         '${ApiConstants.baseUrl}/utilitarios/auditoria',
-        queryParameters: {'limit': 50},
+        queryParameters: {'limit': 100},
       );
       final list = response.data as List<dynamic>;
       setState(() {
@@ -51,8 +51,7 @@ class _AuditoriaPageState extends State<AuditoriaPage> {
   String _formatFecha(String? raw) {
     if (raw == null || raw.isEmpty) return '';
     try {
-      final dt = DateTime.parse(raw).toLocal();
-      return _fmt.format(dt);
+      return _fmt.format(DateTime.parse(raw).toLocal());
     } catch (_) {
       return raw;
     }
@@ -98,45 +97,84 @@ class _AuditoriaPageState extends State<AuditoriaPage> {
                       itemCount: _entries.length,
                       separatorBuilder: (_, __) =>
                           const Divider(height: 1, indent: 64),
-                      itemBuilder: (ctx, i) {
-                        final e     = _entries[i];
-                        final tipo  = (e['tipo'] as String? ?? '').toUpperCase();
-                        final isLogin = tipo == 'LOGIN';
-                        final fecha = _formatFecha(e['fecha_hora']?.toString());
-                        final ip    = e['ip']?.toString();
-
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: isLogin
-                                ? Colors.green.shade100
-                                : Colors.red.shade100,
-                            child: Icon(
-                              isLogin
-                                  ? Icons.login_outlined
-                                  : Icons.logout_outlined,
-                              color:
-                                  isLogin ? Colors.green.shade700 : Colors.red.shade700,
-                            ),
-                          ),
-                          title: Text(
-                            tipo,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: isLogin
-                                  ? Colors.green.shade800
-                                  : Colors.red.shade800,
-                            ),
-                          ),
-                          subtitle: Text(fecha),
-                          trailing: ip != null && ip.isNotEmpty
-                              ? Text(
-                                  ip,
-                                  style: Theme.of(ctx).textTheme.bodySmall,
-                                )
-                              : null,
-                        );
-                      },
+                      itemBuilder: (ctx, i) => _AuditoriaItem(
+                        entry: _entries[i],
+                        formatFecha: _formatFecha,
+                      ),
                     ),
+    );
+  }
+}
+
+class _AuditoriaItem extends StatelessWidget {
+  final Map<String, dynamic> entry;
+  final String Function(String?) formatFecha;
+
+  const _AuditoriaItem({required this.entry, required this.formatFecha});
+
+  @override
+  Widget build(BuildContext context) {
+    final tipo         = (entry['tipo'] as String? ?? '').toUpperCase();
+    final usuarioCodigo = entry['usuario_codigo']?.toString() ?? '';
+    final fecha        = formatFecha(entry['fecha_hora']?.toString());
+    final ip           = entry['ip']?.toString() ?? '';
+
+    final Color bgColor;
+    final Color iconColor;
+    final IconData icon;
+    final String tipoLabel;
+
+    switch (tipo) {
+      case 'LOGIN':
+        bgColor   = Colors.green.shade100;
+        iconColor = Colors.green.shade700;
+        icon      = Icons.login_outlined;
+        tipoLabel = 'Inicio de sesión';
+        break;
+      case 'LOGIN_FAIL':
+        bgColor   = Colors.orange.shade100;
+        iconColor = Colors.orange.shade800;
+        icon      = Icons.warning_amber_rounded;
+        tipoLabel = 'Intento fallido';
+        break;
+      default: // LOGOUT
+        bgColor   = Colors.red.shade100;
+        iconColor = Colors.red.shade700;
+        icon      = Icons.logout_outlined;
+        tipoLabel = 'Cierre de sesión';
+    }
+
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: bgColor,
+        child: Icon(icon, color: iconColor, size: 20),
+      ),
+      title: Row(
+        children: [
+          Text(
+            tipoLabel,
+            style: TextStyle(fontWeight: FontWeight.w600, color: iconColor),
+          ),
+          if (usuarioCodigo.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                usuarioCodigo,
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ],
+      ),
+      subtitle: Text(fecha),
+      trailing: ip.isNotEmpty
+          ? Text(ip, style: Theme.of(context).textTheme.bodySmall)
+          : null,
     );
   }
 }

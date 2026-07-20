@@ -7,6 +7,8 @@ export interface KardexItem {
   descripcionArticulo?: string;
   fecha: string;
   codigoDocumento: string;
+  abreviaturaDocumento?: string;
+  serie: string;
   numeroDocumento: string;
   tipo: string;
   cantEntrada: number;

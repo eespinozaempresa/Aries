@@ -130,7 +130,7 @@ class _View extends StatelessWidget {
         DropdownButtonFormField<String>(
           initialValue: tipoPago,
           decoration: const InputDecoration(labelText: 'Tipo Pago'),
-          items: ['EFECTIVO', 'TRANSFERENCIA', 'CHEQUE']
+          items: ['EFECTIVO', 'DEPOSITO', 'TRANSFERENCIA', 'YAPE/PLIN']
             .map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
           onChanged: (v) => setSt(() => tipoPago = v!),
         ),

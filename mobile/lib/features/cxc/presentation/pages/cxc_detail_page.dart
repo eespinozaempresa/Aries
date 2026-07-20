@@ -98,7 +98,7 @@ class _View extends StatelessWidget {
         ),
       ]),
       const Divider(),
-      _row('Cliente', cxc.codigoCliente),
+      _row('Cliente', cxc.razonSocialCliente ?? cxc.codigoCliente),
       _row('Documento', '${cxc.abreviaturaDocumento ?? cxc.codigoDocumento}-${cxc.serieDocumento ?? '0001'}-${cxc.numeroDocumento}'),
       _row('Tipo', cxc.tipo.name),
       _row('Emisión', cxc.fechaEmision),
@@ -140,7 +140,7 @@ class _View extends StatelessWidget {
         DropdownButtonFormField<String>(
           initialValue: tipoPago,
           decoration: const InputDecoration(labelText: 'Tipo Pago'),
-          items: ['EFECTIVO', 'TRANSFERENCIA', 'CHEQUE']
+          items: ['EFECTIVO', 'DEPOSITO', 'TRANSFERENCIA', 'YAPE/PLIN']
             .map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
           onChanged: (v) => setSt(() => tipoPago = v!),
         ),

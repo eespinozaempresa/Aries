@@ -7,6 +7,7 @@ class UsuarioModel extends Usuario {
     required super.nombre,
     required super.nivel,
     required super.empresa,
+    super.menus = const [],
   });
 
   factory UsuarioModel.fromJson(Map<String, dynamic> json) => UsuarioModel(
@@ -15,6 +16,7 @@ class UsuarioModel extends Usuario {
         nombre: json['nombre'] as String,
         nivel: json['nivel'] as String,
         empresa: json['empresa'] as String,
+        menus: (json['menus'] as List<dynamic>?)?.cast<String>() ?? const [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -23,5 +25,6 @@ class UsuarioModel extends Usuario {
         'nombre': nombre,
         'nivel': nivel,
         'empresa': empresa,
+        'menus': menus,
       };
 }

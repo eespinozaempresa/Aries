@@ -23,3 +23,7 @@ export interface TipoLista extends TablaBase {
   dsctoPct: number;
   dctoMto: number;
 }
+
+export interface TipoPago extends TablaBase {
+  requiereOperacion: boolean;
+}

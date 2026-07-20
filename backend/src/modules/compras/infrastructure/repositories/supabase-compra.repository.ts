@@ -108,6 +108,7 @@ export class SupabaseCompraRepository implements ICompraRepository {
         cantidad:       l.cantidad,
         precioUnitario: l.precioUnitario,
       })),
+      p_serie:       d.serie ?? '0001',
     });
 
     if (rpcErr) throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
@@ -235,24 +236,30 @@ export class SupabaseCompraRepository implements ICompraRepository {
     const rows = data ?? [];
     const proveedorCodes = [...new Set(rows.map((r) => r.codigo_proveedor as string))];
     const almacenCodes   = [...new Set(rows.map((r) => r.codigo_almacen as string))];
+    const documentoCodes = [...new Set(rows.map((r) => r.codigo_documento as string))];
 
-    const [{ data: proveedores }, { data: almacenes }] = await Promise.all([
+    const [{ data: proveedores }, { data: almacenes }, { data: documentos }] = await Promise.all([
       proveedorCodes.length
         ? this.supabase.db.from('proveedores').select('codigo, razon_social').eq('codigo_empresa', f.codigoEmpresa).in('codigo', proveedorCodes)
         : Promise.resolve({ data: [] }),
       almacenCodes.length
         ? this.supabase.db.from('almacenes').select('codigo, descripcion').eq('codigo_empresa', f.codigoEmpresa).in('codigo', almacenCodes)
         : Promise.resolve({ data: [] }),
+      documentoCodes.length
+        ? this.supabase.db.from('documentos').select('codigo, abreviatura').eq('codigo_empresa', f.codigoEmpresa).in('codigo', documentoCodes)
+        : Promise.resolve({ data: [] }),
     ]);
 
-    const proveedorMap = new Map((proveedores ?? []).map((p) => [p.codigo, p.razon_social]));
-    const almacenMap   = new Map((almacenes ?? []).map((a) => [a.codigo, a.descripcion]));
+    const proveedorMap  = new Map((proveedores ?? []).map((p: any) => [p.codigo, p.razon_social]));
+    const almacenMap    = new Map((almacenes  ?? []).map((a: any) => [a.codigo, a.descripcion]));
+    const documentoMap  = new Map((documentos ?? []).map((d: any) => [d.codigo, d.abreviatura]));
 
     const total = count ?? 0;
     return {
       data: rows.map((r) => this.toEntity(r, [], {
         razonSocialProveedor: proveedorMap.get(r.codigo_proveedor as string),
         descripcionAlmacen:   almacenMap.get(r.codigo_almacen as string),
+        abreviaturaDocumento: documentoMap.get(r.codigo_documento as string),
       })),
       total,
       page,
@@ -270,22 +277,25 @@ export class SupabaseCompraRepository implements ICompraRepository {
     if (error) throw new InternalServerErrorException(error.message);
     if (!data) return null;
 
-    const [{ data: proveedor }, { data: almacen }] = await Promise.all([
+    const [{ data: proveedor }, { data: almacen }, { data: documento }] = await Promise.all([
       this.supabase.db.from('proveedores').select('razon_social').eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_proveedor).maybeSingle(),
       this.supabase.db.from('almacenes').select('descripcion').eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_almacen).maybeSingle(),
+      this.supabase.db.from('documentos').select('abreviatura').eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_documento).maybeSingle(),
     ]);
 
     return this.toEntity(data, (data.detalle_compras ?? []).map(this.toDetalle), {
       razonSocialProveedor: proveedor?.razon_social,
       descripcionAlmacen:   almacen?.descripcion,
+      abreviaturaDocumento: (documento as any)?.abreviatura,
     });
   }
 
-  private toEntity(r: Record<string, unknown>, detalles: DetalleCompra[], extras: { razonSocialProveedor?: string; descripcionAlmacen?: string } = {}): Compra {
+  private toEntity(r: Record<string, unknown>, detalles: DetalleCompra[], extras: { razonSocialProveedor?: string; descripcionAlmacen?: string; abreviaturaDocumento?: string } = {}): Compra {
     return {
       id: r.id as string,
       codigoEmpresa: r.codigo_empresa as string,
       codigoDocumento: r.codigo_documento as string,
+      abreviaturaDocumento: extras.abreviaturaDocumento,
       serie: (r.serie as string) ?? '0001',
       numeroDocumento: r.numero_documento as string,
       fecha: r.fecha as string,

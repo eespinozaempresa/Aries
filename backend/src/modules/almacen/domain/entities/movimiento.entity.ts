@@ -6,6 +6,7 @@ export interface Movimiento {
   id: string;
   codigoEmpresa: string;
   codigoDocumento: string;
+  abreviaturaDocumento?: string;
   serie: string;
   numeroDocumento: string;
   fecha: string;

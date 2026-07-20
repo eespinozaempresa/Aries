@@ -36,6 +36,16 @@ export class CreateDocumentoDto extends CreateTablaDto {
   tipo?: string;
 }
 
+export class CreateTipoPagoDto extends CreateTablaDto {
+  @IsBoolean() @IsOptional()
+  requiereOperacion?: boolean;
+}
+
+export class UpdateTipoPagoDto extends UpdateTablaDto {
+  @IsBoolean() @IsOptional()
+  requiereOperacion?: boolean;
+}
+
 export class CreateTipoListaDto extends CreateTablaDto {
   @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @IsOptional()
   dsctoPct?: number;

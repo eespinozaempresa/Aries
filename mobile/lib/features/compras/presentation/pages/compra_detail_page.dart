@@ -44,7 +44,7 @@ class _View extends StatelessWidget {
           };
           if (c == null) return const Center(child: CircularProgressIndicator());
           return ListView(padding: const EdgeInsets.all(16), children: [
-            _card('Documento',   '${c.codigoDocumento} ${c.numeroDocumento}'),
+            _card('Documento',   '${c.abreviaturaDocumento ?? c.codigoDocumento}-${c.serie}-${c.numeroDocumento}'),
             _card('Fecha',       c.fecha),
             _card('Proveedor',   c.razonSocialProveedor ?? c.codigoProveedor),
             _card('Almacén',     c.descripcionAlmacen ?? c.codigoAlmacen),

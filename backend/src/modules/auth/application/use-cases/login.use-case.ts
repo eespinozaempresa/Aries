@@ -25,6 +25,7 @@ export interface LoginResult {
     nombre: string;
     nivel: string;
     empresa: string;
+    menus: string[];
   };
 }
 
@@ -48,11 +49,27 @@ export class LoginUseCase {
     );
 
     if (!usuario || !usuario.canLogin()) {
+      await this.sessionRepo.logAudit({
+        codigoEmpresa: cmd.empresa.toUpperCase(),
+        usuarioId: usuario?.id,
+        usuarioCodigo: cmd.usuario.toUpperCase(),
+        tipo: 'LOGIN_FAIL',
+        ip: cmd.ip,
+        dispositivo: cmd.dispositivo,
+      }).catch(() => {});
       throw new UnauthorizedException('Usuario o contraseña incorrectos');
     }
 
     const passwordValid = await bcrypt.compare(cmd.clave, usuario.passwordHash);
     if (!passwordValid) {
+      await this.sessionRepo.logAudit({
+        codigoEmpresa: cmd.empresa.toUpperCase(),
+        usuarioId: usuario.id,
+        usuarioCodigo: usuario.codigo,
+        tipo: 'LOGIN_FAIL',
+        ip: cmd.ip,
+        dispositivo: cmd.dispositivo,
+      }).catch(() => {});
       throw new UnauthorizedException('Usuario o contraseña incorrectos');
     }
 
@@ -77,10 +94,13 @@ export class LoginUseCase {
     await this.sessionRepo.logAudit({
       codigoEmpresa: usuario.codigoEmpresa,
       usuarioId: usuario.id,
+      usuarioCodigo: usuario.codigo,
       tipo: 'LOGIN',
       ip: cmd.ip,
       dispositivo: cmd.dispositivo,
     });
+
+    const menus = usuario.nivel?.toUpperCase() === 'ADMIN' ? ['*'] : (usuario.menus ?? []);
 
     return {
       accessToken,
@@ -91,6 +111,7 @@ export class LoginUseCase {
         nombre: usuario.nombre,
         nivel: usuario.nivel,
         empresa: usuario.codigoEmpresa,
+        menus,
       },
     };
   }

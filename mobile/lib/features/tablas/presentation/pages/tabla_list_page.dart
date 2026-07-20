@@ -170,9 +170,10 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
         case 'numeroSiguiente': return (item as dynamic).numeroSiguiente?.toString() as V?;
         case 'tipo':            return (item as dynamic).tipo as V?;
         case 'aplicaIgv':       return (item as dynamic).aplicaIgv as V?;
-        case 'dsctoPct':        return (item as dynamic).dsctoPct?.toString() as V?;
-        case 'dctoMto':         return (item as dynamic).dctoMto?.toString() as V?;
-        default:                return null;
+        case 'dsctoPct':          return (item as dynamic).dsctoPct?.toString() as V?;
+        case 'dctoMto':           return (item as dynamic).dctoMto?.toString() as V?;
+        case 'requiereOperacion': return (item as dynamic).requiereOperacion as V?;
+        default:                  return null;
       }
     } catch (_) {
       return null;
@@ -273,6 +274,19 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
 }
 
 // ── Páginas concretas ────────────────────────────────────────────────────────
+
+class TiposPagoPage extends StatelessWidget {
+  final TablaBloc<TipoPago> bloc;
+  const TiposPagoPage({super.key, required this.bloc});
+  @override
+  Widget build(BuildContext context) => TablaListPage<TipoPago>(
+        title: 'Tipos de Pago',
+        bloc: bloc,
+        extraFields: const [
+          _ExtraField('requiereOperacion', 'Requiere N° Operación', isSwitch: true),
+        ],
+      );
+}
 
 class TiposListaPage extends StatelessWidget {
   final TablaBloc<TipoLista> bloc;

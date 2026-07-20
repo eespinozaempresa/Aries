@@ -16,7 +16,7 @@ export class SupabaseCxPRepository implements ICxPRepository {
 
   async list(f: CxPFilter): Promise<CxPListResult> {
     const page  = f.page ?? 1;
-    const limit = Math.min(f.limit ?? 20, 100);
+    const limit = Math.min(f.limit ?? 20, 500);
     const from  = (page - 1) * limit;
 
     let q = this.supabase.db

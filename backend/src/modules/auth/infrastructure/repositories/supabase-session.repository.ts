@@ -47,12 +47,16 @@ export class SupabaseSessionRepository implements ISessionRepository {
   }
 
   async logAudit(params: LogAuditParams): Promise<void> {
-    await this.supabase.db.from('auditoria_sesiones').insert({
+    const { error } = await this.supabase.db.from('auditoria_sesiones').insert({
       codigo_empresa: params.codigoEmpresa,
-      usuario_id: params.usuarioId,
+      usuario_id: params.usuarioId ?? null,
+      usuario_codigo: params.usuarioCodigo ?? null,
       tipo: params.tipo,
       ip: params.ip ?? null,
-      dispositivo: params.dispositivo ?? null,
+      dispositivo: params.dispositivo ? params.dispositivo.substring(0, 200) : null,
     });
+    if (error) {
+      console.error('[Audit] Error al insertar registro de auditoría:', error.message, '| code:', error.code);
+    }
   }
 }

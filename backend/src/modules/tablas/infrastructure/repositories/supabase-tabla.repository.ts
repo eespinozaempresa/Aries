@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
-import { TablaBase, Documento, TipoLista } from '../../domain/entities/tabla-base.entity';
+import { TablaBase, Documento, TipoLista, TipoPago } from '../../domain/entities/tabla-base.entity';
 import { ITablaRepository, TablaFilter } from '../../domain/ports/tabla.repository.port';
 
 function makeRepo<T extends TablaBase>(tableName: string, fromRow: (r: Record<string, unknown>) => T) {
@@ -53,6 +53,7 @@ function toRow(d: Record<string, unknown>): Record<string, unknown> {
     activo: 'activo', abreviatura: 'abreviatura', serie: 'serie',
     numeroSiguiente: 'numero_siguiente', aplicaIgv: 'aplica_igv', tipo: 'tipo',
     dsctoPct: 'dscto_pct', dctoMto: 'dcto_mto',
+    requiereOperacion: 'requiere_operacion',
   };
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(d)) {
@@ -78,6 +79,11 @@ export const SupabaseTipoListaRepo = makeRepo<TipoLista>('tipos_lista', (r) => (
   ...base(r),
   dsctoPct: Number(r.dscto_pct ?? 0),
   dctoMto:  Number(r.dcto_mto  ?? 0),
+}));
+
+export const SupabaseTipoPagoRepo = makeRepo<TipoPago>('tipo_pago', (r) => ({
+  ...base(r),
+  requiereOperacion: (r.requiere_operacion as boolean) ?? false,
 }));
 
 export const SupabaseDocumentoRepo = makeRepo<Documento>('documentos', (r) => ({

@@ -46,6 +46,7 @@ class MovimientoCaja {
   final TipoMovCaja tipo;
   final String concepto;
   final String? referencia;
+  final String? tipoPago;
   final double monto;
   final String fecha;
 
@@ -55,6 +56,7 @@ class MovimientoCaja {
     required this.tipo,
     required this.concepto,
     this.referencia,
+    this.tipoPago,
     required this.monto,
     required this.fecha,
   });
@@ -65,6 +67,7 @@ class MovimientoCaja {
     tipo: TipoMovCaja.values.byName(j['tipo'] as String),
     concepto: j['concepto'] as String,
     referencia: j['referencia'] as String?,
+    tipoPago: j['tipoPago'] as String?,
     monto: (j['monto'] as num).toDouble(),
     fecha: j['fecha'] as String,
   );

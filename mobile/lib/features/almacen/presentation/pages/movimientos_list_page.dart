@@ -80,7 +80,7 @@ class _MovimientosListViewState extends State<_MovimientosListView> {
                   title: 'Movimientos',
                   columns: const ['Doc', 'Serie', 'Número', 'Fecha', 'Tipo', 'Almacén', 'Total', 'Estado'],
                   rows: items.map((m) => [
-                    m.codigoDocumento, m.serie, m.numeroDocumento, m.fecha,
+                    m.abreviaturaDocumento ?? m.codigoDocumento, m.serie, m.numeroDocumento, ExportService.fmtDate(m.fecha),
                     m.tipo.name, m.descripcionAlmacenOrigen ?? m.codigoAlmacenOrigen,
                     m.total.toStringAsFixed(2),
                     m.anulado ? 'Anulado' : 'Vigente',
@@ -146,7 +146,7 @@ class _MovimientosListViewState extends State<_MovimientosListView> {
                     backgroundColor: _tipoColor(mov.tipo).withValues(alpha: 0.15),
                     child: Icon(_tipoIcon(mov.tipo), color: _tipoColor(mov.tipo), size: 20),
                   ),
-                  title: Text('${mov.codigoDocumento}-${mov.serie}-${mov.numeroDocumento}'),
+                  title: Text('${mov.abreviaturaDocumento ?? mov.codigoDocumento}-${mov.serie}-${mov.numeroDocumento}'),
                   subtitle: Text('${mov.fecha} · ${mov.descripcionAlmacenOrigen ?? mov.codigoAlmacenOrigen}'),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

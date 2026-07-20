@@ -57,6 +57,31 @@ export class VentasController {
     return this.utilidadUC.execute(req.user.empresa, almacen, desde, hasta);
   }
 
+  @Get('reporte/ventas')
+  reporteVentas(
+    @Request() req: any,
+    @Query('tipo') tipo: 'general' | 'detallado' = 'general',
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('almacen') almacen?: string,
+    @Query('tipoVenta') tipoVenta?: string,
+  ) {
+    return this.repo.reporteVentas(req.user.empresa, { tipo, desde, hasta, almacen, tipoVenta });
+  }
+
+  @Get('reporte/general')
+  reporteGeneral(
+    @Request() req: any,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('almacen') almacen?: string,
+    @Query('cliente') cliente?: string,
+    @Query('articulo') articulo?: string,
+    @Query('usuario') usuario?: string,
+  ) {
+    return this.repo.reporteGeneral(req.user.empresa, { desde, hasta, almacen, cliente, articulo, usuario });
+  }
+
   @Get(':id')
   async findById(@Param('id') id: string, @Request() req: any) {
     const v = await this.repo.findById(id, req.user.empresa);

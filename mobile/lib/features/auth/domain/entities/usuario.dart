@@ -6,6 +6,7 @@ class Usuario extends Equatable {
   final String nombre;
   final String nivel;
   final String empresa;
+  final List<String> menus;
 
   const Usuario({
     required this.id,
@@ -13,6 +14,7 @@ class Usuario extends Equatable {
     required this.nombre,
     required this.nivel,
     required this.empresa,
+    this.menus = const [],
   });
 
   @override

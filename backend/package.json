@@ -1,7 +1,7 @@
 {
   "name": "aries-backend",
   "version": "1.0.0",
-  "description": "Aries ERP Backend — NestJS Clean Architecture",
+  "description": "Aries Backend — NestJS Clean Architecture",
   "scripts": {
     "build": "nest build",
     "start": "node dist/main",

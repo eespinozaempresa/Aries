@@ -25,6 +25,22 @@ class TablaModel {
     'activo': t.activo,
   };
 
+  static TipoPago tipoPagoFromJson(Map<String, dynamic> j) => TipoPago(
+    id: j['id'] as String,
+    codigoEmpresa: j['codigoEmpresa'] as String,
+    codigo: j['codigo'] as String,
+    descripcion: j['descripcion'] as String,
+    activo: j['activo'] as bool? ?? true,
+    requiereOperacion: j['requiereOperacion'] as bool? ?? false,
+  );
+
+  static Map<String, dynamic> tipoPagoToJson(TipoPago t) => {
+    'codigo': t.codigo,
+    'descripcion': t.descripcion,
+    'activo': t.activo,
+    'requiereOperacion': t.requiereOperacion,
+  };
+
   static Linea lineaFromJson(Map<String, dynamic> j) => Linea(
     id: j['id'] as String,
     codigoEmpresa: j['codigoEmpresa'] as String,

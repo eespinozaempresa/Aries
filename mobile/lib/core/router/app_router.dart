@@ -26,6 +26,7 @@ import '../../features/ventas/presentation/pages/ventas_list_page.dart';
 import '../../features/ventas/presentation/pages/venta_form_page.dart';
 import '../../features/ventas/presentation/pages/venta_detail_page.dart';
 import '../../features/ventas/presentation/pages/reporte_utilidad_page.dart';
+import '../../features/ventas/presentation/pages/reporte_ventas_page.dart';
 import '../../features/cxc/presentation/pages/cxc_list_page.dart';
 import '../../features/cxc/presentation/pages/cxc_detail_page.dart';
 import '../../features/cxp/presentation/pages/cxp_list_page.dart';
@@ -33,12 +34,15 @@ import '../../features/cxp/presentation/pages/cxp_detail_page.dart';
 import '../../features/caja/presentation/pages/caja_list_page.dart';
 import '../../features/caja/presentation/pages/caja_reporte_page.dart';
 import '../../features/utilitarios/presentation/pages/utilitarios_page.dart';
+import '../../features/seguridad/presentation/pages/seguridad_hub_page.dart';
+import '../../features/seguridad/presentation/pages/perfiles_page.dart';
 import '../../features/utilitarios/presentation/pages/cambiar_clave_page.dart';
 import '../../features/utilitarios/presentation/pages/parametros_page.dart';
 import '../../features/utilitarios/presentation/pages/usuarios_page.dart';
 import '../../features/utilitarios/presentation/pages/auditoria_page.dart';
 import '../../features/tipo_cambio/presentation/pages/tipo_cambio_list_page.dart';
 import '../di/injection.dart';
+import '../services/menu_permission_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 
 class AppRouter {
@@ -51,6 +55,9 @@ class AppRouter {
       final loggedIn = await repo.isLoggedIn();
       final isPublic = _publicRoutes.contains(state.matchedLocation);
       if (!loggedIn && !isPublic) return '/login';
+      if (loggedIn && !MenuPermissionService.instance.initialized) {
+        await repo.getCachedUsuario();
+      }
       if (loggedIn && state.matchedLocation == '/login') return '/tipo-cambio';
       return null;
     },
@@ -76,7 +83,8 @@ class AppRouter {
       GoRoute(path: '/tablas/medidas',    builder: (_, __) => MedidasPage(bloc: getIt<TablaBloc<Medida>>())),
       GoRoute(path: '/tablas/bancos',     builder: (_, __) => BancosPage(bloc: getIt<TablaBloc<Banco>>())),
       GoRoute(path: '/tablas/marcas',     builder: (_, __) => MarcasPage(bloc: getIt<TablaBloc<Marca>>())),
-      GoRoute(path: '/tablas/documentos', builder: (_, __) => DocumentosPage(bloc: getIt<TablaBloc<Documento>>())),
+      GoRoute(path: '/tablas/documentos',  builder: (_, __) => DocumentosPage(bloc: getIt<TablaBloc<Documento>>())),
+      GoRoute(path: '/tablas/tipos-pago',  builder: (_, __) => TiposPagoPage(bloc: getIt<TablaBloc<TipoPago>>())),
 
       // Maestros
       GoRoute(path: '/maestros',   builder: (_, __) => const MaestrosHubPage()),
@@ -124,6 +132,7 @@ class AppRouter {
         routes: [
           GoRoute(path: 'nueva',            builder: (_, __) => const VentaFormPage()),
           GoRoute(path: 'reporte-utilidad', builder: (_, __) => const ReporteUtilidadPage()),
+          GoRoute(path: 'reportes',         builder: (_, __) => const ReporteVentasPage()),
           GoRoute(path: ':id',              builder: (_, s)  => VentaDetailPage(ventaId: s.pathParameters['id']!)),
         ],
       ),
@@ -168,6 +177,17 @@ class AppRouter {
       GoRoute(path: '/almacen/kardex', builder: (_, __) => const KardexPage()),
       GoRoute(path: '/almacen/stock',  builder: (_, __) => const StockPage()),
 
+      // Seguridad
+      GoRoute(
+        path: '/seguridad',
+        builder: (_, __) => const SeguridadHubPage(),
+        routes: [
+          GoRoute(path: 'usuarios',  builder: (_, __) => const UsuariosPage()),
+          GoRoute(path: 'auditoria', builder: (_, __) => const AuditoriaPage()),
+          GoRoute(path: 'perfiles',  builder: (_, __) => const PerfilesPage()),
+        ],
+      ),
+
       // Utilitarios
       GoRoute(
         path: '/utilitarios',
@@ -176,8 +196,6 @@ class AppRouter {
           GoRoute(path: 'cambiar-clave', builder: (_, __) => const CambiarClavePage()),
           GoRoute(path: 'tipo-cambio',   builder: (_, __) => const TipoCambioListPage()),
           GoRoute(path: 'parametros',    builder: (_, __) => const ParametrosPage()),
-          GoRoute(path: 'usuarios',      builder: (_, __) => const UsuariosPage()),
-          GoRoute(path: 'auditoria',     builder: (_, __) => const AuditoriaPage()),
         ],
       ),
     ],

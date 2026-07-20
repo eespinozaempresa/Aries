@@ -9,6 +9,7 @@ export class Usuario {
     public readonly activo: boolean,
     public readonly dni?: string,
     public readonly email?: string,
+    public readonly menus?: string[],
   ) {}
 
   isActive(): boolean {

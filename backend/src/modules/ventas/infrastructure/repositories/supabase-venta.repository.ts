@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import { NumeroDocumentoService } from '../../../../shared/infrastructure/supabase/numero-documento.service';
-import { IVentaRepository, RegistrarVentaData, VentaFilter, VentaListResult } from '../../domain/ports/venta.repository.port';
+import { IVentaRepository, RegistrarVentaData, VentaFilter, VentaListResult, ReporteVentasFilter, ReporteGeneralFilter } from '../../domain/ports/venta.repository.port';
 import { Venta } from '../../domain/entities/venta.entity';
 import { DetalleVenta } from '../../domain/entities/detalle-venta.entity';
 
@@ -115,6 +115,7 @@ export class SupabaseVentaRepository implements IVentaRepository {
         cantidad:       l.cantidad,
         precioUnitario: l.precioUnitario,
       })),
+      p_serie:       d.serie ?? '0001',
     });
     if (rpcErr) throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
 
@@ -225,26 +226,32 @@ export class SupabaseVentaRepository implements IVentaRepository {
     if (error) throw new InternalServerErrorException(error.message);
 
     const rows = data ?? [];
-    const clienteCodes = [...new Set(rows.map((r) => r.codigo_cliente as string))];
-    const almacenCodes = [...new Set(rows.map((r) => r.codigo_almacen as string))];
+    const clienteCodes   = [...new Set(rows.map((r) => r.codigo_cliente  as string))];
+    const almacenCodes   = [...new Set(rows.map((r) => r.codigo_almacen  as string))];
+    const documentoCodes = [...new Set(rows.map((r) => r.codigo_documento as string))];
 
-    const [{ data: clientes }, { data: almacenes }] = await Promise.all([
+    const [{ data: clientes }, { data: almacenes }, { data: documentos }] = await Promise.all([
       clienteCodes.length
         ? this.supabase.db.from('clientes').select('codigo, razon_social').eq('codigo_empresa', f.codigoEmpresa).in('codigo', clienteCodes)
         : Promise.resolve({ data: [] }),
       almacenCodes.length
         ? this.supabase.db.from('almacenes').select('codigo, descripcion').eq('codigo_empresa', f.codigoEmpresa).in('codigo', almacenCodes)
         : Promise.resolve({ data: [] }),
+      documentoCodes.length
+        ? this.supabase.db.from('documentos').select('codigo, abreviatura').eq('codigo_empresa', f.codigoEmpresa).in('codigo', documentoCodes)
+        : Promise.resolve({ data: [] }),
     ]);
 
-    const clienteMap = new Map((clientes ?? []).map((c) => [c.codigo, c.razon_social]));
-    const almacenMap = new Map((almacenes ?? []).map((a) => [a.codigo, a.descripcion]));
+    const clienteMap   = new Map((clientes  ?? []).map((c: any) => [c.codigo, c.razon_social]));
+    const almacenMap   = new Map((almacenes ?? []).map((a: any) => [a.codigo, a.descripcion]));
+    const documentoMap = new Map((documentos ?? []).map((d: any) => [d.codigo, d.abreviatura]));
 
     const total = count ?? 0;
     return {
       data: rows.map((r) => this.toEntity(r, [], {
-        razonSocialCliente: clienteMap.get(r.codigo_cliente as string),
-        descripcionAlmacen: almacenMap.get(r.codigo_almacen as string),
+        razonSocialCliente:  clienteMap.get(r.codigo_cliente  as string),
+        descripcionAlmacen:  almacenMap.get(r.codigo_almacen  as string),
+        abreviaturaDocumento: documentoMap.get(r.codigo_documento as string),
       })),
       total, page, lastPage: Math.ceil(total / limit) || 1,
     };
@@ -257,22 +264,196 @@ export class SupabaseVentaRepository implements IVentaRepository {
     if (error) throw new InternalServerErrorException(error.message);
     if (!data) return null;
 
-    const [{ data: cliente }, { data: almacen }] = await Promise.all([
+    const [{ data: cliente }, { data: almacen }, { data: documento }] = await Promise.all([
       this.supabase.db.from('clientes').select('razon_social').eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_cliente).maybeSingle(),
       this.supabase.db.from('almacenes').select('descripcion').eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_almacen).maybeSingle(),
+      this.supabase.db.from('documentos').select('abreviatura').eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_documento).maybeSingle(),
     ]);
 
     return this.toEntity(data, (data.detalle_ventas ?? []).map(this.toDetalle), {
-      razonSocialCliente: cliente?.razon_social,
-      descripcionAlmacen: almacen?.descripcion,
+      razonSocialCliente:  cliente?.razon_social,
+      descripcionAlmacen:  almacen?.descripcion,
+      abreviaturaDocumento: (documento as any)?.abreviatura,
     });
   }
 
-  private toEntity(r: Record<string, unknown>, detalles: DetalleVenta[], extras: { razonSocialCliente?: string; descripcionAlmacen?: string } = {}): Venta {
+  async reporteVentas(codigoEmpresa: string, params: ReporteVentasFilter): Promise<unknown[]> {
+    let query = this.supabase.db
+      .from('ventas')
+      .select('id, fecha, serie, numero_documento, tipo_venta, anulado, subtotal, igv, total, codigo_cliente, codigo_documento')
+      .eq('codigo_empresa', codigoEmpresa)
+      .order('tipo_venta')
+      .order('fecha');
+
+    if (params.desde) query = query.gte('fecha', params.desde);
+    if (params.hasta) query = query.lte('fecha', params.hasta);
+    if (params.almacen) query = query.eq('codigo_almacen', params.almacen);
+    if (params.tipoVenta) query = query.eq('tipo_venta', params.tipoVenta.toUpperCase());
+
+    const { data: ventas, error } = await query;
+    if (error) throw new InternalServerErrorException(error.message);
+    if (!ventas?.length) return [];
+
+    const clienteCodigos = [...new Set(ventas.map((v: any) => v.codigo_cliente))];
+    const docCodigos = [...new Set(ventas.map((v: any) => v.codigo_documento))];
+
+    const [{ data: clientes }, { data: docs }] = await Promise.all([
+      this.supabase.db.from('clientes').select('codigo, razon_social').eq('codigo_empresa', codigoEmpresa).in('codigo', clienteCodigos),
+      this.supabase.db.from('documentos').select('codigo, abreviatura').eq('codigo_empresa', codigoEmpresa).in('codigo', docCodigos),
+    ]);
+
+    const clienteMap: Record<string, string> = Object.fromEntries((clientes ?? []).map((c: any) => [c.codigo, c.razon_social]));
+    const docMap: Record<string, string>     = Object.fromEntries((docs ?? []).map((d: any) => [d.codigo, d.abreviatura]));
+
+    if (params.tipo === 'general') {
+      return ventas.map((v: any) => ({
+        tipoVenta: v.tipo_venta,
+        fecha: v.fecha,
+        documento: docMap[v.codigo_documento] ?? v.codigo_documento,
+        serie: v.serie,
+        numero: v.numero_documento,
+        cliente: clienteMap[v.codigo_cliente] ?? v.codigo_cliente,
+        anulado: v.anulado as boolean,
+        subtotal: Number(v.subtotal),
+        igv: Number(v.igv),
+        total: Number(v.total),
+      }));
+    }
+
+    // Detallado
+    const ventaIds = ventas.map((v: any) => v.id);
+    const ventaMap: Record<string, any> = Object.fromEntries(ventas.map((v: any) => [v.id, v]));
+
+    const { data: detalles, error: detError } = await this.supabase.db
+      .from('detalle_ventas')
+      .select('venta_id, codigo_articulo, cantidad, importe')
+      .in('venta_id', ventaIds);
+    if (detError) throw new InternalServerErrorException(detError.message);
+    if (!detalles?.length) return [];
+
+    const artCodigos = [...new Set(detalles.map((d: any) => d.codigo_articulo))];
+    const { data: articulos } = await this.supabase.db
+      .from('articulos')
+      .select('codigo, descripcion, codigo_medida')
+      .eq('codigo_empresa', codigoEmpresa)
+      .in('codigo', artCodigos);
+
+    const artMap: Record<string, any> = Object.fromEntries((articulos ?? []).map((a: any) => [a.codigo, a]));
+
+    return detalles.map((d: any) => {
+      const v = ventaMap[d.venta_id];
+      const art = artMap[d.codigo_articulo] ?? {};
+      return {
+        tipoVenta: v?.tipo_venta,
+        fecha: v?.fecha,
+        documento: docMap[v?.codigo_documento] ?? v?.codigo_documento,
+        serie: v?.serie,
+        numero: v?.numero_documento,
+        cliente: clienteMap[v?.codigo_cliente] ?? v?.codigo_cliente,
+        articulo: art.descripcion ?? d.codigo_articulo,
+        unidadMedida: art.codigo_medida ?? '',
+        cantidad: Number(d.cantidad),
+        total: Number(d.importe),
+      };
+    });
+  }
+
+  async reporteGeneral(codigoEmpresa: string, params: ReporteGeneralFilter): Promise<unknown[]> {
+    let ventasQuery = this.supabase.db
+      .from('ventas')
+      .select('id, fecha, codigo_cliente, codigo_almacen, codigo_usuario')
+      .eq('codigo_empresa', codigoEmpresa)
+      .eq('anulado', false);
+
+    if (params.desde) ventasQuery = ventasQuery.gte('fecha', params.desde);
+    if (params.hasta) ventasQuery = ventasQuery.lte('fecha', params.hasta);
+    if (params.almacen) ventasQuery = ventasQuery.eq('codigo_almacen', params.almacen);
+    if (params.cliente) ventasQuery = ventasQuery.eq('codigo_cliente', params.cliente);
+    if (params.usuario) ventasQuery = ventasQuery.eq('codigo_usuario', params.usuario);
+
+    const { data: ventas, error: ventasError } = await ventasQuery;
+    if (ventasError) throw new InternalServerErrorException(ventasError.message);
+    if (!ventas?.length) return [];
+
+    const ventaIds  = ventas.map((v: any) => v.id);
+    const ventaMap: Record<string, any> = Object.fromEntries(ventas.map((v: any) => [v.id, v]));
+
+    const clienteCodigos = [...new Set(ventas.map((v: any) => v.codigo_cliente).filter(Boolean))];
+    const almacenCodigos = [...new Set(ventas.map((v: any) => v.codigo_almacen).filter(Boolean))];
+    const usuarioCodigos = [...new Set(ventas.map((v: any) => v.codigo_usuario).filter(Boolean))];
+
+    let detallesQuery = this.supabase.db
+      .from('detalle_ventas')
+      .select('venta_id, codigo_articulo, cantidad, importe')
+      .in('venta_id', ventaIds);
+    if (params.articulo) detallesQuery = detallesQuery.eq('codigo_articulo', params.articulo);
+
+    const [
+      { data: detalles, error: detError },
+      { data: clientes },
+      { data: almacenes },
+      { data: usuarios },
+    ] = await Promise.all([
+      detallesQuery,
+      clienteCodigos.length
+        ? this.supabase.db.from('clientes').select('codigo, razon_social').eq('codigo_empresa', codigoEmpresa).in('codigo', clienteCodigos)
+        : Promise.resolve({ data: [] }),
+      almacenCodigos.length
+        ? this.supabase.db.from('almacenes').select('codigo, descripcion').eq('codigo_empresa', codigoEmpresa).in('codigo', almacenCodigos)
+        : Promise.resolve({ data: [] }),
+      usuarioCodigos.length
+        ? this.supabase.db.from('usuarios').select('codigo, nombre').eq('codigo_empresa', codigoEmpresa).in('codigo', usuarioCodigos)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    if (detError) throw new InternalServerErrorException(detError.message);
+    if (!detalles?.length) return [];
+
+    const clienteMap: Record<string, string> = Object.fromEntries((clientes ?? []).map((c: any) => [c.codigo, c.razon_social]));
+    const almacenMap: Record<string, string> = Object.fromEntries((almacenes ?? []).map((a: any) => [a.codigo, a.descripcion]));
+    const usuarioMap: Record<string, string> = Object.fromEntries((usuarios ?? []).map((u: any) => [u.codigo, u.nombre ?? u.codigo]));
+
+    const artCodigos = [...new Set(detalles.map((d: any) => d.codigo_articulo))];
+    const { data: articulos } = await this.supabase.db
+      .from('articulos')
+      .select('codigo, descripcion, codigo_medida, codigo_linea')
+      .eq('codigo_empresa', codigoEmpresa)
+      .in('codigo', artCodigos);
+
+    const lineaCodigos = [...new Set((articulos ?? []).map((a: any) => a.codigo_linea).filter(Boolean))];
+    const { data: lineas } = lineaCodigos.length
+      ? await this.supabase.db.from('lineas').select('codigo, descripcion').eq('codigo_empresa', codigoEmpresa).in('codigo', lineaCodigos)
+      : { data: [] };
+
+    const artMap: Record<string, any>      = Object.fromEntries((articulos ?? []).map((a: any) => [a.codigo, a]));
+    const lineaMap: Record<string, string> = Object.fromEntries((lineas ?? []).map((l: any) => [l.codigo, l.descripcion as string]));
+
+    const rows = detalles.map((d: any) => {
+      const v   = ventaMap[d.venta_id] ?? {};
+      const art = artMap[d.codigo_articulo] ?? {};
+      return {
+        codigoLinea:  art.codigo_linea ?? '',
+        linea:        lineaMap[art.codigo_linea] ?? art.codigo_linea ?? 'Sin línea',
+        fecha:        v.fecha ?? '',
+        cliente:      clienteMap[v.codigo_cliente] ?? v.codigo_cliente ?? '',
+        almacen:      almacenMap[v.codigo_almacen] ?? v.codigo_almacen ?? '',
+        usuario:      usuarioMap[v.codigo_usuario] ?? v.codigo_usuario ?? '',
+        articulo:     art.descripcion ?? d.codigo_articulo,
+        unidadMedida: art.codigo_medida ?? '',
+        cantidad:     Number(d.cantidad),
+        total:        Number(d.importe),
+      };
+    });
+
+    return rows.sort((a: any, b: any) => a.codigoLinea.localeCompare(b.codigoLinea));
+  }
+
+  private toEntity(r: Record<string, unknown>, detalles: DetalleVenta[], extras: { razonSocialCliente?: string; descripcionAlmacen?: string; abreviaturaDocumento?: string } = {}): Venta {
     return {
       id: r.id as string,
       codigoEmpresa: r.codigo_empresa as string,
       codigoDocumento: r.codigo_documento as string,
+      abreviaturaDocumento: extras.abreviaturaDocumento,
       serie: (r.serie as string) ?? '0001',
       numeroDocumento: r.numero_documento as string,
       fecha: r.fecha as string,
@@ -294,8 +475,8 @@ export class SupabaseVentaRepository implements IVentaRepository {
       anulado: r.anulado as boolean,
       createdAt: r.created_at as string | undefined,
       detalles,
-      razonSocialCliente: extras.razonSocialCliente,
-      descripcionAlmacen: extras.descripcionAlmacen,
+      razonSocialCliente:  extras.razonSocialCliente,
+      descripcionAlmacen:  extras.descripcionAlmacen,
     };
   }
 

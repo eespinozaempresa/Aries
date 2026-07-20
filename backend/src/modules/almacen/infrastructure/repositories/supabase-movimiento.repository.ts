@@ -32,6 +32,7 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
       p_concepto:    data.concepto ?? null,
       p_cod_usuario: data.codigoUsuario,
       p_lineas:      data.lineas,
+      p_serie:       data.serie ?? '0001',
     });
     if (error) {
       if (error.code === '23505') throw new ConflictException('Número de documento ya existe');
@@ -74,18 +75,26 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
 
     const rows = data ?? [];
     const almacenCodes = [...new Set(rows.map((r) => r.codigo_almacen_origen as string))];
+    const documentoCodes = [...new Set(rows.map((r) => r.codigo_documento as string))];
 
-    const { data: almacenes } = almacenCodes.length
-      ? await this.supabase.db.from('almacenes').select('codigo, descripcion').eq('codigo_empresa', f.codigoEmpresa).in('codigo', almacenCodes)
-      : { data: [] };
+    const [{ data: almacenes }, { data: documentos }] = await Promise.all([
+      almacenCodes.length
+        ? this.supabase.db.from('almacenes').select('codigo, descripcion').eq('codigo_empresa', f.codigoEmpresa).in('codigo', almacenCodes)
+        : Promise.resolve({ data: [] }),
+      documentoCodes.length
+        ? this.supabase.db.from('documentos').select('codigo, abreviatura').eq('codigo_empresa', f.codigoEmpresa).in('codigo', documentoCodes)
+        : Promise.resolve({ data: [] }),
+    ]);
 
-    const almacenMap = new Map((almacenes ?? []).map((a: any) => [a.codigo, a.descripcion]));
+    const almacenMap  = new Map((almacenes  ?? []).map((a: any) => [a.codigo, a.descripcion]));
+    const documentoMap = new Map((documentos ?? []).map((d: any) => [d.codigo, d.abreviatura]));
 
     const total = count ?? 0;
     return {
       data: rows.map((r) => {
         const mov = this.toEntity(r);
         mov.descripcionAlmacenOrigen = almacenMap.get(r.codigo_almacen_origen as string) as string | undefined;
+        mov.abreviaturaDocumento = documentoMap.get(r.codigo_documento as string) as string | undefined;
         return mov;
       }),
       total,
@@ -107,11 +116,10 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
     const almacenCodes = [data.codigo_almacen_origen as string];
     if (data.codigo_almacen_dest) almacenCodes.push(data.codigo_almacen_dest as string);
 
-    const { data: almacenes } = await this.supabase.db
-      .from('almacenes')
-      .select('codigo, descripcion')
-      .eq('codigo_empresa', codigoEmpresa)
-      .in('codigo', almacenCodes);
+    const [{ data: almacenes }, { data: documentos }] = await Promise.all([
+      this.supabase.db.from('almacenes').select('codigo, descripcion').eq('codigo_empresa', codigoEmpresa).in('codigo', almacenCodes),
+      this.supabase.db.from('documentos').select('codigo, abreviatura').eq('codigo_empresa', codigoEmpresa).eq('codigo', data.codigo_documento as string),
+    ]);
 
     const almacenMap = new Map((almacenes ?? []).map((a: any) => [a.codigo, a.descripcion]));
 
@@ -120,6 +128,7 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
     if (data.codigo_almacen_dest) {
       mov.descripcionAlmacenDest = almacenMap.get(data.codigo_almacen_dest as string) as string | undefined;
     }
+    mov.abreviaturaDocumento = (documentos?.[0] as any)?.abreviatura as string | undefined;
     mov.detalles = (data.detalle_movimientos ?? []).map(this.toDetalle);
     return mov;
   }

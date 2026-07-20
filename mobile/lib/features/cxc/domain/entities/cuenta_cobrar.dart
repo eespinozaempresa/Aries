@@ -17,6 +17,7 @@ class CuentaCobrar {
   final String fechaEmision;
   final String? fechaVencimiento;
   final String codigoCliente;
+  final String? razonSocialCliente;
   final String? abreviaturaDocumento;
   final String? serieDocumento;
   final String? descripcion;
@@ -40,6 +41,7 @@ class CuentaCobrar {
     required this.fechaEmision,
     this.fechaVencimiento,
     required this.codigoCliente,
+    this.razonSocialCliente,
     this.abreviaturaDocumento,
     this.serieDocumento,
     this.descripcion,
@@ -64,6 +66,7 @@ class CuentaCobrar {
     fechaEmision: j['fechaEmision'] as String,
     fechaVencimiento: j['fechaVencimiento'] as String?,
     codigoCliente: j['codigoCliente'] as String,
+    razonSocialCliente: j['razonSocialCliente'] as String?,
     abreviaturaDocumento: j['abreviaturaDocumento'] as String?,
     serieDocumento: j['serieDocumento'] as String?,
     descripcion: j['descripcion'] as String?,

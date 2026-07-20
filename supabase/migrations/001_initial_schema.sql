@@ -1,5 +1,5 @@
 -- ============================================================
--- Aries ERP — Esquema inicial multi-empresa
+-- Aries — Esquema inicial multi-empresa
 -- Compatible con Supabase (PostgreSQL 15+)
 -- ============================================================
 

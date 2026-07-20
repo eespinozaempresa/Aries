@@ -1,5 +1,5 @@
 -- ============================================================
--- Aries ERP — Autonumeración por Serie
+-- Aries — Autonumeración por Serie
 -- Agrega campo 'serie' a documentos y tablas de transacciones.
 -- Crea función atómica siguiente_numero_doc().
 -- ============================================================

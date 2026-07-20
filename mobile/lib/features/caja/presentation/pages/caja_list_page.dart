@@ -66,7 +66,7 @@ class _State extends State<CajaListPage> {
                 }
                 final sesion = items[i];
                 return ListTile(
-                  onTap: () => ctx.go('/caja/${sesion.id}'),
+                  onTap: () => ctx.push('/caja/${sesion.id}'),
                   leading: CircleAvatar(
                     backgroundColor: sesion.estado == EstadoCaja.ABIERTA ? Colors.green[100] : Colors.grey[200],
                     child: Icon(

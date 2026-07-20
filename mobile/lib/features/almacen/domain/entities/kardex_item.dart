@@ -7,6 +7,8 @@ class KardexItem {
   final String? descripcionArticulo;
   final String fecha;
   final String codigoDocumento;
+  final String? abreviaturaDocumento;
+  final String serie;
   final String numeroDocumento;
   final String tipo;
   final double cantEntrada;
@@ -28,6 +30,8 @@ class KardexItem {
     this.descripcionArticulo,
     required this.fecha,
     required this.codigoDocumento,
+    this.abreviaturaDocumento,
+    this.serie = '0001',
     required this.numeroDocumento,
     required this.tipo,
     required this.cantEntrada,

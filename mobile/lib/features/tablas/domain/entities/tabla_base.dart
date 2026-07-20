@@ -39,6 +39,22 @@ class TipoLista extends TablaBase {
   String get subtitle => 'Dscto: ${dsctoPct.toStringAsFixed(1)}% / S/ ${dctoMto.toStringAsFixed(2)}';
 }
 
+class TipoPago extends TablaBase {
+  final bool requiereOperacion;
+
+  const TipoPago({
+    required super.id,
+    required super.codigoEmpresa,
+    required super.codigo,
+    required super.descripcion,
+    required super.activo,
+    required this.requiereOperacion,
+  });
+
+  @override
+  String get subtitle => requiereOperacion ? 'Requiere N° operación' : '';
+}
+
 class Documento extends TablaBase {
   final String? abreviatura;
   final String serie;

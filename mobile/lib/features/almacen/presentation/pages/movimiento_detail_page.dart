@@ -128,7 +128,7 @@ class _InfoCard extends StatelessWidget {
         child: Column(
           children: [
             _Row('Tipo', mov.tipo.name),
-            _Row('Documento', '${mov.codigoDocumento} ${mov.numeroDocumento}'),
+            _Row('Documento', '${mov.abreviaturaDocumento ?? mov.codigoDocumento} ${mov.numeroDocumento}'),
             _Row('Fecha', mov.fecha),
             _Row('Almacén origen', mov.descripcionAlmacenOrigen ?? mov.codigoAlmacenOrigen),
             if (mov.codigoAlmacenDest != null) _Row('Almacén destino', mov.descripcionAlmacenDest ?? mov.codigoAlmacenDest!),

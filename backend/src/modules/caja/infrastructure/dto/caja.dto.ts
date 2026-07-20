@@ -14,6 +14,7 @@ export class RegistrarMovCajaDto {
   @IsEnum(['INGRESO', 'EGRESO']) tipo: 'INGRESO' | 'EGRESO';
   @IsString() concepto: string;
   @IsOptional() @IsString() referencia?: string;
+  @IsOptional() @IsString() tipoPago?: string;
   @IsNumber() @Min(0.01) monto: number;
   @IsDateString() fecha: string;
 }

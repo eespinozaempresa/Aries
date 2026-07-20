@@ -45,6 +45,11 @@ class _ViewState extends State<_View> {
         title: const Text('Ventas'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.assessment_outlined),
+            tooltip: 'Reportes de Ventas',
+            onPressed: () => context.push('/ventas/reportes'),
+          ),
+          IconButton(
             icon: const Icon(Icons.bar_chart),
             tooltip: 'Reporte Utilidad',
             onPressed: () => context.push('/ventas/reporte-utilidad'),
@@ -65,10 +70,10 @@ class _ViewState extends State<_View> {
                   title: 'Ventas',
                   columns: const ['Doc', 'Serie', 'Número', 'Fecha', 'Cliente', 'Total', 'Tipo', 'Estado'],
                   rows: items.map((v) => [
-                    v.codigoDocumento,
+                    v.abreviaturaDocumento ?? v.codigoDocumento,
                     v.serie,
                     v.numeroDocumento,
-                    v.fecha,
+                    ExportService.fmtDate(v.fecha),
                     v.codigoCliente,
                     v.total.toStringAsFixed(2),
                     v.tipoVenta.name,
@@ -117,7 +122,7 @@ class _ViewState extends State<_View> {
                     backgroundColor: v.anulado ? Colors.grey.shade200 : Colors.green.shade50,
                     child: Icon(Icons.receipt, color: v.anulado ? Colors.grey : Colors.green, size: 20),
                   ),
-                  title: Text('${v.codigoDocumento}-${v.serie}-${v.numeroDocumento}'),
+                  title: Text('${v.abreviaturaDocumento ?? v.codigoDocumento}-${v.serie}-${v.numeroDocumento}'),
                   subtitle: Text('${v.fecha} · ${v.razonSocialCliente ?? v.codigoCliente}'),
                   trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
                     Text('$cur ${monto.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),

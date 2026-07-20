@@ -6,6 +6,7 @@ export interface LogoutCommand {
   refreshToken: string;
   codigoEmpresa: string;
   usuarioId: string;
+  usuarioCodigo?: string;
   ip?: string;
   dispositivo?: string;
 }
@@ -23,6 +24,7 @@ export class LogoutUseCase {
     await this.sessionRepo.logAudit({
       codigoEmpresa: cmd.codigoEmpresa,
       usuarioId: cmd.usuarioId,
+      usuarioCodigo: cmd.usuarioCodigo,
       tipo: 'LOGOUT',
       ip: cmd.ip,
       dispositivo: cmd.dispositivo,

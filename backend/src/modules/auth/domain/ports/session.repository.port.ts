@@ -6,8 +6,9 @@ export interface StoreRefreshTokenParams {
 
 export interface LogAuditParams {
   codigoEmpresa: string;
-  usuarioId: string;
-  tipo: 'LOGIN' | 'LOGOUT';
+  usuarioId?: string;
+  usuarioCodigo?: string;
+  tipo: 'LOGIN' | 'LOGIN_FAIL' | 'LOGOUT';
   ip?: string;
   dispositivo?: string;
 }
