@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 // ── Menu tree definitions ─────────────────────────────────────────────────────
 
@@ -119,7 +120,7 @@ class _PerfilesPageState extends State<PerfilesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Perfiles de usuario')),
+      appBar: AriesAppBar(title: const Text('Perfiles de usuario')),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(),
         tooltip: 'Nuevo perfil',
@@ -313,7 +314,7 @@ class _PerfilFormPageState extends State<_PerfilFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: Text(_isEdit ? 'Editar perfil' : 'Nuevo perfil'),
         actions: [
           TextButton(

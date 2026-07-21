@@ -21,7 +21,7 @@ export interface RegistrarCobroData {
   cuentaCobrarId: string;
   numeroRecibo: string;
   fecha: string;
-  tipoPago: 'EFECTIVO' | 'TRANSFERENCIA' | 'CHEQUE';
+  tipoPago: string;
   numeroOperacion?: string;
   codigoBanco?: string;
   monto: number;

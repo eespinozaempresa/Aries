@@ -18,6 +18,8 @@ import '../../domain/entities/compra.dart';
 import '../bloc/compra_bloc.dart';
 import '../bloc/compra_event.dart';
 import '../bloc/compra_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
 
 class CompraFormPage extends StatelessWidget {
   const CompraFormPage({super.key});
@@ -109,7 +111,7 @@ class _FormState extends State<_Form> {
       title: 'Almacén', onSearch: (q) async {
         final res = await repo.findAll();
         return res.fold((_) => [], (l) => l.where((a) => a.descripcion.toLowerCase().contains(q.toLowerCase())).toList());
-      }, itemTitle: (a) => a.descripcion, itemSubtitle: (a) => a.codigo);
+      }, itemTitle: (a) => a.descripcion);
     if (r != null) setState(() { _almacen = r.codigo; _almacenNombre = r.descripcion; });
   }
 
@@ -117,18 +119,18 @@ class _FormState extends State<_Form> {
     final repo = getIt<ProveedorRepository>();
     final r = await MaestroPicker.show<Proveedor>(context,
       title: 'Proveedor', onSearch: (q) async {
-        final res = await repo.search(q: q, page: 1);
+        final res = await repo.search(q: q, activo: true, page: 1);
         return res.fold((_) => [], (p) => p.data);
-      }, itemTitle: (p) => p.razonSocial, itemSubtitle: (p) => p.rucDni ?? p.codigo);
+      }, itemTitle: (p) => p.razonSocial, itemSubtitle: (p) => p.rucDni ?? '');
     if (r != null) setState(() { _proveedor = r.codigo; _proveedorNombre = r.razonSocial; });
   }
 
   Future<void> _addLinea() async {
     final art = await MaestroPicker.show<Articulo>(context,
       title: 'Artículo', onSearch: (q) async {
-        final res = await getIt<ArticuloRepository>().search(q: q, page: 1);
+        final res = await getIt<ArticuloRepository>().search(q: q, activo: true, page: 1);
         return res.fold((_) => [], (p) => p.data);
-      }, itemTitle: (a) => a.descripcion, itemSubtitle: (a) => a.codigo);
+      }, itemTitle: (a) => a.descripcion);
     if (art == null || !mounted) return;
 
     final qCtrl = TextEditingController(text: '1');
@@ -136,9 +138,9 @@ class _FormState extends State<_Form> {
     final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
       title: Text(art.descripcion),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        TextFormField(controller: qCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Cantidad')),
+        NumberFormField(controller: qCtrl, decoration: const InputDecoration(labelText: 'Cantidad')),
         const SizedBox(height: 8),
-        TextFormField(controller: pCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Precio unitario')),
+        NumberFormField(controller: pCtrl, decoration: const InputDecoration(labelText: 'Precio unitario')),
       ]),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
@@ -190,7 +192,7 @@ class _FormState extends State<_Form> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nueva Compra')),
+      appBar: AriesAppBar(title: const Text('Nueva Compra')),
       body: BlocConsumer<CompraBloc, CompraState>(
         listener: (ctx, state) {
           if (state is CompraSaved) {
@@ -211,7 +213,7 @@ class _FormState extends State<_Form> {
                 decoration: const InputDecoration(labelText: 'Documento *', border: OutlineInputBorder(), isDense: true),
                 items: _documentos.map((d) => DropdownMenuItem(
                   value: d,
-                  child: Text('${d.abreviatura ?? d.codigo} · ${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
+                  child: Text('${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
                 )).toList(),
                 onChanged: (d) => setState(() => _documento = d),
                 validator: (v) => v == null ? 'Seleccione un documento' : null,
@@ -236,7 +238,7 @@ class _FormState extends State<_Form> {
                 ChoiceChip(label: const Text('Crédito'), selected: _forma == FormaPago.CREDITO, onSelected: (_) => setState(() => _forma = FormaPago.CREDITO)),
                 if (_forma == FormaPago.CREDITO) ...[
                   const SizedBox(width: 12),
-                  SizedBox(width: 60, child: TextFormField(initialValue: _plazo.toString(), decoration: const InputDecoration(labelText: 'Días'), keyboardType: TextInputType.number, onChanged: (v) => _plazo = int.tryParse(v) ?? 30)),
+                  SizedBox(width: 60, child: NumberFormField(initialValue: _plazo.toString(), decoration: const InputDecoration(labelText: 'Días'), allowDecimal: false, onChanged: (v) => _plazo = int.tryParse(v ?? '') ?? 30)),
                 ],
               ]),
               const SizedBox(height: 12),
@@ -246,7 +248,7 @@ class _FormState extends State<_Form> {
                 const SizedBox(width: 8),
                 ChoiceChip(label: const Text('USD'), selected: _moneda == 'USD', onSelected: (_) => setState(() => _moneda = 'USD')),
                 const SizedBox(width: 12),
-                SizedBox(width: 90, child: TextFormField(controller: _tcCtrl, decoration: const InputDecoration(labelText: 'T.C.'), keyboardType: TextInputType.number)),
+                SizedBox(width: 90, child: NumberFormField(controller: _tcCtrl, decoration: const InputDecoration(labelText: 'T.C.'))),
               ]),
               const Divider(),
               // Almacén y proveedor

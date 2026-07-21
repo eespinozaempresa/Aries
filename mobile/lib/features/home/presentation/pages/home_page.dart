@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/di/injection.dart';
 import '../../../../core/services/menu_permission_service.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -24,21 +23,7 @@ class HomePage extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('ARIES'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.lock_reset_outlined),
-            tooltip: 'Cambiar contraseña',
-            onPressed: () => context.push('/utilitarios/cambiar-clave'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-            onPressed: () => _logout(context),
-          ),
-        ],
-      ),
+      appBar: const AriesAppBar(title: Text('ARIES')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: GridView.builder(
@@ -53,13 +38,6 @@ class HomePage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _logout(BuildContext context) async {
-    final storage = getIt<FlutterSecureStorage>();
-    await storage.deleteAll();
-    MenuPermissionService.instance.clear();
-    if (context.mounted) context.go('/login');
   }
 }
 

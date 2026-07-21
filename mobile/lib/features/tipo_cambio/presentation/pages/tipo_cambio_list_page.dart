@@ -6,6 +6,8 @@ import '../../domain/repositories/tipo_cambio_repository.dart';
 import '../bloc/tipo_cambio_bloc.dart';
 import '../bloc/tipo_cambio_event.dart';
 import '../bloc/tipo_cambio_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
 
 class TipoCambioListPage extends StatelessWidget {
   const TipoCambioListPage({super.key});
@@ -49,7 +51,7 @@ class _TipoCambioListViewState extends State<_TipoCambioListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tipo de Cambio')),
+      appBar: AriesAppBar(title: const Text('Tipo de Cambio')),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showForm(context, null),
         child: const Icon(Icons.add),
@@ -166,9 +168,8 @@ class _TipoCambioListViewState extends State<_TipoCambioListView> {
                   validator: (v) => (v == null || v.isEmpty) ? 'Seleccione una fecha' : null,
                 ),
               if (existing == null) const SizedBox(height: 16),
-              TextFormField(
+              NumberFormField(
                 controller: tcCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 autofocus: true,
                 decoration: const InputDecoration(
                   labelText: 'Tipo de Cambio',
@@ -177,7 +178,7 @@ class _TipoCambioListViewState extends State<_TipoCambioListView> {
                 ),
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Ingrese el valor';
-                  final n = double.tryParse(v.replaceAll(',', '.'));
+                  final n = double.tryParse(v);
                   if (n == null || n <= 0) return 'Ingrese un valor válido mayor a 0';
                   return null;
                 },

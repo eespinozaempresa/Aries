@@ -4,6 +4,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/services/menu_permission_service.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 Future<void> _showForbiddenDialog(BuildContext context, String message) {
   return showDialog(
@@ -118,7 +119,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Gestión de usuarios')),
+      appBar: AriesAppBar(title: const Text('Gestión de usuarios')),
       floatingActionButton: FloatingActionButton(
         onPressed: _openNewUserSheet,
         tooltip: 'Nuevo usuario',

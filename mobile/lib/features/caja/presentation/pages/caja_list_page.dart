@@ -5,6 +5,8 @@ import '../../../../core/di/injection.dart';
 import '../../data/datasources/caja_remote_datasource.dart';
 import '../../domain/entities/sesion_caja.dart';
 import '../bloc/caja_bloc.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
 
 class CajaListPage extends StatefulWidget {
   const CajaListPage({super.key});
@@ -30,7 +32,7 @@ class _State extends State<CajaListPage> {
     return BlocProvider(
       create: (_) => CajaBloc(getIt<CajaRemoteDataSource>())..add(CajaLoad(reset: true)),
       child: Builder(builder: (ctx) => Scaffold(
-        appBar: AppBar(title: const Text('Caja')),
+        appBar: AriesAppBar(title: const Text('Caja')),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _showAbrirDialog(ctx),
           icon: const Icon(Icons.add),
@@ -105,7 +107,7 @@ class _State extends State<CajaListPage> {
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         TextField(controller: cajaCtrl, decoration: const InputDecoration(labelText: 'Código caja (ej: CAJA01)')),
         const SizedBox(height: 8),
-        TextField(controller: montoCtrl, keyboardType: TextInputType.number,
+        NumberFormField(controller: montoCtrl,
           decoration: const InputDecoration(labelText: 'Monto apertura (S/)')),
       ]),
       actions: [

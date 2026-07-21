@@ -7,6 +7,7 @@ import '../../domain/entities/venta.dart';
 import '../bloc/venta_bloc.dart';
 import '../bloc/venta_event.dart';
 import '../bloc/venta_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class VentaDetailPage extends StatelessWidget {
   final String ventaId;
@@ -23,7 +24,7 @@ class _View extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalle Venta')),
+      appBar: AriesAppBar(title: const Text('Detalle Venta')),
       body: BlocConsumer<VentaBloc, VentaState>(
         listener: (ctx, state) {
           if (state is VentaAnulada) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Venta anulada'), backgroundColor: Colors.orange));

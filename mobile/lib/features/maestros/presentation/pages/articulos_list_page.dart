@@ -7,6 +7,7 @@ import '../../domain/repositories/articulo_repository.dart';
 import '../bloc/articulos_bloc.dart';
 import '../bloc/maestro_list_event.dart';
 import '../bloc/maestro_list_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class ArticulosListPage extends StatelessWidget {
   const ArticulosListPage({super.key});
@@ -57,7 +58,7 @@ class _ArticulosViewState extends State<_ArticulosView> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: const Text('Artículos'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),

@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Put, Body, Param, Query,
-  Req, UseGuards, HttpCode, HttpStatus,
+  Req, UseGuards, HttpCode, HttpStatus, NotFoundException,
   ParseIntPipe, DefaultValuePipe,
 } from '@nestjs/common';
 import { Request } from 'express';
@@ -8,6 +8,7 @@ import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
 import { JwtPayload } from '../../../../shared/infrastructure/jwt/jwt.service';
 import { SearchProveedoresUseCase } from '../../application/use-cases/proveedores/search-proveedores.use-case';
 import { SaveProveedorUseCase } from '../../application/use-cases/proveedores/save-proveedor.use-case';
+import { IProveedorRepository } from '../../domain/ports/proveedor.repository.port';
 import { CreatePersonaDto, UpdatePersonaDto } from '../dto/persona.dto';
 
 @Controller('maestros/proveedores')
@@ -16,7 +17,16 @@ export class ProveedoresController {
   constructor(
     private readonly search: SearchProveedoresUseCase,
     private readonly save: SaveProveedorUseCase,
+    private readonly repo: IProveedorRepository,
   ) {}
+
+  @Get(':id')
+  async findOne(@Param('id') id: string, @Req() req: Request) {
+    const user = req['user'] as JwtPayload;
+    const proveedor = await this.repo.findById(id, user.empresa);
+    if (!proveedor) throw new NotFoundException('Proveedor no encontrado');
+    return { data: proveedor };
+  }
 
   @Get()
   async list(

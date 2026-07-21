@@ -6,6 +6,11 @@ import '../../../../core/utils/export_service.dart';
 import '../../data/datasources/cxc_remote_datasource.dart';
 import '../../domain/entities/cuenta_cobrar.dart';
 import '../bloc/cxc_bloc.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
+import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
+import '../../../tablas/data/models/tabla_model.dart';
+import '../../../tablas/domain/entities/tabla_base.dart';
 
 class CxCListPage extends StatefulWidget {
   const CxCListPage({super.key});
@@ -38,7 +43,7 @@ class _State extends State<CxCListPage> {
       create: (_) => CxCBloc(getIt<CxCRemoteDataSource>())
         ..add(CxCLoad(reset: true, pendiente: _filtroPendiente)),
       child: Builder(builder: (ctx) => Scaffold(
-        appBar: AppBar(
+        appBar: AriesAppBar(
           title: const Text('CxC — Cuentas por Cobrar'),
           actions: [
             IconButton(
@@ -317,12 +322,21 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
     final reciboCtrl = TextEditingController();
     final montoCtrl  = TextEditingController(text: cxc.saldo.toStringAsFixed(2));
     final operCtrl   = TextEditingController();
-    String tipoPago  = 'EFECTIVO';
+    List<TipoPago> tiposPago = [];
+    TipoPago? tipoPagoSeleccionado;
+    bool fetched = false;
     DateTime fecha   = DateTime.now();
 
     showDialog(
       context: context,
-      builder: (dctx) => StatefulBuilder(builder: (dctx, setSt) => AlertDialog(
+      builder: (dctx) => StatefulBuilder(builder: (dctx, setSt) {
+        if (!fetched) {
+          fetched = true;
+          getIt<TablasRemoteDataSource>().list('tipos-pago', activo: true).then((raw) {
+            setSt(() => tiposPago = raw.map(TablaModel.tipoPagoFromJson).toList());
+          }).catchError((_) {});
+        }
+        return AlertDialog(
         title: const Text('Registrar Cobro'),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text('Saldo: S/ ${cxc.saldo.toStringAsFixed(2)}',
@@ -331,19 +345,19 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
           TextField(controller: reciboCtrl,
               decoration: const InputDecoration(labelText: 'N° Recibo')),
           const SizedBox(height: 8),
-          TextField(controller: montoCtrl,
-              keyboardType: TextInputType.number,
+          NumberFormField(controller: montoCtrl,
               decoration: const InputDecoration(labelText: 'Monto')),
           const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: tipoPago,
+          DropdownButtonFormField<TipoPago>(
+            value: tipoPagoSeleccionado,
             decoration: const InputDecoration(labelText: 'Tipo Pago'),
-            items: ['EFECTIVO', 'DEPOSITO', 'TRANSFERENCIA', 'YAPE/PLIN']
-                .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                .toList(),
-            onChanged: (v) => setSt(() => tipoPago = v!),
+            items: tiposPago.map((t) => DropdownMenuItem(value: t, child: Text(t.descripcion))).toList(),
+            onChanged: (v) => setSt(() {
+              tipoPagoSeleccionado = v;
+              operCtrl.clear();
+            }),
           ),
-          if (tipoPago != 'EFECTIVO')
+          if (tipoPagoSeleccionado?.requiereOperacion == true)
             TextField(controller: operCtrl,
                 decoration: const InputDecoration(labelText: 'N° Operación')),
           const SizedBox(height: 8),
@@ -369,12 +383,12 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
           ElevatedButton(
             onPressed: () {
               final m = double.tryParse(montoCtrl.text);
-              if (reciboCtrl.text.isEmpty || m == null || m <= 0) return;
+              if (reciboCtrl.text.isEmpty || m == null || m <= 0 || tipoPagoSeleccionado == null) return;
               widget.bloc.add(CxCRegistrarCobro(
                 cuentaCobrarId: cxc.id,
                 numeroRecibo: reciboCtrl.text.trim(),
                 fecha: fecha.toIso8601String().substring(0, 10),
-                tipoPago: tipoPago,
+                tipoPago: tipoPagoSeleccionado!.descripcion,
                 monto: m,
                 numeroOperacion:
                     operCtrl.text.isNotEmpty ? operCtrl.text.trim() : null,
@@ -385,7 +399,7 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
             child: const Text('Guardar'),
           ),
         ],
-      )),
+      );}),
     );
   }
 }

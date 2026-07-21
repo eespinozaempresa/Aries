@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/menu_permission_service.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class UtilitariosPage extends StatelessWidget {
   const UtilitariosPage({super.key});
@@ -18,7 +19,7 @@ class UtilitariosPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Utilitarios')),
+      appBar: AriesAppBar(title: const Text('Utilitarios')),
       body: tiles.isEmpty
           ? const Center(child: Text('Sin acceso a utilitarios'))
           : ListView.separated(

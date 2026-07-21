@@ -15,6 +15,8 @@ import '../../domain/repositories/movimiento_repository.dart';
 import '../bloc/movimiento_bloc.dart';
 import '../bloc/movimiento_event.dart';
 import '../bloc/movimiento_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
 
 class MovimientoFormPage extends StatelessWidget {
   const MovimientoFormPage({super.key});
@@ -110,7 +112,6 @@ class _MovimientoFormState extends State<_MovimientoForm> {
           a.codigo.toLowerCase().contains(q.toLowerCase())).toList());
       },
       itemTitle: (a) => a.descripcion,
-      itemSubtitle: (a) => a.codigo,
     );
     if (result != null) {
       setState(() {
@@ -135,7 +136,6 @@ class _MovimientoFormState extends State<_MovimientoForm> {
         return res.fold((_) => [], (page) => page.data);
       },
       itemTitle: (a) => a.descripcion,
-      itemSubtitle: (a) => a.codigo,
     );
     if (art == null || !mounted) return;
 
@@ -148,10 +148,10 @@ class _MovimientoFormState extends State<_MovimientoForm> {
       builder: (_) => AlertDialog(
         title: Text(art.descripcion),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextFormField(controller: qtyCtrl, keyboardType: TextInputType.number,
+          NumberFormField(controller: qtyCtrl,
               decoration: const InputDecoration(labelText: 'Cantidad')),
           const SizedBox(height: 8),
-          TextFormField(controller: priceCtrl, keyboardType: TextInputType.number,
+          NumberFormField(controller: priceCtrl,
               decoration: const InputDecoration(labelText: 'Precio unitario')),
         ]),
         actions: [
@@ -209,7 +209,7 @@ class _MovimientoFormState extends State<_MovimientoForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nuevo Movimiento')),
+      appBar: AriesAppBar(title: const Text('Nuevo Movimiento')),
       body: BlocConsumer<MovimientoBloc, MovimientoState>(
         listener: (ctx, state) {
           if (state is MovimientoSaved) {
@@ -251,7 +251,7 @@ class _MovimientoFormState extends State<_MovimientoForm> {
                     decoration: const InputDecoration(labelText: 'Documento *', border: OutlineInputBorder(), isDense: true),
                     items: _documentos.map((d) => DropdownMenuItem(
                       value: d,
-                      child: Text('${d.codigo} · ${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
+                      child: Text('${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
                     )).toList(),
                     onChanged: (d) => setState(() => _documento = d),
                     validator: (v) => v == null ? 'Seleccione un documento' : null,

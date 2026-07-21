@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 ///     title: 'Seleccionar Artículo',
 ///     onSearch: (q) async { ... },
 ///     itemTitle: (a) => a.descripcion,
-///     itemSubtitle: (a) => '${a.codigo} | S/. ${a.precioVenta.toStringAsFixed(2)}',
+///     itemSubtitle: (a) => 'S/. ${a.precioVenta.toStringAsFixed(2)}',
 ///   );
 class MaestroPicker<T> extends StatefulWidget {
   final String title;
@@ -151,7 +151,7 @@ class _MaestroPickerState<T> extends State<MaestroPicker<T>> {
                             color: inactive ? cs.onSurface.withValues(alpha: 0.4) : null,
                           ),
                         ),
-                        subtitle: widget.itemSubtitle != null
+                        subtitle: (widget.itemSubtitle?.call(item) ?? '').isNotEmpty
                             ? Text(widget.itemSubtitle!(item))
                             : null,
                         trailing: inactive

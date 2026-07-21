@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/menu_permission_service.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class SeguridadHubPage extends StatelessWidget {
   const SeguridadHubPage({super.key});
@@ -21,7 +22,7 @@ class SeguridadHubPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Seguridad')),
+      appBar: AriesAppBar(title: const Text('Seguridad')),
       body: tiles.isEmpty
           ? const Center(child: Text('Sin acceso a opciones de seguridad'))
           : ListView.separated(

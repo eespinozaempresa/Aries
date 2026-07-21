@@ -4,6 +4,11 @@ import '../../../../core/di/injection.dart';
 import '../../data/datasources/cxc_remote_datasource.dart';
 import '../../domain/entities/cuenta_cobrar.dart';
 import '../bloc/cxc_bloc.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
+import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
+import '../../../tablas/data/models/tabla_model.dart';
+import '../../../tablas/domain/entities/tabla_base.dart';
 
 class CxCDetailPage extends StatelessWidget {
   final String cxcId;
@@ -23,7 +28,7 @@ class _View extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cuenta por Cobrar')),
+      appBar: AriesAppBar(title: const Text('Cuenta por Cobrar')),
       body: BlocConsumer<CxCBloc, CxCState>(
         listener: (ctx, s) {
           if (s is CxCError) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(s.message), backgroundColor: Colors.red));
@@ -125,26 +130,37 @@ class _View extends StatelessWidget {
     final reciboCtrl = TextEditingController();
     final montoCtrl  = TextEditingController(text: cxc.saldo.toStringAsFixed(2));
     final operCtrl   = TextEditingController();
-    String tipoPago  = 'EFECTIVO';
+    List<TipoPago> tiposPago = [];
+    TipoPago? tipoPagoSeleccionado;
+    bool fetched = false;
     DateTime fecha   = DateTime.now();
 
-    showDialog(context: ctx, builder: (dctx) => StatefulBuilder(builder: (dctx, setSt) => AlertDialog(
+    showDialog(context: ctx, builder: (dctx) => StatefulBuilder(builder: (dctx, setSt) {
+      if (!fetched) {
+        fetched = true;
+        getIt<TablasRemoteDataSource>().list('tipos-pago', activo: true).then((raw) {
+          setSt(() => tiposPago = raw.map(TablaModel.tipoPagoFromJson).toList());
+        }).catchError((_) {});
+      }
+      return AlertDialog(
       title: const Text('Registrar Cobro'),
       content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('Saldo: S/ ${cxc.saldo.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey)),
         const SizedBox(height: 8),
         TextField(controller: reciboCtrl, decoration: const InputDecoration(labelText: 'N° Recibo')),
         const SizedBox(height: 8),
-        TextField(controller: montoCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Monto')),
+        NumberFormField(controller: montoCtrl, decoration: const InputDecoration(labelText: 'Monto')),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: tipoPago,
+        DropdownButtonFormField<TipoPago>(
+          value: tipoPagoSeleccionado,
           decoration: const InputDecoration(labelText: 'Tipo Pago'),
-          items: ['EFECTIVO', 'DEPOSITO', 'TRANSFERENCIA', 'YAPE/PLIN']
-            .map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-          onChanged: (v) => setSt(() => tipoPago = v!),
+          items: tiposPago.map((t) => DropdownMenuItem(value: t, child: Text(t.descripcion))).toList(),
+          onChanged: (v) => setSt(() {
+            tipoPagoSeleccionado = v;
+            operCtrl.clear();
+          }),
         ),
-        if (tipoPago != 'EFECTIVO')
+        if (tipoPagoSeleccionado?.requiereOperacion == true)
           TextField(controller: operCtrl, decoration: const InputDecoration(labelText: 'N° Operación')),
         const SizedBox(height: 8),
         ListTile(
@@ -162,13 +178,13 @@ class _View extends StatelessWidget {
         ElevatedButton(
           onPressed: () {
             final m = double.tryParse(montoCtrl.text);
-            if (reciboCtrl.text.isEmpty || m == null || m <= 0) return;
+            if (reciboCtrl.text.isEmpty || m == null || m <= 0 || tipoPagoSeleccionado == null) return;
             Navigator.pop(dctx);
             ctx.read<CxCBloc>().add(CxCRegistrarCobro(
               cuentaCobrarId: cxc.id,
               numeroRecibo: reciboCtrl.text.trim(),
               fecha: fecha.toIso8601String().substring(0, 10),
-              tipoPago: tipoPago,
+              tipoPago: tipoPagoSeleccionado!.descripcion,
               monto: m,
               numeroOperacion: operCtrl.text.isNotEmpty ? operCtrl.text.trim() : null,
             ));
@@ -176,7 +192,7 @@ class _View extends StatelessWidget {
           child: const Text('Guardar'),
         ),
       ],
-    )));
+    );}));
   }
 
   void _showRenovarDialog(BuildContext ctx, CuentaCobrar cxc) {
@@ -229,7 +245,7 @@ class _View extends StatelessWidget {
           TextField(controller: letraBaseCtrl,
             decoration: const InputDecoration(labelText: 'Base N° Letra (ej. L-001)', isDense: true)),
           const SizedBox(height: 8),
-          TextField(controller: tasaCtrl, keyboardType: TextInputType.number,
+          NumberFormField(controller: tasaCtrl,
             decoration: const InputDecoration(labelText: 'Tasa de interés (%)', isDense: true)),
           const SizedBox(height: 4),
           ListTile(
@@ -244,10 +260,10 @@ class _View extends StatelessWidget {
               if (d != null) setSt(() => fechaInicio = d);
             },
           ),
-          TextField(controller: cuotasCtrl, keyboardType: TextInputType.number,
+          NumberFormField(controller: cuotasCtrl, allowDecimal: false,
             decoration: const InputDecoration(labelText: 'Cantidad de cuotas', isDense: true)),
           const SizedBox(height: 8),
-          TextField(controller: plazoDiasCtrl, keyboardType: TextInputType.number,
+          NumberFormField(controller: plazoDiasCtrl, allowDecimal: false,
             decoration: const InputDecoration(labelText: 'Plazo entre cuotas (días)', isDense: true)),
         ]);
 

@@ -7,6 +7,7 @@ import '../../domain/repositories/almacen_repository.dart';
 import '../bloc/almacenes_bloc.dart';
 import '../bloc/maestro_list_event.dart';
 import '../bloc/maestro_list_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class AlmacenesListPage extends StatelessWidget {
   const AlmacenesListPage({super.key});
@@ -32,7 +33,7 @@ class _AlmacenesViewState extends State<_AlmacenesView> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Almacenes')),
+      appBar: AriesAppBar(title: const Text('Almacenes')),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final saved = await context.push<bool>('/maestros/almacenes/nuevo');

@@ -8,6 +8,7 @@ import '../../domain/entities/venta.dart';
 import '../bloc/venta_bloc.dart';
 import '../bloc/venta_event.dart';
 import '../bloc/venta_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class VentasListPage extends StatelessWidget {
   const VentasListPage({super.key});
@@ -41,7 +42,7 @@ class _ViewState extends State<_View> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: const Text('Ventas'),
         actions: [
           IconButton(

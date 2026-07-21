@@ -7,6 +7,7 @@ import '../../domain/entities/compra.dart';
 import '../bloc/compra_bloc.dart';
 import '../bloc/compra_event.dart';
 import '../bloc/compra_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class CompraDetailPage extends StatelessWidget {
   final String compraId;
@@ -25,7 +26,7 @@ class _View extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalle Compra')),
+      appBar: AriesAppBar(title: const Text('Detalle Compra')),
       body: BlocConsumer<CompraBloc, CompraState>(
         listener: (ctx, state) {
           if (state is CompraAnulado) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Compra anulada'), backgroundColor: Colors.orange));

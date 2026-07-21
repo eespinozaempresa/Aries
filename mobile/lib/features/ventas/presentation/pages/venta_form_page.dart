@@ -19,6 +19,8 @@ import '../../domain/entities/venta.dart';
 import '../bloc/venta_bloc.dart';
 import '../bloc/venta_event.dart';
 import '../bloc/venta_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
 
 class VentaFormPage extends StatelessWidget {
   const VentaFormPage({super.key});
@@ -132,16 +134,16 @@ class _FormState extends State<_Form> {
         return res.fold((_) => [], (l) => l
             .where((a) => a.descripcion.toLowerCase().contains(q.toLowerCase()))
             .toList());
-      }, itemTitle: (a) => a.descripcion, itemSubtitle: (a) => a.codigo);
+      }, itemTitle: (a) => a.descripcion);
     if (r != null) setState(() { _almacen = r.codigo; _almNombre = r.descripcion; });
   }
 
   Future<void> _pickCliente() async {
     final r = await MaestroPicker.show<Cliente>(context,
       title: 'Cliente', onSearch: (q) async {
-        final res = await getIt<ClienteRepository>().search(q: q, page: 1);
+        final res = await getIt<ClienteRepository>().search(q: q, activo: true, page: 1);
         return res.fold((_) => [], (p) => p.data);
-      }, itemTitle: (c) => c.razonSocial, itemSubtitle: (c) => c.rucDni ?? c.codigo);
+      }, itemTitle: (c) => c.razonSocial, itemSubtitle: (c) => c.rucDni ?? '');
     if (r != null) {
       setState(() {
         _clienteCodigo    = r.codigo;
@@ -158,9 +160,9 @@ class _FormState extends State<_Form> {
   Future<void> _addLinea() async {
     final art = await MaestroPicker.show<Articulo>(context,
       title: 'Artículo', onSearch: (q) async {
-        final res = await getIt<ArticuloRepository>().search(q: q, page: 1);
+        final res = await getIt<ArticuloRepository>().search(q: q, activo: true, page: 1);
         return res.fold((_) => [], (p) => p.data);
-      }, itemTitle: (a) => a.descripcion, itemSubtitle: (a) => a.codigo);
+      }, itemTitle: (a) => a.descripcion);
     if (art == null || !mounted) return;
 
     double precioSugerido = art.precioVentaBase > 0 ? art.precioVentaBase : art.precioVenta;
@@ -186,13 +188,13 @@ class _FormState extends State<_Form> {
     final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
       title: Text(art.descripcion),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        TextFormField(controller: qCtrl, keyboardType: TextInputType.number,
+        NumberFormField(controller: qCtrl,
             decoration: const InputDecoration(labelText: 'Cantidad')),
         const SizedBox(height: 8),
-        TextFormField(controller: pCtrl, keyboardType: TextInputType.number,
+        NumberFormField(controller: pCtrl,
             decoration: InputDecoration(labelText: 'Precio unitario ($_moneda)')),
         const SizedBox(height: 8),
-        TextFormField(controller: dscCtrl, keyboardType: TextInputType.number,
+        NumberFormField(controller: dscCtrl,
             decoration: const InputDecoration(labelText: 'Descuento %')),
       ]),
       actions: [
@@ -251,7 +253,7 @@ class _FormState extends State<_Form> {
   Widget build(BuildContext context) {
     final currLabel = _moneda == 'USD' ? 'USD' : 'S/';
     return Scaffold(
-      appBar: AppBar(title: const Text('Nueva Venta')),
+      appBar: AriesAppBar(title: const Text('Nueva Venta')),
       body: BlocConsumer<VentaBloc, VentaState>(
         listener: (ctx, state) {
           if (state is VentaSaved) {
@@ -276,7 +278,7 @@ class _FormState extends State<_Form> {
                 decoration: const InputDecoration(labelText: 'Documento *', border: OutlineInputBorder(), isDense: true),
                 items: _documentos.map((d) => DropdownMenuItem(
                   value: d,
-                  child: Text('${d.abreviatura ?? d.codigo} · ${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
+                  child: Text('${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
                 )).toList(),
                 onChanged: _onDocChanged,
                 validator: (v) => v == null ? 'Seleccione un documento' : null,
@@ -311,11 +313,11 @@ class _FormState extends State<_Form> {
                     onSelected: (_) => setState(() => _tipo = TipoVenta.CREDITO)),
                 if (_tipo == TipoVenta.CREDITO) ...[
                   const SizedBox(width: 12),
-                  SizedBox(width: 60, child: TextFormField(
+                  SizedBox(width: 60, child: NumberFormField(
                       initialValue: _plazo.toString(),
                       decoration: const InputDecoration(labelText: 'Días'),
-                      keyboardType: TextInputType.number,
-                      onChanged: (v) => _plazo = int.tryParse(v) ?? 30)),
+                      allowDecimal: false,
+                      onChanged: (v) => _plazo = int.tryParse(v ?? '') ?? 30)),
                 ],
               ]),
               const SizedBox(height: 12),
@@ -329,11 +331,10 @@ class _FormState extends State<_Form> {
                 ChoiceChip(label: const Text('USD'), selected: _moneda == 'USD',
                     onSelected: (_) => setState(() => _moneda = 'USD')),
                 const SizedBox(width: 12),
-                Expanded(child: TextFormField(
+                Expanded(child: NumberFormField(
                   controller: _tcCtrl,
                   decoration: const InputDecoration(labelText: 'Tipo de Cambio', isDense: true),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (v) => setState(() => _tipoCambio = double.tryParse(v) ?? 1.0),
+                  onChanged: (v) => setState(() => _tipoCambio = double.tryParse(v ?? '') ?? 1.0),
                 )),
               ]),
               const Divider(),

@@ -9,6 +9,8 @@ import '../../data/datasources/maestros_remote_datasource.dart';
 import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
 import '../../../tablas/data/models/tabla_model.dart';
 import '../../../tablas/domain/entities/tabla_base.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
 
 class ArticuloFormPage extends StatefulWidget {
   final String? articuloId;
@@ -265,7 +267,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
     if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: Text(widget.isEdit ? 'Editar Artículo' : 'Nuevo Artículo'),
         actions: [
           if (_saving)
@@ -422,9 +424,8 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
   Widget _numField(TextEditingController ctrl, String label, {bool required = false}) =>
       Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: TextFormField(
+        child: NumberFormField(
           controller: ctrl,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
               labelText: label, border: const OutlineInputBorder(), isDense: true),
           validator: required
@@ -455,7 +456,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
           const DropdownMenuItem<String>(value: null, child: Text('— Sin selección —')),
           ...items.map((t) => DropdownMenuItem<String>(
                 value: t.codigo,
-                child: Text('${t.codigo}  ${t.descripcion}', overflow: TextOverflow.ellipsis),
+                child: Text(t.descripcion, overflow: TextOverflow.ellipsis),
               )),
         ],
         onChanged: onChanged,
@@ -593,9 +594,8 @@ class _PrecioDialogState extends State<_PrecioDialog> {
               Text('P. Venta Base: S/${widget.precioVentaBase.toStringAsFixed(2)}',
                   style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 12),
-              TextFormField(
+              NumberFormField(
                 controller: _pctCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   labelText: 'Descuento %',
                   border: OutlineInputBorder(),
@@ -603,9 +603,8 @@ class _PrecioDialogState extends State<_PrecioDialog> {
                 ),
               ),
               const SizedBox(height: 8),
-              TextFormField(
+              NumberFormField(
                 controller: _montoCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   labelText: 'Descuento S/.',
                   border: OutlineInputBorder(),

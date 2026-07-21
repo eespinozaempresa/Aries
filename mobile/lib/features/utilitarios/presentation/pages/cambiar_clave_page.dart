@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class CambiarClavePage extends StatefulWidget {
   const CambiarClavePage({super.key});
@@ -66,7 +67,7 @@ class _CambiarClavePageState extends State<CambiarClavePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cambiar contraseña')),
+      appBar: AriesAppBar(title: const Text('Cambiar contraseña')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(

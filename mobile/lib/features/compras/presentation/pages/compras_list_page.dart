@@ -8,6 +8,7 @@ import '../../domain/entities/compra.dart';
 import '../bloc/compra_bloc.dart';
 import '../bloc/compra_event.dart';
 import '../bloc/compra_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class ComprasListPage extends StatelessWidget {
   const ComprasListPage({super.key});
@@ -44,7 +45,7 @@ class _ViewState extends State<_View> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: const Text('Compras'),
         actions: [
           BlocBuilder<CompraBloc, CompraState>(

@@ -10,6 +10,7 @@ import '../bloc/clientes_bloc.dart';
 import '../bloc/proveedores_bloc.dart';
 import '../bloc/maestro_list_event.dart';
 import '../bloc/maestro_list_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 // ── Clientes ──────────────────────────────────────────────────────────────────
 
@@ -74,7 +75,7 @@ class _PersonaListViewState extends State<_PersonaListView> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: Text('${widget.tipo}s'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),

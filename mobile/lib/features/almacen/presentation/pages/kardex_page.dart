@@ -8,6 +8,7 @@ import '../../../maestros/domain/entities/almacen.dart' as maestro_alm_ent;
 import '../../../maestros/presentation/widgets/maestro_picker.dart';
 import '../../domain/entities/kardex_item.dart';
 import '../../domain/repositories/movimiento_repository.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class KardexPage extends StatefulWidget {
   const KardexPage({super.key});
@@ -37,7 +38,6 @@ class _KardexPageState extends State<KardexPage> {
           a.codigo.toLowerCase().contains(q.toLowerCase())).toList());
       },
       itemTitle: (a) => a.descripcion,
-      itemSubtitle: (a) => a.codigo,
     );
     if (result != null) {
       setState(() { _almacen = result.codigo; _almacenNombre = result.descripcion; });
@@ -54,7 +54,6 @@ class _KardexPageState extends State<KardexPage> {
         return res.fold((_) => [], (page) => page.data);
       },
       itemTitle: (a) => a.descripcion,
-      itemSubtitle: (a) => a.codigo,
     );
     if (result != null) {
       setState(() { _articulo = result.codigo; _articuloNombre = result.descripcion; });
@@ -80,7 +79,7 @@ class _KardexPageState extends State<KardexPage> {
     final showArticuloCol = _articulo == null;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: const Text('Kardex'),
         actions: [
           if (_items != null && _items!.isNotEmpty)

@@ -6,6 +6,7 @@ import '../bloc/movimiento_bloc.dart';
 import '../bloc/movimiento_event.dart';
 import '../bloc/movimiento_state.dart';
 import '../../domain/repositories/movimiento_repository.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class MovimientoDetailPage extends StatelessWidget {
   final String movimientoId;
@@ -27,7 +28,7 @@ class _DetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Movimiento')),
+      appBar: AriesAppBar(title: const Text('Movimiento')),
       body: BlocConsumer<MovimientoBloc, MovimientoState>(
         listener: (ctx, state) {
           if (state is MovimientoAnulado) {

@@ -24,6 +24,7 @@ abstract class MaestrosRemoteDataSource {
   Future<ClienteModel> saveCliente(Map<String, dynamic> data, {String? id});
 
   Future<PageResult<ProveedorModel>> searchProveedores({String? q, bool? activo, int page = 1, int limit = 20});
+  Future<ProveedorModel> getProveedor(String id);
   Future<ProveedorModel> saveProveedor(Map<String, dynamic> data, {String? id});
 
   Future<List<AlmacenModel>> findAllAlmacenes({String? q, bool? activo});
@@ -124,6 +125,14 @@ class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
         'limit': limit,
       });
       return _parsePage(res.data, ProveedorModel.fromJson);
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<ProveedorModel> getProveedor(String id) async {
+    try {
+      final res = await _dio.get('/maestros/proveedores/$id');
+      return ProveedorModel.fromJson(res.data['data'] as Map<String, dynamic>);
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 

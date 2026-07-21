@@ -6,6 +6,8 @@ import '../../domain/repositories/tipo_cambio_repository.dart';
 import '../bloc/tipo_cambio_bloc.dart';
 import '../bloc/tipo_cambio_event.dart';
 import '../bloc/tipo_cambio_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
 
 class TipoCambioPage extends StatelessWidget {
   const TipoCambioPage({super.key});
@@ -59,13 +61,16 @@ class _TipoCambioViewState extends State<_TipoCambioView> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
+        appBar: AriesAppBar(
           title: const Text('Tipo de Cambio'),
           automaticallyImplyLeading: false,
         ),
         body: BlocBuilder<TipoCambioBloc, TipoCambioState>(
           builder: (context, state) {
-            if (state is TipoCambioLoading || state is TipoCambioInitial) {
+            if (state is TipoCambioLoading ||
+                state is TipoCambioInitial ||
+                state is TipoCambioYaRegistrado ||
+                state is TipoCambioRegistradoExitoso) {
               return const Center(child: CircularProgressIndicator());
             }
             return Center(
@@ -105,11 +110,8 @@ class _TipoCambioViewState extends State<_TipoCambioView> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 28),
-                            TextFormField(
+                            NumberFormField(
                               controller: _tcController,
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
                               autofocus: true,
                               decoration: InputDecoration(
                                 labelText: 'Tipo de Cambio (S/. por USD)',
@@ -122,7 +124,7 @@ class _TipoCambioViewState extends State<_TipoCambioView> {
                                 if (v == null || v.isEmpty) {
                                   return 'Ingrese el tipo de cambio';
                                 }
-                                final n = double.tryParse(v.replaceAll(',', '.'));
+                                final n = double.tryParse(v);
                                 if (n == null || n <= 0) {
                                   return 'Ingrese un valor válido mayor a 0';
                                 }

@@ -3,6 +3,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/export_service.dart';
 import '../../data/datasources/ventas_remote_datasource.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class ReporteUtilidadPage extends StatefulWidget {
   const ReporteUtilidadPage({super.key});
@@ -51,7 +52,7 @@ class _State extends State<ReporteUtilidadPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: const Text('Reporte Utilidad'),
         actions: [
           if (_items != null && _items!.isNotEmpty)

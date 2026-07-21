@@ -32,7 +32,7 @@ export interface Pago {
   cuentaPagarId: string;
   numeroVoucher: string;
   fecha: string;
-  tipoPago: 'EFECTIVO' | 'TRANSFERENCIA' | 'CHEQUE';
+  tipoPago: string;
   numeroOperacion?: string;
   codigoBanco?: string;
   monto: number;

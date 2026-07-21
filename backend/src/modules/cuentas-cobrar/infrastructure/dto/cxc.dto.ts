@@ -1,11 +1,11 @@
-import { IsString, IsNumber, IsEnum, IsOptional, IsDateString, IsArray, ValidateNested, Min } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsDateString, IsArray, ValidateNested, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class RegistrarCobroDto {
   @IsString() cuentaCobrarId: string;
   @IsString() numeroRecibo: string;
   @IsDateString() fecha: string;
-  @IsEnum(['EFECTIVO', 'TRANSFERENCIA', 'CHEQUE']) tipoPago: 'EFECTIVO' | 'TRANSFERENCIA' | 'CHEQUE';
+  @IsString() tipoPago: string;
   @IsOptional() @IsString() numeroOperacion?: string;
   @IsOptional() @IsString() codigoBanco?: string;
   @IsNumber() @Min(0.01) monto: number;

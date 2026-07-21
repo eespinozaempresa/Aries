@@ -8,6 +8,7 @@ import '../../../maestros/domain/entities/almacen.dart' as maestro_alm_ent;
 import '../../../maestros/presentation/widgets/maestro_picker.dart';
 import '../../domain/entities/stock_item.dart';
 import '../../domain/repositories/movimiento_repository.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class StockPage extends StatefulWidget {
   const StockPage({super.key});
@@ -39,7 +40,6 @@ class _StockPageState extends State<StockPage> {
           a.codigo.toLowerCase().contains(q.toLowerCase())).toList());
       },
       itemTitle: (a) => a.descripcion,
-      itemSubtitle: (a) => a.codigo,
     );
     if (result != null) {
       setState(() { _almacen = result.codigo; _almacenNombre = result.descripcion; });
@@ -56,7 +56,6 @@ class _StockPageState extends State<StockPage> {
         return res.fold((_) => [], (page) => page.data);
       },
       itemTitle: (a) => a.descripcion,
-      itemSubtitle: (a) => a.codigo,
     );
     if (result != null) {
       setState(() { _articulo = result.codigo; _articuloNombre = result.descripcion; });
@@ -83,7 +82,7 @@ class _StockPageState extends State<StockPage> {
     final showArticuloCol = _articulo == null;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: const Text('Stock'),
         actions: [
           if (_items != null && _items!.isNotEmpty)

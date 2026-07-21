@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
 
 class ParametrosPage extends StatefulWidget {
   const ParametrosPage({super.key});
@@ -89,7 +91,7 @@ class _ParametrosPageState extends State<ParametrosPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Parámetros')),
+      appBar: AriesAppBar(title: const Text('Parámetros')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -114,11 +116,8 @@ class _ParametrosPageState extends State<ParametrosPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        TextFormField(
+                        NumberFormField(
                           controller: _igvCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
                           decoration: const InputDecoration(
                             labelText: 'IGV (%)',
                             prefixIcon: Icon(Icons.percent),
@@ -132,9 +131,9 @@ class _ParametrosPageState extends State<ParametrosPage> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        TextFormField(
+                        NumberFormField(
                           controller: _tiempoCtrl,
-                          keyboardType: TextInputType.number,
+                          allowDecimal: false,
                           decoration: const InputDecoration(
                             labelText: 'Tiempo de financiamiento (días)',
                             prefixIcon: Icon(Icons.calendar_today_outlined),

@@ -5,6 +5,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/utils/export_service.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 enum _TipoReporte { ventas, general }
 enum _SubtipoVentas { general, detallado }
@@ -212,7 +213,7 @@ class _ReporteVentasPageState extends State<ReporteVentasPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: const Text('Reportes de Ventas'),
         actions: [
           if (_hasResults && _results.isNotEmpty)

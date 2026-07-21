@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/utils/unique_id.dart';
 import '../../domain/repositories/almacen_repository.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class AlmacenFormPage extends StatefulWidget {
   final String? almacenId;
@@ -68,7 +69,7 @@ class _AlmacenFormPageState extends State<AlmacenFormPage> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     final result = await getIt<AlmacenRepository>().save({
-      'codigo'     : _codigoCtrl.text.toUpperCase(),
+      if (!widget.isEdit) 'codigo': _codigoCtrl.text.toUpperCase(),
       'descripcion': _descCtrl.text,
       'activo'     : _activo,
       'tipo'       : _tipo,
@@ -88,7 +89,7 @@ class _AlmacenFormPageState extends State<AlmacenFormPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
+        appBar: AriesAppBar(
           title: Text(widget.isEdit ? 'Editar Almacén' : 'Nuevo Almacén'),
           actions: [
             if (_saving)

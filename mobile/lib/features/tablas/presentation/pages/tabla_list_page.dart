@@ -5,6 +5,8 @@ import '../../domain/entities/tabla_base.dart';
 import '../bloc/tabla_bloc.dart';
 import '../bloc/tabla_event.dart';
 import '../bloc/tabla_state.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
 
 /// Página de lista + formulario inline para cualquier tabla base.
 class TablaListPage<T extends TablaBase> extends StatefulWidget {
@@ -62,7 +64,7 @@ class _TablaListPageState<T extends TablaBase> extends State<TablaListPage<T>> {
     return BlocProvider.value(
       value: widget.bloc,
       child: Scaffold(
-        appBar: AppBar(title: Text(widget.title)),
+        appBar: AriesAppBar(title: Text(widget.title)),
         floatingActionButton: FloatingActionButton(
           onPressed: () => _openForm(context),
           child: const Icon(Icons.add),
@@ -255,13 +257,21 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
                   onChanged: (v) => setState(() => _switchValues[f.key] = v),
                 );
               }
+              final isDecimal = f.keyboardType == const TextInputType.numberWithOptions(decimal: true);
+              final isInteger = f.keyboardType == TextInputType.number;
               return Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: TextFormField(
-                  controller: _extraCtrl[f.key],
-                  decoration: InputDecoration(labelText: f.label),
-                  keyboardType: f.keyboardType,
-                ),
+                child: (isDecimal || isInteger)
+                    ? NumberFormField(
+                        controller: _extraCtrl[f.key],
+                        decoration: InputDecoration(labelText: f.label),
+                        allowDecimal: isDecimal,
+                      )
+                    : TextFormField(
+                        controller: _extraCtrl[f.key],
+                        decoration: InputDecoration(labelText: f.label),
+                        keyboardType: f.keyboardType,
+                      ),
               );
             }),
             const SizedBox(height: 16),

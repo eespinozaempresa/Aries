@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/menu_permission_service.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class TablasHubPage extends StatelessWidget {
   const TablasHubPage({super.key});
@@ -26,7 +27,7 @@ class TablasHubPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tablas Base')),
+      appBar: AriesAppBar(title: const Text('Tablas Base')),
       body: tiles.isEmpty
           ? const Center(child: Text('Sin acceso a tablas'))
           : ListView.separated(

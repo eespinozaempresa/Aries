@@ -8,6 +8,8 @@ import '../../../../features/tablas/domain/entities/tabla_base.dart';
 import '../../data/datasources/caja_remote_datasource.dart';
 import '../../domain/entities/sesion_caja.dart';
 import '../bloc/caja_bloc.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
+import '../../../../core/widgets/number_form_field.dart';
 
 class CajaReportePage extends StatelessWidget {
   final String sesionId;
@@ -27,7 +29,7 @@ class _View extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: const Text('Reporte de Caja'),
         actions: [
           BlocBuilder<CajaBloc, CajaState>(
@@ -181,7 +183,7 @@ class _View extends StatelessWidget {
           const SizedBox(height: 8),
           TextField(controller: conceptoCtrl, decoration: const InputDecoration(labelText: 'Concepto')),
           TextField(controller: refCtrl, decoration: const InputDecoration(labelText: 'Referencia (opcional)')),
-          TextField(controller: montoCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Monto')),
+          NumberFormField(controller: montoCtrl, decoration: const InputDecoration(labelText: 'Monto')),
           if (tiposPago.isNotEmpty) ...[
             const SizedBox(height: 8),
             DropdownButtonFormField<TipoPago>(
@@ -250,7 +252,7 @@ class _View extends StatelessWidget {
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('Saldo calculado: S/ ${saldoFinal.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey)),
         const SizedBox(height: 8),
-        TextField(controller: montoCtrl, keyboardType: TextInputType.number,
+        NumberFormField(controller: montoCtrl,
           decoration: const InputDecoration(labelText: 'Monto contado (S/)')),
       ]),
       actions: [

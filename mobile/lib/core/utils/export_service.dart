@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:excel/excel.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -9,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 
 class ExportService {
   static final _dateFmt = DateFormat('dd/MM/yyyy');
+  static final _fileTimestampFmt = DateFormat('yyyyMMddHHmmss');
 
   /// Formatea una fecha ISO (yyyy-MM-dd o datetime) a dd/MM/yyyy.
   /// Si no puede parsear, retorna [fallback].
@@ -19,6 +21,13 @@ class ExportService {
     } catch (_) {
       return iso;
     }
+  }
+
+  /// Nombre de archivo a partir del título, con fecha y hora agregadas
+  /// (ej. "Ventas_20260721145502"), para que cada descarga tenga nombre único.
+  static String _fileBaseName(String title) {
+    final safe = title.replaceAll(RegExp(r'[^\w]'), '_');
+    return '${safe}_${_fileTimestampFmt.format(DateTime.now())}';
   }
 
   /// Exporta a PDF y abre el visor de impresión/compartir
@@ -54,7 +63,7 @@ class ExportService {
       ),
     );
 
-    await Printing.layoutPdf(onLayout: (_) async => doc.save());
+    await Printing.layoutPdf(onLayout: (_) async => doc.save(), name: _fileBaseName(title));
   }
 
   /// Exporta a Excel y comparte el archivo
@@ -76,18 +85,23 @@ class ExportService {
         sheet.appendRow(row.map((cell) => TextCellValue(cell)).toList());
       }
 
-      final bytes = excelDoc.save();
+      final fname = _fileBaseName(title);
+      // En Web, excelDoc.save() ya dispara la descarga del navegador como
+      // efecto secundario (con el fileName indicado); llamar además a
+      // Share.shareXFiles ahí produciría una segunda descarga duplicada.
+      final bytes = excelDoc.save(fileName: '$fname.xlsx');
       if (bytes == null) throw Exception('No se pudo generar el archivo Excel');
 
-      final fname = title.replaceAll(RegExp(r'[^\w]'), '_');
-      await Share.shareXFiles(
-        [XFile.fromData(
-          Uint8List.fromList(bytes),
-          name: '$fname.xlsx',
-          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        )],
-        subject: title,
-      );
+      if (!kIsWeb) {
+        await Share.shareXFiles(
+          [XFile.fromData(
+            Uint8List.fromList(bytes),
+            name: '$fname.xlsx',
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          )],
+          subject: title,
+        );
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

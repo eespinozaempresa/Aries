@@ -12,6 +12,7 @@ import '../../domain/use_cases/logout_use_case.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../../../../core/widgets/number_form_field.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -283,9 +284,9 @@ class _LoginViewState extends State<_LoginView> {
                   const SizedBox(width: 12),
                   SizedBox(
                     width: 100,
-                    child: TextFormField(
+                    child: NumberFormField(
                       controller: _captchaCtrl,
-                      keyboardType: TextInputType.number,
+                      allowDecimal: false,
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                       decoration: const InputDecoration(hintText: '?'),

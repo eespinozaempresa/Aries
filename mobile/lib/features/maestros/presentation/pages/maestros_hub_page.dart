@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/menu_permission_service.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class MaestrosHubPage extends StatelessWidget {
   const MaestrosHubPage({super.key});
@@ -21,7 +22,7 @@ class MaestrosHubPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Maestros')),
+      appBar: AriesAppBar(title: const Text('Maestros')),
       body: items.isEmpty
           ? const Center(child: Text('Sin acceso a maestros'))
           : ListView.separated(

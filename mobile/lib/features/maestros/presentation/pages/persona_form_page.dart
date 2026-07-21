@@ -8,6 +8,7 @@ import '../../domain/repositories/proveedor_repository.dart';
 import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
 import '../../../tablas/data/models/tabla_model.dart';
 import '../../../tablas/domain/entities/tabla_base.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 enum PersonaTipo { cliente, proveedor }
 
@@ -89,6 +90,26 @@ class _PersonaFormPageState extends State<PersonaFormPage> {
               : null;
         }
       } catch (_) {}
+    } else if (widget.isEdit && !_isCliente) {
+      final result = await getIt<ProveedorRepository>().getById(widget.personaId!);
+      if (mounted) {
+        result.fold(
+          (e) => ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message),
+                backgroundColor: Theme.of(context).colorScheme.error),
+          ),
+          (p) {
+            _codigoCtrl.text = p.codigo;
+            _razonCtrl.text  = p.razonSocial;
+            _dirCtrl.text    = p.direccion ?? '';
+            _rucCtrl.text    = p.rucDni ?? '';
+            _telCtrl.text    = p.telefono ?? '';
+            _celCtrl.text    = p.celular ?? '';
+            _emailCtrl.text  = p.email ?? '';
+            _activo          = p.activo;
+          },
+        );
+      }
     } else if (!widget.isEdit) {
       _codigoCtrl.text = uniqueId(8);
     }
@@ -100,7 +121,7 @@ class _PersonaFormPageState extends State<PersonaFormPage> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     final data = <String, dynamic>{
-      'codigo'     : _codigoCtrl.text.toUpperCase(),
+      if (!widget.isEdit) 'codigo': _codigoCtrl.text.toUpperCase(),
       'razonSocial': _razonCtrl.text,
       'activo'     : _activo,
       if (_dirCtrl.text.isNotEmpty)   'direccion': _dirCtrl.text,
@@ -131,7 +152,7 @@ class _PersonaFormPageState extends State<PersonaFormPage> {
     if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: Text(widget.isEdit ? 'Editar $_tipoLabel' : 'Nuevo $_tipoLabel'),
         actions: [
           if (_saving)

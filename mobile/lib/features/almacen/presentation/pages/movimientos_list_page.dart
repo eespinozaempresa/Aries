@@ -8,6 +8,7 @@ import '../bloc/movimiento_bloc.dart';
 import '../bloc/movimiento_event.dart';
 import '../bloc/movimiento_state.dart';
 import '../../domain/repositories/movimiento_repository.dart';
+import '../../../../core/widgets/aries_app_bar.dart';
 
 class MovimientosListPage extends StatelessWidget {
   const MovimientosListPage({super.key});
@@ -61,7 +62,7 @@ class _MovimientosListViewState extends State<_MovimientosListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AriesAppBar(
         title: const Text('Movimientos'),
         actions: [
           BlocBuilder<MovimientoBloc, MovimientoState>(

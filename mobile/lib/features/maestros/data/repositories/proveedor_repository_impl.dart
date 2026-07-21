@@ -19,6 +19,13 @@ class ProveedorRepositoryImpl implements ProveedorRepository {
   }
 
   @override
+  Future<Either<ApiException, Proveedor>> getById(String id) async {
+    try {
+      return Right(await _remote.getProveedor(id));
+    } on ApiException catch (e) { return Left(e); }
+  }
+
+  @override
   Future<Either<ApiException, Proveedor>> save(Map<String, dynamic> data, {String? id}) async {
     try {
       return Right(await _remote.saveProveedor(data, id: id));
