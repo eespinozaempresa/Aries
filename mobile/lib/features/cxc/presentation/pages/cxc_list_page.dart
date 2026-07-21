@@ -83,18 +83,19 @@ class _State extends State<CxCListPage> {
                 );
               },
             ),
-            DropdownButton<bool?>(
-              value: _filtroPendiente,
-              underline: const SizedBox(),
-              items: const [
-                DropdownMenuItem(value: null,  child: Text('Todas')),
-                DropdownMenuItem(value: true,  child: Text('Pendientes')),
-                DropdownMenuItem(value: false, child: Text('Canceladas')),
-              ],
-              onChanged: (v) {
+            PopupMenuButton<bool?>(
+              icon: const Icon(Icons.filter_list),
+              tooltip: 'Filtrar',
+              initialValue: _filtroPendiente,
+              onSelected: (v) {
                 setState(() => _filtroPendiente = v);
                 ctx.read<CxCBloc>().add(CxCLoad(reset: true, pendiente: v));
               },
+              itemBuilder: (_) => [
+                CheckedPopupMenuItem(value: null,  checked: _filtroPendiente == null,  child: const Text('Todas')),
+                CheckedPopupMenuItem(value: true,  checked: _filtroPendiente == true,  child: const Text('Pendientes')),
+                CheckedPopupMenuItem(value: false, checked: _filtroPendiente == false, child: const Text('Canceladas')),
+              ],
             ),
             const SizedBox(width: 8),
           ],
