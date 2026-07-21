@@ -23,7 +23,7 @@ if exist "%ROOT%supabase\migrations" (
     echo   en el SQL Editor de Supabase antes de continuar. El backend NO
     echo   corre migraciones automaticamente al desplegar.
     echo.
-    set /p SUPABASE_OK="¿Ya aplicaste (o no hay) migraciones pendientes en Supabase? (S/N): "
+    set /p SUPABASE_OK="Ya aplicaste (o no hay) migraciones pendientes en Supabase? (S/N): "
     if /I not "!SUPABASE_OK!"=="S" (
         echo.
         echo Aplica las migraciones pendientes en https://app.supabase.com y vuelve a correr este script.
@@ -40,7 +40,7 @@ if %errorlevel%==0 (
     echo Hay cambios sin commitear:
     git status --short
     echo.
-    set /p DOCOMMIT="¿Commit y push de estos cambios a GitHub ahora? (S/N): "
+    set /p DOCOMMIT="Commit y push de estos cambios a GitHub ahora? (S/N): "
     if /I "!DOCOMMIT!"=="S" (
         set /p COMMITMSG="Mensaje del commit: "
         git add -A
