@@ -170,7 +170,15 @@ class _View extends StatelessWidget {
         }).catchError((_) {});
       }
       return AlertDialog(
-        title: const Text('Registrar Movimiento'),
+        title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          const Text('Registrar Movimiento'),
+          IconButton(
+            icon: const Icon(Icons.close),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () => Navigator.pop(dctx),
+          ),
+        ]),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
           SegmentedButton<String>(
             segments: const [
@@ -248,7 +256,15 @@ class _View extends StatelessWidget {
     final montoCtrl = TextEditingController(text: saldoFinal.toStringAsFixed(2));
 
     showDialog(context: ctx, builder: (dctx) => AlertDialog(
-      title: const Text('Cerrar Caja'),
+      title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        const Text('Cerrar Caja'),
+        IconButton(
+          icon: const Icon(Icons.close),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () => Navigator.pop(dctx),
+        ),
+      ]),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('Saldo calculado: S/ ${saldoFinal.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey)),
         const SizedBox(height: 8),

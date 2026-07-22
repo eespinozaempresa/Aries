@@ -143,7 +143,15 @@ class _View extends StatelessWidget {
         }).catchError((_) {});
       }
       return AlertDialog(
-      title: const Text('Registrar Cobro'),
+      title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        const Text('Registrar Cobro'),
+        IconButton(
+          icon: const Icon(Icons.close),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () => Navigator.pop(dctx),
+        ),
+      ]),
       content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('Saldo: S/ ${cxc.saldo.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey)),
         const SizedBox(height: 8),
@@ -320,15 +328,23 @@ class _View extends StatelessWidget {
 
         return Dialog(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440, maxHeight: 580),
+            constraints: const BoxConstraints(maxWidth: 480, maxHeight: 580),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Renovar CxC — ${titles[step]}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Expanded(child: Text('Renovar CxC — ${titles[step]}',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () => Navigator.pop(dctx),
+                    ),
+                  ]),
                   const Divider(height: 16),
                   Flexible(child: SingleChildScrollView(
                     child: step == 0 ? buildStep0()

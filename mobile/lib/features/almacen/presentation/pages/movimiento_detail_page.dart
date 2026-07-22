@@ -105,7 +105,15 @@ class _MovimientoBody extends StatelessWidget {
     showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Anular movimiento'),
+        title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          const Text('Anular movimiento'),
+          IconButton(
+            icon: const Icon(Icons.close),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+        ]),
         content: const Text('Esta acción no puede deshacerse sin recalcular el kardex. ¿Continuar?'),
         actions: [
           OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),

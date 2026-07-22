@@ -103,7 +103,15 @@ class _State extends State<CajaListPage> {
     final montoCtrl = TextEditingController(text: '0');
 
     showDialog(context: ctx, builder: (dctx) => AlertDialog(
-      title: const Text('Abrir Caja'),
+      title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        const Text('Abrir Caja'),
+        IconButton(
+          icon: const Icon(Icons.close),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () => Navigator.pop(dctx),
+        ),
+      ]),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         TextField(controller: cajaCtrl, decoration: const InputDecoration(labelText: 'Código caja (ej: CAJA01)')),
         const SizedBox(height: 8),

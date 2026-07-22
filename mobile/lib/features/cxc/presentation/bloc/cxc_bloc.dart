@@ -111,6 +111,8 @@ class CxCBloc extends Bloc<CxCEvent, CxCState> {
       emit(CxCCobroRegistrado(Cobro.fromJson(cobro)));
     } on ApiException catch (ex) {
       emit(CxCError(ex.message));
+    } catch (ex) {
+      emit(CxCError(ex.toString()));
     }
   }
 

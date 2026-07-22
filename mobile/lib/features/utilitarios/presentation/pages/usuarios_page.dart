@@ -153,48 +153,79 @@ class _UsuariosPageState extends State<UsuariosPage> {
                         final activo = u['activo'] as bool? ?? false;
                         final nivel = u['nivel']?.toString() ?? '';
                         final perfilDesc = u['perfilDescripcion']?.toString();
-                        return ListTile(
-                          shape: RoundedRectangleBorder(
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          tileColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-                          leading: CircleAvatar(
-                            backgroundColor: activo
-                                ? Theme.of(ctx).colorScheme.primaryContainer
-                                : Colors.grey.shade300,
-                            child: Text(
-                              (u['codigo']?.toString() ?? '?')
-                                  .substring(0, 1)
-                                  .toUpperCase(),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          title: Text(
-                            u['nombre']?.toString() ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: Text(
-                            '${u['codigo'] ?? ''} · $nivel'
-                            '${perfilDesc != null ? ' · $perfilDesc' : ''}',
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _NivelChip(nivel: nivel),
-                              const SizedBox(width: 4),
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined, size: 20),
-                                onPressed: () => _openEditSheet(u),
-                                tooltip: 'Editar',
+                              // Fila 1: avatar + nombre
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor: activo
+                                        ? Theme.of(ctx).colorScheme.primaryContainer
+                                        : Colors.grey.shade300,
+                                    child: Text(
+                                      (u['codigo']?.toString() ?? '?')
+                                          .substring(0, 1)
+                                          .toUpperCase(),
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      u['nombre']?.toString() ?? '',
+                                      style: const TextStyle(fontWeight: FontWeight.w600),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.lock_reset_outlined, size: 20),
-                                onPressed: () => _openResetPasswordDialog(u),
-                                tooltip: 'Resetear contraseña',
+                              const SizedBox(height: 6),
+                              // Fila 2: código + nivel + perfil
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${u['codigo'] ?? ''}'
+                                      '${perfilDesc != null ? ' · $perfilDesc' : ''}',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _NivelChip(nivel: nivel),
+                                ],
                               ),
-                              Switch(
-                                value: activo,
-                                onChanged: (_) => _toggleActivo(u),
+                              const SizedBox(height: 4),
+                              // Fila 3: acciones + switch activo
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined, size: 20),
+                                    onPressed: () => _openEditSheet(u),
+                                    tooltip: 'Editar',
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.lock_reset_outlined, size: 20),
+                                    onPressed: () => _openResetPasswordDialog(u),
+                                    tooltip: 'Resetear contraseña',
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Switch(
+                                    value: activo,
+                                    onChanged: (_) => _toggleActivo(u),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -571,7 +602,15 @@ class _ResetPasswordDialogState extends State<_ResetPasswordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Resetear contraseña'),
+      title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        const Text('Resetear contraseña'),
+        IconButton(
+          icon: const Icon(Icons.close),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ]),
       content: Form(
         key: _formKey,
         child: Column(

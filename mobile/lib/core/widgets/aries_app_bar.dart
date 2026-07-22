@@ -61,7 +61,15 @@ class AriesAppBar extends StatelessWidget implements PreferredSizeWidget {
     await showDialog<void>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('Mi cuenta'),
+        title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          const Text('Mi cuenta'),
+          IconButton(
+            icon: const Icon(Icons.close),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () => Navigator.pop(dialogCtx),
+          ),
+        ]),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -40,7 +40,7 @@ class _State extends State<CxPListPage> {
         ..add(CxPLoad(reset: true, pendiente: _filtroPendiente)),
       child: Builder(builder: (ctx) => Scaffold(
         appBar: AriesAppBar(
-          title: const Text('CxP — Cuentas por Pagar'),
+          title: const Text('Cuentas x Pagar'),
           actions: [
             BlocBuilder<CxPBloc, CxPState>(
               builder: (bctx, state) {
@@ -49,7 +49,9 @@ class _State extends State<CxPListPage> {
                   _ => <CuentaPagar>[],
                 };
                 return PopupMenuButton<String>(
-                  icon: const Icon(Icons.settings),
+                  icon: const Icon(Icons.settings, color: Colors.white, shadows: [
+                    Shadow(color: Colors.black45, blurRadius: 3),
+                  ]),
                   tooltip: 'Opciones',
                   onSelected: (v) {
                     switch (v) {
@@ -234,7 +236,7 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
 
     return Dialog(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 640),
+        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 640),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -353,7 +355,15 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
           }).catchError((_) {});
         }
         return AlertDialog(
-        title: const Text('Registrar Pago'),
+        title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          const Text('Registrar Pago'),
+          IconButton(
+            icon: const Icon(Icons.close),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () => Navigator.pop(dctx),
+          ),
+        ]),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text('Saldo: S/ ${cxp.saldo.toStringAsFixed(2)}',
               style: const TextStyle(color: Colors.grey)),

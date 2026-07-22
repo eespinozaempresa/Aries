@@ -91,6 +91,8 @@ class CxPBloc extends Bloc<CxPEvent, CxPState> {
       ));
     } on ApiException catch (ex) {
       emit(CxPError(ex.message));
+    } catch (ex) {
+      emit(CxPError(ex.toString()));
     }
   }
 
@@ -109,6 +111,8 @@ class CxPBloc extends Bloc<CxPEvent, CxPState> {
       emit(CxPPagoRegistrado(Pago.fromJson(pago)));
     } on ApiException catch (ex) {
       emit(CxPError(ex.message));
+    } catch (ex) {
+      emit(CxPError(ex.toString()));
     }
   }
 

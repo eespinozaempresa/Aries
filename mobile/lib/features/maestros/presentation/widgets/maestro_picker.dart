@@ -116,7 +116,6 @@ class _MaestroPickerState<T> extends State<MaestroPicker<T>> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextField(
               controller: _controller,
-              autofocus: true,
               decoration: InputDecoration(
                 hintText: 'Buscar...',
                 prefixIcon: const Icon(Icons.search),

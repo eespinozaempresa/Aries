@@ -43,11 +43,14 @@ class AppTheme {
             borderSide: const BorderSide(color: Color(0xFFC62828)),
           ),
         ),
+        dialogTheme: const DialogThemeData(
+          insetPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: _seed,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -63,7 +66,7 @@ class AppTheme {
           style: FilledButton.styleFrom(
             backgroundColor: _seed,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -79,7 +82,7 @@ class AppTheme {
           style: OutlinedButton.styleFrom(
             foregroundColor: _seed,
             side: const BorderSide(color: _seed),
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),

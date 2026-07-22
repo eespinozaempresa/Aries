@@ -134,7 +134,7 @@ class _FormState extends State<_Form> {
     if (art == null || !mounted) return;
 
     final qCtrl = TextEditingController(text: '1');
-    final pCtrl = TextEditingController(text: art.precioCompra.toStringAsFixed(4) ?? '0.0000');
+    final pCtrl = TextEditingController(text: art.precioCompraBase.toStringAsFixed(4) ?? '0.0000');
     final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
       title: Text(art.descripcion),
       content: Column(mainAxisSize: MainAxisSize.min, children: [

@@ -35,10 +35,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
   final _descCtrl       = TextEditingController();
   final _barrasCtrl     = TextEditingController();
   final _pCompraBaseCtrl = TextEditingController(text: '0.0000');
-  final _pCompraCtrl    = TextEditingController(text: '0.0000');
   final _pVentaBaseCtrl = TextEditingController(text: '0.0000');
-  final _pVentaCtrl     = TextEditingController(text: '0.0000');
-  final _utilidadCtrl   = TextEditingController(text: '0.00');
   final _stMinCtrl      = TextEditingController(text: '0');
   final _stMaxCtrl      = TextEditingController(text: '0');
   bool _activo = true;
@@ -65,8 +62,8 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
   @override
   void dispose() {
     for (final c in [_codigoCtrl, _descCtrl, _barrasCtrl,
-                     _pCompraBaseCtrl, _pCompraCtrl, _pVentaBaseCtrl,
-                     _pVentaCtrl, _utilidadCtrl, _stMinCtrl, _stMaxCtrl]) {
+                     _pCompraBaseCtrl, _pVentaBaseCtrl,
+                     _stMinCtrl, _stMaxCtrl]) {
       c.dispose();
     }
     super.dispose();
@@ -114,10 +111,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
     _descCtrl.text        = a.descripcion;
     _barrasCtrl.text      = a.codigoBarras ?? '';
     _pCompraBaseCtrl.text = a.precioCompraBase.toStringAsFixed(4);
-    _pCompraCtrl.text     = a.precioCompra.toStringAsFixed(4);
     _pVentaBaseCtrl.text  = a.precioVentaBase.toStringAsFixed(4);
-    _pVentaCtrl.text      = a.precioVenta.toStringAsFixed(4);
-    _utilidadCtrl.text    = a.utilidadPct.toStringAsFixed(2);
     _stMinCtrl.text       = a.stockMinimo.toStringAsFixed(2);
     _stMaxCtrl.text       = a.stockMaximo.toStringAsFixed(2);
     _activo               = a.activo;
@@ -139,10 +133,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
       if (_selectedMedida != null) 'codigoMedida': _selectedMedida,
       if (_selectedMarca  != null) 'codigoMarca' : _selectedMarca,
       'precioCompraBase': double.tryParse(_pCompraBaseCtrl.text) ?? 0,
-      'precioCompra'    : double.tryParse(_pCompraCtrl.text)     ?? 0,
       'precioVentaBase' : double.tryParse(_pVentaBaseCtrl.text)  ?? 0,
-      'precioVenta'     : double.tryParse(_pVentaCtrl.text)      ?? 0,
-      'utilidadPct'     : double.tryParse(_utilidadCtrl.text)    ?? 0,
       'stockMinimo'     : double.tryParse(_stMinCtrl.text)       ?? 0,
       'stockMaximo'     : double.tryParse(_stMaxCtrl.text)       ?? 0,
     };
@@ -301,15 +292,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
             Row(children: [
               Expanded(child: _numField(_pCompraBaseCtrl, 'P. Compra Base')),
               const SizedBox(width: 8),
-              Expanded(child: _numField(_pCompraCtrl, 'P. Compra')),
-            ]),
-            const SizedBox(height: 8),
-            Row(children: [
               Expanded(child: _numField(_pVentaBaseCtrl, 'P. Venta Base *', required: true)),
-              const SizedBox(width: 8),
-              Expanded(child: _numField(_utilidadCtrl, 'Utilidad %')),
-              const SizedBox(width: 8),
-              Expanded(child: _numField(_pVentaCtrl, 'P. Venta')),
             ]),
             _section('Stock'),
             Row(children: [

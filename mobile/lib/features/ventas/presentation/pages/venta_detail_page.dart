@@ -124,7 +124,15 @@ class _View extends StatelessWidget {
 
   void _confirm(BuildContext context, String id) {
     showDialog<bool>(context: context, builder: (_) => AlertDialog(
-      title: const Text('Anular venta'),
+      title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        const Text('Anular venta'),
+        IconButton(
+          icon: const Icon(Icons.close),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () => Navigator.pop(context, false),
+        ),
+      ]),
       content: const Text('Se revertirán los movimientos de almacén y la CxC asociada. ¿Continuar?'),
       actions: [
         OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
@@ -139,7 +147,15 @@ class _View extends StatelessWidget {
 
   void _confirmEliminar(BuildContext context, String id) {
     showDialog<bool>(context: context, builder: (_) => AlertDialog(
-      title: const Text('Eliminar venta'),
+      title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        const Text('Eliminar venta'),
+        IconButton(
+          icon: const Icon(Icons.close),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () => Navigator.pop(context, false),
+        ),
+      ]),
       content: const Text('Esta acción es irreversible. Se eliminará permanentemente la venta y su detalle. ¿Desea continuar?'),
       actions: [
         OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
