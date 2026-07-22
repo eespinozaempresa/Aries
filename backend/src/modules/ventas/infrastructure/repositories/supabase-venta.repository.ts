@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import { NumeroDocumentoService } from '../../../../shared/infrastructure/supabase/numero-documento.service';
+import { IFormulaRepository } from '../../../maestros/domain/ports/formula.repository.port';
 import { IVentaRepository, RegistrarVentaData, VentaFilter, VentaListResult, ReporteVentasFilter, ReporteGeneralFilter } from '../../domain/ports/venta.repository.port';
 import { Venta } from '../../domain/entities/venta.entity';
 import { DetalleVenta } from '../../domain/entities/detalle-venta.entity';
@@ -10,6 +11,7 @@ export class SupabaseVentaRepository implements IVentaRepository {
   constructor(
     private readonly supabase: SupabaseService,
     private readonly numeracion: NumeroDocumentoService,
+    private readonly formulas: IFormulaRepository,
   ) {}
 
   async registrar(codigoEmpresa: string, d: RegistrarVentaData): Promise<Venta> {
@@ -98,7 +100,37 @@ export class SupabaseVentaRepository implements IVentaRepository {
       })));
     if (detErr) throw new InternalServerErrorException(detErr.message);
 
-    // Salida de almacén via RPC
+    // Explosión de fórmula (BOM): además del Principal, descontar sus Partes
+    const codigosVendidos = [...new Set(lineasProc.map((l) => l.codigoArticulo))];
+    const formulasActivas = await this.formulas.findActivasByArticulos(codigoEmpresa, codigosVendidos);
+
+    const lineasPartes: { codigoArticulo: string; cantidad: number; precioUnitario: number }[] = [];
+    if (formulasActivas.size) {
+      const codigosComponentes = [...new Set(
+        [...formulasActivas.values()].flat().map((c) => c.codigoArticulo),
+      )];
+      const { data: stockComponentes } = await this.supabase.db
+        .from('stock')
+        .select('codigo_articulo, costo_promedio')
+        .eq('codigo_empresa', codigoEmpresa)
+        .eq('codigo_almacen', d.codigoAlmacen)
+        .in('codigo_articulo', codigosComponentes);
+      const costoMap = new Map((stockComponentes ?? []).map((s: any) => [s.codigo_articulo, Number(s.costo_promedio)]));
+
+      for (const l of lineasProc) {
+        const componentes = formulasActivas.get(l.codigoArticulo);
+        if (!componentes) continue;
+        for (const c of componentes) {
+          lineasPartes.push({
+            codigoArticulo: c.codigoArticulo,
+            cantidad:       l.cantidad * c.cantidad,
+            precioUnitario: costoMap.get(c.codigoArticulo) ?? 0,
+          });
+        }
+      }
+    }
+
+    // Salida de almacén via RPC (Principal + Partes explotadas de su fórmula)
     const { error: rpcErr } = await this.supabase.db.rpc('registrar_movimiento', {
       p_empresa:     codigoEmpresa,
       p_cod_doc:     d.codigoDocumento,
@@ -110,11 +142,14 @@ export class SupabaseVentaRepository implements IVentaRepository {
       p_observacion: d.observacion ?? null,
       p_concepto:    'VENTA',
       p_cod_usuario: d.codigoUsuario,
-      p_lineas:      lineasProc.map((l) => ({
-        codigoArticulo: l.codigoArticulo,
-        cantidad:       l.cantidad,
-        precioUnitario: l.precioUnitario,
-      })),
+      p_lineas:      [
+        ...lineasProc.map((l) => ({
+          codigoArticulo: l.codigoArticulo,
+          cantidad:       l.cantidad,
+          precioUnitario: l.precioUnitario,
+        })),
+        ...lineasPartes,
+      ],
       p_serie:       d.serie ?? '0001',
     });
     if (rpcErr) throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);

@@ -14,10 +14,12 @@ import '../../features/maestros/data/repositories/articulo_repository_impl.dart'
 import '../../features/maestros/data/repositories/cliente_repository_impl.dart';
 import '../../features/maestros/data/repositories/proveedor_repository_impl.dart';
 import '../../features/maestros/data/repositories/almacen_repository_impl.dart';
+import '../../features/maestros/data/repositories/formula_repository_impl.dart';
 import '../../features/maestros/domain/repositories/articulo_repository.dart';
 import '../../features/maestros/domain/repositories/cliente_repository.dart';
 import '../../features/maestros/domain/repositories/proveedor_repository.dart';
 import '../../features/maestros/domain/repositories/almacen_repository.dart';
+import '../../features/maestros/domain/repositories/formula_repository.dart';
 import '../../features/almacen/data/datasources/almacen_remote_datasource.dart';
 import '../../features/almacen/data/repositories/movimiento_repository_impl.dart';
 import '../../features/almacen/domain/repositories/movimiento_repository.dart';
@@ -78,6 +80,9 @@ Future<void> configureDependencies() async {
   );
   getIt.registerLazySingleton<AlmacenRepository>(
     () => AlmacenRepositoryImpl(getIt<MaestrosRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<FormulaRepository>(
+    () => FormulaRepositoryImpl(getIt<MaestrosRemoteDataSource>()),
   );
 
   // Tablas base

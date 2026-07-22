@@ -19,6 +19,8 @@ class MaestrosHubPage extends StatelessWidget {
         const _Item('Proveedores', Icons.local_shipping_outlined, '/maestros/proveedores'),
       if (svc.canAccess('maestros.almacenes'))
         const _Item('Almacenes', Icons.warehouse_outlined, '/maestros/almacenes'),
+      if (svc.canAccess('maestros.formulas'))
+        const _Item('Fórmulas', Icons.precision_manufacturing_outlined, '/maestros/formulas'),
     ];
 
     return Scaffold(

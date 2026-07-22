@@ -9,6 +9,8 @@ import '../../features/maestros/presentation/pages/personas_list_page.dart';
 import '../../features/maestros/presentation/pages/persona_form_page.dart';
 import '../../features/maestros/presentation/pages/almacenes_list_page.dart';
 import '../../features/maestros/presentation/pages/almacen_form_page.dart';
+import '../../features/maestros/presentation/pages/formulas_list_page.dart';
+import '../../features/maestros/presentation/pages/formula_form_page.dart';
 import '../../features/compras/presentation/pages/compras_list_page.dart';
 import '../../features/compras/presentation/pages/compra_form_page.dart';
 import '../../features/compras/presentation/pages/compra_detail_page.dart';
@@ -122,6 +124,15 @@ class AppRouter {
         routes: [
           GoRoute(path: 'nuevo', builder: (_, __) => const AlmacenFormPage()),
           GoRoute(path: ':id',   builder: (_, s)  => AlmacenFormPage(almacenId: s.pathParameters['id'])),
+        ],
+      ),
+
+      GoRoute(
+        path: '/maestros/formulas',
+        builder: (_, __) => const FormulasListPage(),
+        routes: [
+          GoRoute(path: 'nuevo', builder: (_, __) => const FormulaFormPage()),
+          GoRoute(path: ':id',   builder: (_, s)  => FormulaFormPage(formulaId: s.pathParameters['id'])),
         ],
       ),
 

@@ -4,6 +4,7 @@ import '../models/articulo_model.dart';
 import '../models/cliente_model.dart';
 import '../models/proveedor_model.dart';
 import '../models/almacen_model.dart';
+import '../models/formula_model.dart';
 import '../../domain/entities/lista_precio.dart';
 
 class PageResult<T> {
@@ -30,6 +31,11 @@ abstract class MaestrosRemoteDataSource {
   Future<List<AlmacenModel>> findAllAlmacenes({String? q, bool? activo});
   Future<AlmacenModel> getAlmacen(String id);
   Future<AlmacenModel> saveAlmacen(Map<String, dynamic> data, {String? id});
+
+  Future<List<FormulaModel>> findAllFormulas({String? q, bool? activo});
+  Future<FormulaModel> getFormula(String id);
+  Future<FormulaModel> saveFormula(Map<String, dynamic> data, {String? id});
+  Future<FormulaModel> toggleFormula(String id);
 
   Future<List<ListaPrecio>> listPrecios(String articuloId);
   Future<ListaPrecio> saveListaPrecio(Map<String, dynamic> data, {String? id});
@@ -176,6 +182,47 @@ class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
           ? await _dio.put('/maestros/almacenes/$id', data: data)
           : await _dio.post('/maestros/almacenes', data: data);
       return AlmacenModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  // ── Fórmulas ───────────────────────────────────────────────────────────────
+
+  @override
+  Future<List<FormulaModel>> findAllFormulas({String? q, bool? activo}) async {
+    try {
+      final res = await _dio.get('/maestros/formulas', queryParameters: {
+        if (q != null && q.isNotEmpty) 'q': q,
+        if (activo != null) 'activo': activo,
+      });
+      return (res.data['data'] as List)
+          .map((e) => FormulaModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<FormulaModel> getFormula(String id) async {
+    try {
+      final res = await _dio.get('/maestros/formulas/$id');
+      return FormulaModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<FormulaModel> saveFormula(Map<String, dynamic> data, {String? id}) async {
+    try {
+      final res = id != null
+          ? await _dio.put('/maestros/formulas/$id', data: data)
+          : await _dio.post('/maestros/formulas', data: data);
+      return FormulaModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<FormulaModel> toggleFormula(String id) async {
+    try {
+      final res = await _dio.patch('/maestros/formulas/$id/toggle');
+      return FormulaModel.fromJson(res.data['data'] as Map<String, dynamic>);
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 

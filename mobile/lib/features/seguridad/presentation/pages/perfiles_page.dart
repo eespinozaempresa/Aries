@@ -36,6 +36,7 @@ const _menuTree = [
     _MenuNode('maestros.clientes', 'Clientes'),
     _MenuNode('maestros.proveedores', 'Proveedores'),
     _MenuNode('maestros.almacenes', 'Almacenes'),
+    _MenuNode('maestros.formulas', 'Fórmulas'),
   ]),
   _MenuGroup('almacen', 'Almacén', [
     _MenuNode('almacen.movimientos', 'Movimientos'),
