@@ -101,6 +101,11 @@ class _View extends StatelessWidget {
                 onPressed: () => _confirmEliminar(ctx, c.id),
               ),
             ],
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: () => ctx.pop(),
+              child: const Text('Cancelar'),
+            ),
           ]);
         },
       ),

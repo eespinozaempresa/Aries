@@ -7,7 +7,7 @@ import '../services/menu_permission_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 
 /// AppBar estándar de la app: agrega siempre, al final de [actions],
-/// el botón Inicio (oculto en /home), Cambiar contraseña y Cerrar sesión.
+/// el botón Inicio (oculto en /home), Cambiar contraseña (solo en /home) y Cerrar sesión.
 class AriesAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget title;
   final List<Widget> actions;
@@ -41,11 +41,12 @@ class AriesAppBar extends StatelessWidget implements PreferredSizeWidget {
             tooltip: 'Inicio',
             onPressed: () => context.go('/home'),
           ),
-        IconButton(
-          icon: const Icon(Icons.lock_reset_outlined),
-          tooltip: 'Cambiar contraseña',
-          onPressed: () => context.push('/utilitarios/cambiar-clave'),
-        ),
+        if (isHome)
+          IconButton(
+            icon: const Icon(Icons.lock_reset_outlined),
+            tooltip: 'Cambiar contraseña',
+            onPressed: () => context.push('/utilitarios/cambiar-clave'),
+          ),
         IconButton(
           icon: const Icon(Icons.logout),
           tooltip: 'Cerrar sesión',

@@ -275,7 +275,18 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
               );
             }),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _submit, child: const Text('Guardar')),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(onPressed: _submit, child: const Text('Guardar')),
+              ),
+            ]),
           ],
         ),
       ),

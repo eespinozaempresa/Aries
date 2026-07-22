@@ -46,56 +46,80 @@ class _State extends State<CxCListPage> {
         appBar: AriesAppBar(
           title: const Text('CxC — Cuentas por Cobrar'),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.account_balance_wallet_outlined),
-              tooltip: 'Consolidado',
-              onPressed: () => showDialog(
-                context: ctx,
-                builder: (_) => _ConsolidadoDialog(bloc: ctx.read<CxCBloc>()),
-              ),
-            ),
             BlocBuilder<CxCBloc, CxCState>(
               builder: (bctx, state) {
                 final items = switch (state) {
                   CxCLoaded(:final items) => items,
                   _ => <CuentaCobrar>[],
                 };
-                if (items.isEmpty) return const SizedBox.shrink();
-                return IconButton(
-                  icon: const Icon(Icons.download),
-                  tooltip: 'Exportar',
-                  onPressed: () => ExportService.showExportDialog(
-                    context: context,
-                    title: 'Cuentas por Cobrar',
-                    columns: const ['Provisión', 'Cliente', 'Doc', 'Número', 'Emisión', 'Vencimiento', 'Total', 'Saldo', 'Estado'],
-                    rows: items.map((c) => <String>[
-                      '${c.numeroProvision}',
-                      c.razonSocialCliente ?? c.codigoCliente,
-                      c.codigoDocumento,
-                      c.numeroDocumento,
-                      ExportService.fmtDate(c.fechaEmision),
-                      ExportService.fmtDate(c.fechaVencimiento),
-                      c.montoTotal.toStringAsFixed(2),
-                      c.saldo.toStringAsFixed(2),
-                      c.pendiente ? 'Pendiente' : 'Cancelada',
-                    ]).toList(),
-                  ),
+                return PopupMenuButton<String>(
+                  icon: const Icon(Icons.settings),
+                  tooltip: 'Opciones',
+                  onSelected: (v) {
+                    switch (v) {
+                      case 'todas':
+                        setState(() => _filtroPendiente = null);
+                        ctx.read<CxCBloc>().add(CxCLoad(reset: true, pendiente: null));
+                        break;
+                      case 'pendientes':
+                        setState(() => _filtroPendiente = true);
+                        ctx.read<CxCBloc>().add(CxCLoad(reset: true, pendiente: true));
+                        break;
+                      case 'canceladas':
+                        setState(() => _filtroPendiente = false);
+                        ctx.read<CxCBloc>().add(CxCLoad(reset: true, pendiente: false));
+                        break;
+                      case 'exportar':
+                        ExportService.showExportDialog(
+                          context: context,
+                          title: 'Cuentas por Cobrar',
+                          columns: const ['Provisión', 'Cliente', 'Doc', 'Número', 'Emisión', 'Vencimiento', 'Total', 'Saldo', 'Estado'],
+                          rows: items.map((c) => <String>[
+                            '${c.numeroProvision}',
+                            c.razonSocialCliente ?? c.codigoCliente,
+                            c.codigoDocumento,
+                            c.numeroDocumento,
+                            ExportService.fmtDate(c.fechaEmision),
+                            ExportService.fmtDate(c.fechaVencimiento),
+                            c.montoTotal.toStringAsFixed(2),
+                            c.saldo.toStringAsFixed(2),
+                            c.pendiente ? 'Pendiente' : 'Cancelada',
+                          ]).toList(),
+                        );
+                        break;
+                      case 'consolidado':
+                        showDialog(
+                          context: ctx,
+                          builder: (_) => _ConsolidadoDialog(bloc: ctx.read<CxCBloc>()),
+                        );
+                        break;
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    CheckedPopupMenuItem(value: 'todas',       checked: _filtroPendiente == null,  child: const Text('Todas')),
+                    CheckedPopupMenuItem(value: 'pendientes',  checked: _filtroPendiente == true,  child: const Text('Pendientes')),
+                    CheckedPopupMenuItem(value: 'canceladas',  checked: _filtroPendiente == false, child: const Text('Canceladas')),
+                    const PopupMenuDivider(),
+                    PopupMenuItem(
+                      value: 'exportar',
+                      enabled: items.isNotEmpty,
+                      child: const Row(children: [
+                        Icon(Icons.download, size: 20),
+                        SizedBox(width: 12),
+                        Text('Exportar'),
+                      ]),
+                    ),
+                    const PopupMenuItem(
+                      value: 'consolidado',
+                      child: Row(children: [
+                        Icon(Icons.account_balance_wallet_outlined, size: 20),
+                        SizedBox(width: 12),
+                        Text('Consolidado'),
+                      ]),
+                    ),
+                  ],
                 );
               },
-            ),
-            PopupMenuButton<bool?>(
-              icon: const Icon(Icons.filter_list),
-              tooltip: 'Filtrar',
-              initialValue: _filtroPendiente,
-              onSelected: (v) {
-                setState(() => _filtroPendiente = v);
-                ctx.read<CxCBloc>().add(CxCLoad(reset: true, pendiente: v));
-              },
-              itemBuilder: (_) => [
-                CheckedPopupMenuItem(value: null,  checked: _filtroPendiente == null,  child: const Text('Todas')),
-                CheckedPopupMenuItem(value: true,  checked: _filtroPendiente == true,  child: const Text('Pendientes')),
-                CheckedPopupMenuItem(value: false, checked: _filtroPendiente == false, child: const Text('Canceladas')),
-              ],
             ),
             const SizedBox(width: 8),
           ],

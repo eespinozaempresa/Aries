@@ -91,22 +91,6 @@ class _AlmacenFormPageState extends State<AlmacenFormPage> {
   Widget build(BuildContext context) => Scaffold(
         appBar: AriesAppBar(
           title: Text(widget.isEdit ? 'Editar Almacén' : 'Nuevo Almacén'),
-          actions: [
-            if (_saving)
-              const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: SizedBox(width: 20, height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2)))
-            else
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: FilledButton.icon(
-                onPressed: _save,
-                icon: const Icon(Icons.save, size: 18),
-                label: const Text('Guardar'),
-              ),
-            ),
-          ],
         ),
         body: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -150,7 +134,28 @@ class _AlmacenFormPageState extends State<AlmacenFormPage> {
                   value: _activo,
                   onChanged: (v) => setState(() => _activo = v),
                 ),
-              const SizedBox(height: 80),
+              const SizedBox(height: 24),
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _saving ? null : () => context.pop(),
+                    child: const Text('Cancelar'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _saving ? null : _save,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18, height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.save, size: 18),
+                    label: const Text('Guardar'),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 40),
             ],
           ),
         ),

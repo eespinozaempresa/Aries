@@ -338,10 +338,21 @@ class _MovimientoFormState extends State<_MovimientoForm> {
                   ),
                   const SizedBox(height: 24),
 
-                  ElevatedButton(
-                    onPressed: saving ? null : _submit,
-                    child: const Text('Registrar'),
-                  ),
+                  Row(children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: saving ? null : () => ctx.pop(),
+                        child: const Text('Cancelar'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: saving ? null : _submit,
+                        child: const Text('Registrar'),
+                      ),
+                    ),
+                  ]),
                   const SizedBox(height: 40),
                 ],
               ),
