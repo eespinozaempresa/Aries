@@ -149,7 +149,7 @@ class _LoginViewState extends State<_LoginView> {
     return Column(
       children: [
         Image.asset(
-          'assets/images/logo_aries.jpeg',
+          'assets/images/logo_aries.png',
           height: 96,
           fit: BoxFit.contain,
         ),
