@@ -148,7 +148,7 @@ class _ParametrosPageState extends State<ParametrosPage> {
                         const SizedBox(height: 32),
                         SizedBox(
                           height: 50,
-                          child: ElevatedButton(
+                          child: FilledButton(
                             onPressed: _saving ? null : _submit,
                             child: _saving
                                 ? const SizedBox(

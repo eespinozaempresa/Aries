@@ -138,7 +138,7 @@ class _CambiarClavePageState extends State<CambiarClavePage> {
               const SizedBox(height: 32),
               SizedBox(
                 height: 50,
-                child: ElevatedButton(
+                child: FilledButton(
                   onPressed: _loading ? null : _submit,
                   child: _loading
                       ? const SizedBox(

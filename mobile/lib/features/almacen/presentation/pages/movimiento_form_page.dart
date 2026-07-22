@@ -155,8 +155,8 @@ class _MovimientoFormState extends State<_MovimientoForm> {
               decoration: const InputDecoration(labelText: 'Precio unitario')),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Agregar')),
+          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Agregar')),
         ],
       ),
     );
@@ -347,7 +347,7 @@ class _MovimientoFormState extends State<_MovimientoForm> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: FilledButton(
                         onPressed: saving ? null : _submit,
                         child: const Text('Registrar'),
                       ),

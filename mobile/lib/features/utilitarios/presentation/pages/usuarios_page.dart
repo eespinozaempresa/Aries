@@ -389,27 +389,39 @@ class _UsuarioSheetState extends State<_UsuarioSheet> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _codigoCtrl,
-                enabled: !_isEdit,
-                decoration: const InputDecoration(labelText: 'Código'),
-                textCapitalization: TextCapitalization.characters,
-                validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: _codigoCtrl,
+                      enabled: !_isEdit,
+                      decoration: const InputDecoration(labelText: 'Código'),
+                      textCapitalization: TextCapitalization.characters,
+                      validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 3,
+                    child: DropdownButtonFormField<String>(
+                      value: _nivel,
+                      isExpanded: true,
+                      decoration: const InputDecoration(labelText: 'Nivel'),
+                      items: _niveles
+                          .map((n) => DropdownMenuItem(value: n, child: Text(n)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _nivel = v ?? 'operador'),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _nombreCtrl,
                 decoration: const InputDecoration(labelText: 'Nombre'),
                 validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _nivel,
-                decoration: const InputDecoration(labelText: 'Nivel'),
-                items: _niveles
-                    .map((n) => DropdownMenuItem(value: n, child: Text(n)))
-                    .toList(),
-                onChanged: (v) => setState(() => _nivel = v ?? 'operador'),
               ),
               if (!_isEdit) ...[
                 const SizedBox(height: 8),
@@ -430,39 +442,66 @@ class _UsuarioSheetState extends State<_UsuarioSheet> {
                 ),
               ],
               const SizedBox(height: 8),
-              TextFormField(
-                controller: _emailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email (opcional)'),
-              ),
-              const SizedBox(height: 8),
-              _loadingPerfiles
-                  ? const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
-                  : DropdownButtonFormField<String>(
-                      value: _perfiles.any((p) => p['id'] == _perfilId)
-                          ? _perfilId
-                          : null,
-                      decoration: const InputDecoration(labelText: 'Perfil (opcional)'),
-                      items: [
-                        const DropdownMenuItem<String>(value: null, child: Text('Sin perfil')),
-                        ..._perfiles.map((p) => DropdownMenuItem<String>(
-                              value: p['id']?.toString(),
-                              child: Text(p['descripcion']?.toString() ?? ''),
-                            )),
-                      ],
-                      onChanged: (v) => setState(() => _perfilId = v),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextFormField(
+                      controller: _emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(labelText: 'Email (opcional)'),
                     ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _saving ? null : _submit,
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : Text(_isEdit ? 'Guardar cambios' : 'Crear usuario'),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: _loadingPerfiles
+                        ? const Center(
+                            child: SizedBox(
+                                width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+                        : DropdownButtonFormField<String>(
+                            value: _perfiles.any((p) => p['id'] == _perfilId)
+                                ? _perfilId
+                                : null,
+                            isExpanded: true,
+                            decoration: const InputDecoration(labelText: 'Perfil'),
+                            items: [
+                              const DropdownMenuItem<String>(value: null, child: Text('Sin perfil')),
+                              ..._perfiles.map((p) => DropdownMenuItem<String>(
+                                    value: p['id']?.toString(),
+                                    child: Text(p['descripcion']?.toString() ?? '',
+                                        overflow: TextOverflow.ellipsis),
+                                  )),
+                            ],
+                            onChanged: (v) => setState(() => _perfilId = v),
+                          ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 20),
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                    child: const Text('Cancelar'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _saving ? null : _submit,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.save, size: 18),
+                    label: Text(_isEdit ? 'Guardar cambios' : 'Crear usuario'),
+                  ),
+                ),
+              ]),
             ],
           ),
         ),

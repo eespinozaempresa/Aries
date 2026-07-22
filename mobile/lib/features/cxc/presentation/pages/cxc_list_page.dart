@@ -402,10 +402,10 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
           ),
         ])),
         actions: [
-          TextButton(
+          OutlinedButton(
               onPressed: () => Navigator.pop(dctx),
               child: const Text('Cancelar')),
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
               final m = double.tryParse(montoCtrl.text);
               if (reciboCtrl.text.isEmpty || m == null || m <= 0 || tipoPagoSeleccionado == null) return;

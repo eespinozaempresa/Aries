@@ -317,7 +317,7 @@ class _PerfilFormPageState extends State<_PerfilFormPage> {
       appBar: AriesAppBar(
         title: Text(_isEdit ? 'Editar perfil' : 'Nuevo perfil'),
         actions: [
-          TextButton(
+          FilledButton(
             onPressed: _saving ? null : _save,
             child: _saving
                 ? const SizedBox(

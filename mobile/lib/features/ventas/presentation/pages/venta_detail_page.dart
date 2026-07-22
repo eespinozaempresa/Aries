@@ -121,8 +121,12 @@ class _View extends StatelessWidget {
       title: const Text('Anular venta'),
       content: const Text('Se revertirán los movimientos de almacén y la CxC asociada. ¿Continuar?'),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Anular', style: TextStyle(color: Colors.red))),
+        OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Anular'),
+        ),
       ],
     )).then((ok) { if (ok == true && context.mounted) context.read<VentaBloc>().add(VentaAnular(id)); });
   }
@@ -132,8 +136,12 @@ class _View extends StatelessWidget {
       title: const Text('Eliminar venta'),
       content: const Text('Esta acción es irreversible. Se eliminará permanentemente la venta y su detalle. ¿Desea continuar?'),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
+        OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Eliminar'),
+        ),
       ],
     )).then((ok) { if (ok == true && context.mounted) context.read<VentaBloc>().add(VentaEliminar(id)); });
   }

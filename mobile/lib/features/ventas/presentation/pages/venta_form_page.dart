@@ -198,8 +198,8 @@ class _FormState extends State<_Form> {
             decoration: const InputDecoration(labelText: 'Descuento %')),
       ]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-        TextButton(onPressed: () => Navigator.pop(context, true),  child: const Text('Agregar')),
+        OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+        FilledButton(onPressed: () => Navigator.pop(context, true),  child: const Text('Agregar')),
       ],
     ));
     if (ok == true) {
@@ -402,7 +402,7 @@ class _FormState extends State<_Form> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton(onPressed: saving ? null : _submit, child: const Text('Registrar Venta')),
+                  child: FilledButton(onPressed: saving ? null : _submit, child: const Text('Registrar Venta')),
                 ),
               ]),
               const SizedBox(height: 40),

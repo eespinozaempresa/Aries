@@ -284,7 +284,7 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(onPressed: _submit, child: const Text('Guardar')),
+                child: FilledButton(onPressed: _submit, child: const Text('Guardar')),
               ),
             ]),
           ],

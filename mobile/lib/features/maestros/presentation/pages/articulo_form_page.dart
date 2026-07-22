@@ -644,7 +644,7 @@ class _PrecioDialogState extends State<_PrecioDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
         FilledButton(onPressed: _submit, child: const Text('Guardar')),
       ],
     );

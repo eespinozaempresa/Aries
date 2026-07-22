@@ -187,7 +187,7 @@ class _TipoCambioListViewState extends State<_TipoCambioListView> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           FilledButton(
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
@@ -215,7 +215,7 @@ class _TipoCambioListViewState extends State<_TipoCambioListView> {
         title: const Text('Eliminar'),
         content: Text('¿Eliminar el tipo de cambio del ${_formatFecha(tc.fecha)}?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
             onPressed: () {

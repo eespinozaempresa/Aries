@@ -214,8 +214,8 @@ class _View extends StatelessWidget {
           ),
         ])),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
-          ElevatedButton(
+          OutlinedButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
+          FilledButton(
             onPressed: () {
               final m = double.tryParse(montoCtrl.text);
               if (conceptoCtrl.text.isEmpty || m == null || m <= 0) return;
@@ -256,9 +256,9 @@ class _View extends StatelessWidget {
           decoration: const InputDecoration(labelText: 'Monto contado (S/)')),
       ]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+        OutlinedButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
           onPressed: () {
             final m = double.tryParse(montoCtrl.text);
             if (m == null) return;

@@ -174,8 +174,8 @@ class _View extends StatelessWidget {
         ),
       ])),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
-        ElevatedButton(
+        OutlinedButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
+        FilledButton(
           onPressed: () {
             final m = double.tryParse(montoCtrl.text);
             if (reciboCtrl.text.isEmpty || m == null || m <= 0 || tipoPagoSeleccionado == null) return;
@@ -343,10 +343,10 @@ class _View extends StatelessWidget {
                         ? TextButton(
                             onPressed: () => setSt(() => step--),
                             child: const Text('Atrás'))
-                        : TextButton(
+                        : OutlinedButton(
                             onPressed: () => Navigator.pop(dctx),
                             child: const Text('Cancelar')),
-                      ElevatedButton(
+                      FilledButton(
                         onPressed: () {
                           if (step == 0) {
                             final nc = int.tryParse(cuotasCtrl.text) ?? 0;

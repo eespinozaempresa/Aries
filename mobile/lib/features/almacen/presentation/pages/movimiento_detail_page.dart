@@ -102,10 +102,11 @@ class _MovimientoBody extends StatelessWidget {
         title: const Text('Anular movimiento'),
         content: const Text('Esta acción no puede deshacerse sin recalcular el kardex. ¿Continuar?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(
+          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Anular', style: TextStyle(color: Colors.red)),
+            child: const Text('Anular'),
           ),
         ],
       ),

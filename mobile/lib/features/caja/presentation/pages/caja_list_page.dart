@@ -111,8 +111,8 @@ class _State extends State<CajaListPage> {
           decoration: const InputDecoration(labelText: 'Monto apertura (S/)')),
       ]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
-        ElevatedButton(
+        OutlinedButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
+        FilledButton(
           onPressed: () {
             final m = double.tryParse(montoCtrl.text) ?? 0;
             if (cajaCtrl.text.isEmpty) return;
