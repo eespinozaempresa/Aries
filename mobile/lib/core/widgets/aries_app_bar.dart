@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../constants/api_constants.dart';
 import '../di/injection.dart';
 import '../services/menu_permission_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 
 /// AppBar estándar de la app: agrega siempre, al final de [actions],
-/// el botón Inicio (oculto en /home); Cambiar contraseña y Cerrar sesión
-/// solo se muestran en /home.
+/// el botón Inicio (oculto en /home); en /home se muestra en su lugar
+/// un botón de usuario que abre un popup con los datos de la sesión,
+/// Cambiar contraseña y Cerrar sesión.
 class AriesAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget title;
   final List<Widget> actions;
@@ -42,19 +44,54 @@ class AriesAppBar extends StatelessWidget implements PreferredSizeWidget {
             tooltip: 'Inicio',
             onPressed: () => context.go('/home'),
           ),
-        if (isHome) ...[
+        if (isHome)
           IconButton(
-            icon: const Icon(Icons.lock_reset_outlined),
-            tooltip: 'Cambiar contraseña',
-            onPressed: () => context.push('/utilitarios/cambiar-clave'),
+            icon: const Icon(Icons.account_circle),
+            tooltip: 'Usuario',
+            onPressed: () => _showUserMenu(context),
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-            onPressed: () => _logout(context),
-          ),
-        ],
       ],
+    );
+  }
+
+  Future<void> _showUserMenu(BuildContext context) async {
+    final usuario = await getIt<AuthRepository>().getCachedUsuario();
+    final now = DateTime.now();
+    if (!context.mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Mi cuenta'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _InfoRow('Usuario', usuario?.codigo ?? '-'),
+            _InfoRow('Nombre', usuario?.nombre ?? '-'),
+            _InfoRow('Fecha', DateFormat('dd/MM/yyyy').format(now)),
+            _InfoRow('Hora', DateFormat('HH:mm:ss').format(now)),
+            const Divider(height: 24),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.lock_reset_outlined),
+              title: const Text('Cambiar Contraseña'),
+              onTap: () {
+                Navigator.pop(dialogCtx);
+                context.push('/utilitarios/cambiar-clave');
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.logout),
+              title: const Text('Cerrar sesión'),
+              onTap: () {
+                Navigator.pop(dialogCtx);
+                _logout(context);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -68,5 +105,19 @@ class AriesAppBar extends StatelessWidget implements PreferredSizeWidget {
       MenuPermissionService.instance.clear();
     }
     if (context.mounted) context.go('/login');
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _InfoRow(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Text('$label: $value'),
+    );
   }
 }

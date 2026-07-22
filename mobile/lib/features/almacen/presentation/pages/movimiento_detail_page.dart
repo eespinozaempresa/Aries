@@ -84,13 +84,19 @@ class _MovimientoBody extends StatelessWidget {
               trailing: Text('S/ ${d.importe.toStringAsFixed(2)}'),
             )),
         const SizedBox(height: 24),
-        if (!mov.anulado)
+        OutlinedButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        if (!mov.anulado) ...[
+          const SizedBox(height: 8),
           OutlinedButton.icon(
             icon: const Icon(Icons.block),
             label: const Text('Anular movimiento'),
             style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
             onPressed: () => _confirmAnular(context, mov.id),
           ),
+        ],
       ],
     );
   }

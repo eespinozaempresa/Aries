@@ -285,7 +285,18 @@ class _FormState extends State<_Form> {
                 _TotalesRow('≈ Equivalente S/', _total, 'S/', color: Colors.orange.shade700),
               ],
               const SizedBox(height: 24),
-              ElevatedButton(onPressed: saving ? null : _submit, child: const Text('Registrar Compra')),
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: saving ? null : () => ctx.pop(),
+                    child: const Text('Cancelar'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(onPressed: saving ? null : _submit, child: const Text('Registrar Compra')),
+                ),
+              ]),
               const SizedBox(height: 40),
             ])),
             if (saving) const Positioned.fill(child: ColoredBox(color: Colors.black26, child: Center(child: CircularProgressIndicator()))),

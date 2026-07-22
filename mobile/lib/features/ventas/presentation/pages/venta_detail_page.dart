@@ -83,13 +83,19 @@ class _View extends StatelessWidget {
               _totRow('≈ Equivalente S/', v.total, 'S/', color: Colors.orange.shade700),
             ],
             const SizedBox(height: 24),
-            if (!v.anulado)
+            OutlinedButton(
+              onPressed: () => ctx.pop(),
+              child: const Text('Cancelar'),
+            ),
+            if (!v.anulado) ...[
+              const SizedBox(height: 8),
               OutlinedButton.icon(
                 icon: const Icon(Icons.block),
                 label: const Text('Anular venta'),
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                 onPressed: () => _confirm(ctx, v.id),
               ),
+            ],
             if (v.anulado) ...[
               const SizedBox(height: 8),
               OutlinedButton.icon(

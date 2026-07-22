@@ -126,14 +126,14 @@ class _LoginViewState extends State<_LoginView> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _buildHeader(),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
                     _buildForm(context),
                   ],
                 ),
@@ -150,10 +150,10 @@ class _LoginViewState extends State<_LoginView> {
       children: [
         Image.asset(
           'assets/images/logo_aries.png',
-          height: 96,
+          height: 56,
           fit: BoxFit.contain,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         const Text(
           'ARIES',
           style: TextStyle(
@@ -177,7 +177,7 @@ class _LoginViewState extends State<_LoginView> {
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
@@ -187,7 +187,7 @@ class _LoginViewState extends State<_LoginView> {
                 'Iniciar sesión',
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF1A2B45)),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 14),
 
               // Empresa — dropdown
               const _FieldLabel('Empresa'),
@@ -211,7 +211,7 @@ class _LoginViewState extends State<_LoginView> {
                       onChanged: (v) => setState(() => _empresa = v),
                       validator: (_) => _empresa == null ? 'Seleccione una empresa' : null,
                     ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // Usuario
               const _FieldLabel('Usuario'),
@@ -223,7 +223,7 @@ class _LoginViewState extends State<_LoginView> {
                 ),
                 validator: (v) => v == null || v.trim().isEmpty ? 'Ingrese su usuario' : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // Clave
               const _FieldLabel('Contraseña'),
@@ -243,7 +243,7 @@ class _LoginViewState extends State<_LoginView> {
                 ),
                 validator: (v) => v == null || v.isEmpty ? 'Ingrese su contraseña' : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // Captcha
               const _FieldLabel('Verificación'),
@@ -296,7 +296,7 @@ class _LoginViewState extends State<_LoginView> {
                   ),
                 ],
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 18),
 
               // Submit
               BlocBuilder<AuthBloc, AuthState>(
