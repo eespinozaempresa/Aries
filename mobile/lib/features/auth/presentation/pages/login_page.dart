@@ -148,14 +148,10 @@ class _LoginViewState extends State<_LoginView> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1565C0),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(Icons.business_center, color: Colors.white, size: 34),
+        Image.asset(
+          'assets/images/logo_aries.jpeg',
+          height: 96,
+          fit: BoxFit.contain,
         ),
         const SizedBox(height: 16),
         const Text(
