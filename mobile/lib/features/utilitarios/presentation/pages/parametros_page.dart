@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/network/dio_client.dart';
@@ -146,22 +147,28 @@ class _ParametrosPageState extends State<ParametrosPage> {
                           },
                         ),
                         const SizedBox(height: 32),
-                        SizedBox(
-                          height: 50,
-                          child: FilledButton(
-                            onPressed: _saving ? null : _submit,
-                            child: _saving
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Text('Guardar'),
+                        Row(children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _saving ? null : () => context.pop(),
+                              child: const Text('Cancelar'),
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: _saving ? null : _submit,
+                              icon: _saving
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.save, size: 18),
+                              label: const Text('Guardar'),
+                            ),
+                          ),
+                        ]),
                       ],
                     ),
                   ),

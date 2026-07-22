@@ -184,7 +184,20 @@ class AppRouter {
         routes: [
           GoRoute(path: 'usuarios',  builder: (_, __) => const UsuariosPage()),
           GoRoute(path: 'auditoria', builder: (_, __) => const AuditoriaPage()),
-          GoRoute(path: 'perfiles',  builder: (_, __) => const PerfilesPage()),
+          GoRoute(
+            path: 'perfiles',
+            builder: (_, __) => const PerfilesPage(),
+            routes: [
+              GoRoute(
+                path: 'nuevo',
+                builder: (_, s) => PerfilFormPage(perfil: s.extra as Map<String, dynamic>?),
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (_, s) => PerfilFormPage(perfil: s.extra as Map<String, dynamic>?),
+              ),
+            ],
+          ),
         ],
       ),
 

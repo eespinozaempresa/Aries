@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/network/dio_client.dart';
@@ -112,9 +113,11 @@ class _PerfilesPageState extends State<PerfilesPage> {
   }
 
   Future<void> _openForm([Map<String, dynamic>? perfil]) async {
-    await Navigator.of(context).push<void>(MaterialPageRoute(
-      builder: (_) => _PerfilFormPage(perfil: perfil, onSaved: _fetch),
-    ));
+    final saved = await context.push<bool>(
+      perfil == null ? '/seguridad/perfiles/nuevo' : '/seguridad/perfiles/${perfil['id']}',
+      extra: perfil,
+    );
+    if (saved == true && mounted) _fetch();
   }
 
   @override
@@ -194,17 +197,16 @@ class _PerfilesPageState extends State<PerfilesPage> {
 
 // ── Perfil Form Page ──────────────────────────────────────────────────────────
 
-class _PerfilFormPage extends StatefulWidget {
+class PerfilFormPage extends StatefulWidget {
   final Map<String, dynamic>? perfil;
-  final VoidCallback onSaved;
 
-  const _PerfilFormPage({this.perfil, required this.onSaved});
+  const PerfilFormPage({super.key, this.perfil});
 
   @override
-  State<_PerfilFormPage> createState() => _PerfilFormPageState();
+  State<PerfilFormPage> createState() => _PerfilFormPageState();
 }
 
-class _PerfilFormPageState extends State<_PerfilFormPage> {
+class _PerfilFormPageState extends State<PerfilFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _codigoCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
@@ -296,8 +298,7 @@ class _PerfilFormPageState extends State<_PerfilFormPage> {
         );
       }
       if (mounted) {
-        widget.onSaved();
-        Navigator.of(context).pop();
+        context.pop(true);
       }
     } on DioException catch (e) {
       final msg = (e.response?.data['message'] ?? 'Error al guardar').toString();
@@ -316,18 +317,6 @@ class _PerfilFormPageState extends State<_PerfilFormPage> {
     return Scaffold(
       appBar: AriesAppBar(
         title: Text(_isEdit ? 'Editar perfil' : 'Nuevo perfil'),
-        actions: [
-          FilledButton(
-            onPressed: _saving ? null : _save,
-            child: _saving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Text('Guardar', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
       body: Form(
         key: _formKey,
@@ -353,6 +342,30 @@ class _PerfilFormPageState extends State<_PerfilFormPage> {
             Text('Opciones de menú', style: Theme.of(context).textTheme.titleMedium),
             const Divider(),
             ..._menuTree.map(_buildGroupTile),
+            const SizedBox(height: 24),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _saving ? null : () => context.pop(),
+                  child: const Text('Cancelar'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _saving ? null : _save,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save, size: 18),
+                  label: const Text('Guardar'),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 40),
           ],
         ),
       ),
