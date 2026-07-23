@@ -69,6 +69,15 @@ class CxCRemoteDataSource {
     }
   }
 
+  Future<Map<String, dynamic>> eliminarCobro(String id) async {
+    try {
+      final r = await _dio.delete('/cxc/cobros/$id');
+      return r.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   Future<List<dynamic>> renovar({
     required String id,
     required List<Map<String, dynamic>> cuotas,

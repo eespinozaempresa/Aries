@@ -27,6 +27,7 @@ class CxCRenovar extends CxCEvent {
   final List<Map<String, dynamic>> cuotas;
   CxCRenovar({required this.id, required this.cuotas});
 }
+class CxCEliminarCobro extends CxCEvent { final String cobroId; CxCEliminarCobro(this.cobroId); }
 
 // ── States ───────────────────────────────────────────────────────────────────
 sealed class CxCState {}
@@ -45,6 +46,7 @@ class CxCDetailLoaded extends CxCState {
 class CxCSaving extends CxCState {}
 class CxCCobroRegistrado extends CxCState { final Cobro cobro; CxCCobroRegistrado(this.cobro); }
 class CxCRenovada extends CxCState { final List<CuentaCobrar> nuevas; CxCRenovada(this.nuevas); }
+class CxCCobroEliminado extends CxCState { final CuentaCobrar cxc; CxCCobroEliminado(this.cxc); }
 class CxCError extends CxCState { final String message; CxCError(this.message); }
 
 // ── BLoC ─────────────────────────────────────────────────────────────────────
@@ -58,6 +60,7 @@ class CxCBloc extends Bloc<CxCEvent, CxCState> {
     on<CxCLoadDetail>(_onLoadDetail);
     on<CxCRegistrarCobro>(_onRegistrarCobro);
     on<CxCRenovar>(_onRenovar);
+    on<CxCEliminarCobro>(_onEliminarCobro);
   }
 
   Future<void> _onLoad(CxCLoad e, Emitter<CxCState> emit) async {
@@ -113,6 +116,16 @@ class CxCBloc extends Bloc<CxCEvent, CxCState> {
       emit(CxCError(ex.message));
     } catch (ex) {
       emit(CxCError(ex.toString()));
+    }
+  }
+
+  Future<void> _onEliminarCobro(CxCEliminarCobro e, Emitter<CxCState> emit) async {
+    emit(CxCSaving());
+    try {
+      final cxc = await _ds.eliminarCobro(e.cobroId);
+      emit(CxCCobroEliminado(CuentaCobrar.fromJson(cxc)));
+    } on ApiException catch (ex) {
+      emit(CxCError(ex.message));
     }
   }
 

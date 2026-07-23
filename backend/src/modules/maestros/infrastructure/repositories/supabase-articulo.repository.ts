@@ -156,6 +156,7 @@ export class SupabaseArticuloRepository implements IArticuloRepository {
       codigoBarras: row.codigo_barras as string | undefined,
       pendiente: row.pendiente as boolean,
       activo: row.activo as boolean,
+      conFormula: (row.con_formula as boolean) ?? false,
       createdAt: row.created_at as string | undefined,
       updatedAt: row.updated_at as string | undefined,
     };

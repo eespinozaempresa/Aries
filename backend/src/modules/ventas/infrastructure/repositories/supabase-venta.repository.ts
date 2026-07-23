@@ -19,7 +19,7 @@ export class SupabaseVentaRepository implements IVentaRepository {
 
     // IGV dinámico: leer de parametros y verificar aplica_igv del documento
     const [paramRes, docRes] = await Promise.all([
-      this.supabase.db.from('parametros').select('igv')
+      this.supabase.db.from('parametros').select('igv, almacen_partes')
         .eq('codigo_empresa', codigoEmpresa).maybeSingle(),
       this.supabase.db.from('documentos').select('aplica_igv')
         .eq('codigo_empresa', codigoEmpresa)
@@ -29,6 +29,9 @@ export class SupabaseVentaRepository implements IVentaRepository {
     const igvRate    = aplicaIgv ? (Number(paramRes.data?.igv ?? 18) / 100) : 0;
     const moneda     = d.moneda ?? 'PEN';
     const tipoCambio = d.tipoCambio ?? 1;
+    // Almacén de Partes: si está configurado, las Partes explotadas de una fórmula
+    // se descuentan de ese almacén; si no, caen en el almacén elegido en la venta.
+    const almacenPartesDestino = (paramRes.data as any)?.almacen_partes || d.codigoAlmacen;
 
     const lineasProc = d.lineas.map((l) => {
       const descPct     = l.descuentoPct ?? 0;
@@ -113,7 +116,7 @@ export class SupabaseVentaRepository implements IVentaRepository {
         .from('stock')
         .select('codigo_articulo, costo_promedio')
         .eq('codigo_empresa', codigoEmpresa)
-        .eq('codigo_almacen', d.codigoAlmacen)
+        .eq('codigo_almacen', almacenPartesDestino)
         .in('codigo_articulo', codigosComponentes);
       const costoMap = new Map((stockComponentes ?? []).map((s: any) => [s.codigo_articulo, Number(s.costo_promedio)]));
 
@@ -130,29 +133,42 @@ export class SupabaseVentaRepository implements IVentaRepository {
       }
     }
 
-    // Salida de almacén via RPC (Principal + Partes explotadas de su fórmula)
-    const { error: rpcErr } = await this.supabase.db.rpc('registrar_movimiento', {
-      p_empresa:     codigoEmpresa,
-      p_cod_doc:     d.codigoDocumento,
-      p_num_doc:     numeroDocumento,
-      p_fecha:       d.fecha,
-      p_tipo:        'SALIDA',
-      p_alm_origen:  d.codigoAlmacen,
-      p_alm_dest:    null,
-      p_observacion: d.observacion ?? null,
-      p_concepto:    'VENTA',
-      p_cod_usuario: d.codigoUsuario,
-      p_lineas:      [
-        ...lineasProc.map((l) => ({
-          codigoArticulo: l.codigoArticulo,
-          cantidad:       l.cantidad,
-          precioUnitario: l.precioUnitario,
-        })),
-        ...lineasPartes,
-      ],
-      p_serie:       d.serie ?? '0001',
-    });
-    if (rpcErr) throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
+    // Salida de almacén via RPC (Principal + Partes explotadas de su fórmula).
+    // Si el Almacén de Partes configurado difiere del almacén de la venta, se
+    // generan dos movimientos: uno para el/los Principal(es) en el almacén de
+    // la venta (como siempre), y otro (sufijo "-P") para las Partes en el
+    // Almacén de Partes.
+    const lineasPrincipales = lineasProc.map((l) => ({
+      codigoArticulo: l.codigoArticulo,
+      cantidad:       l.cantidad,
+      precioUnitario: l.precioUnitario,
+    }));
+    const registrarSalida = (numDoc: string, almOrigen: string, lineas: typeof lineasPrincipales) =>
+      this.supabase.db.rpc('registrar_movimiento', {
+        p_empresa:     codigoEmpresa,
+        p_cod_doc:     d.codigoDocumento,
+        p_num_doc:     numDoc,
+        p_fecha:       d.fecha,
+        p_tipo:        'SALIDA',
+        p_alm_origen:  almOrigen,
+        p_alm_dest:    null,
+        p_observacion: d.observacion ?? null,
+        p_concepto:    'VENTA',
+        p_cod_usuario: d.codigoUsuario,
+        p_lineas:      lineas,
+        p_serie:       d.serie ?? '0001',
+      });
+
+    if (lineasPartes.length && almacenPartesDestino !== d.codigoAlmacen) {
+      const { error: rpcErr1 } = await registrarSalida(numeroDocumento, d.codigoAlmacen, lineasPrincipales);
+      if (rpcErr1) throw new InternalServerErrorException(`Stock error: ${rpcErr1.message}`);
+
+      const { error: rpcErr2 } = await registrarSalida(`${numeroDocumento}-P`, almacenPartesDestino, lineasPartes);
+      if (rpcErr2) throw new InternalServerErrorException(`Stock error (partes): ${rpcErr2.message}`);
+    } else {
+      const { error: rpcErr } = await registrarSalida(numeroDocumento, d.codigoAlmacen, [...lineasPrincipales, ...lineasPartes]);
+      if (rpcErr) throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
+    }
 
     // CxC automática para ventas a crédito
     if (d.tipoVenta === 'CREDITO') {
@@ -195,24 +211,30 @@ export class SupabaseVentaRepository implements IVentaRepository {
       .select().single();
     if (error) throw new InternalServerErrorException(error.message);
 
-    // Revertir movimiento de almacén
-    const { data: movRow } = await this.supabase.db
-      .from('movimientos_almacen')
-      .select('id')
-      .eq('codigo_empresa', codigoEmpresa)
-      .eq('codigo_documento', venta.codigoDocumento)
-      .eq('numero_documento', venta.numeroDocumento)
-      .maybeSingle();
+    // Revertir movimiento(s) de almacén. Si la venta incluía artículos con fórmula
+    // y el Almacén de Partes difería del almacén de la venta, se generaron dos
+    // movimientos (el propio y uno con sufijo "-P" para las Partes); se revierten
+    // ambos si existen.
+    const numerosDocumento = [venta.numeroDocumento, `${venta.numeroDocumento}-P`];
+    for (const numDoc of numerosDocumento) {
+      const { data: movRow } = await this.supabase.db
+        .from('movimientos_almacen')
+        .select('id')
+        .eq('codigo_empresa', codigoEmpresa)
+        .eq('codigo_documento', venta.codigoDocumento)
+        .eq('numero_documento', numDoc)
+        .maybeSingle();
 
-    if (movRow) {
-      await this.supabase.db.rpc('anular_movimiento', {
-        p_empresa: codigoEmpresa, p_mov_id: movRow.id, p_cod_usuario: codigoUsuario,
-      });
-      // Eliminar registros físicamente para que movimientos_almacen quede limpio
-      await this.supabase.db.from('detalle_movimientos').delete()
-        .eq('movimiento_id', movRow.id).eq('codigo_empresa', codigoEmpresa);
-      await this.supabase.db.from('movimientos_almacen').delete()
-        .eq('id', movRow.id).eq('codigo_empresa', codigoEmpresa);
+      if (movRow) {
+        await this.supabase.db.rpc('anular_movimiento', {
+          p_empresa: codigoEmpresa, p_mov_id: movRow.id, p_cod_usuario: codigoUsuario,
+        });
+        // Eliminar registros físicamente para que movimientos_almacen quede limpio
+        await this.supabase.db.from('detalle_movimientos').delete()
+          .eq('movimiento_id', movRow.id).eq('codigo_empresa', codigoEmpresa);
+        await this.supabase.db.from('movimientos_almacen').delete()
+          .eq('id', movRow.id).eq('codigo_empresa', codigoEmpresa);
+      }
     }
 
     // Marcar CxC como no pendiente (anulada de facto)

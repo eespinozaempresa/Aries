@@ -69,6 +69,15 @@ class CxPRemoteDataSource {
     }
   }
 
+  Future<Map<String, dynamic>> eliminarPago(String id) async {
+    try {
+      final r = await _dio.delete('/cxp/pagos/$id');
+      return r.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   Future<List<dynamic>> renovar({
     required String id,
     required List<Map<String, dynamic>> cuotas,

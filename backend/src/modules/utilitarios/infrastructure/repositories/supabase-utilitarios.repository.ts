@@ -7,16 +7,17 @@ import { CreateUsuarioDto, UpdateUsuarioDto, CreatePerfilDto, UpdatePerfilDto } 
 export class SupabaseUtilitariosRepository {
   constructor(private readonly supabase: SupabaseService) {}
 
-  async getParametros(codigoEmpresa: string): Promise<{ igv: number; tiempoFinanciamiento: number }> {
+  async getParametros(codigoEmpresa: string): Promise<{ igv: number; tiempoFinanciamiento: number; almacenPartes: string | null }> {
     const { data, error } = await this.supabase.db
       .from('parametros')
-      .select('igv, tiempo_financiamiento')
+      .select('igv, tiempo_financiamiento, almacen_partes')
       .eq('codigo_empresa', codigoEmpresa)
       .maybeSingle();
     if (error) throw new InternalServerErrorException(error.message);
     return {
       igv: data?.igv ?? 0,
       tiempoFinanciamiento: data?.tiempo_financiamiento ?? 30,
+      almacenPartes: data?.almacen_partes ?? null,
     };
   }
 
@@ -24,19 +25,26 @@ export class SupabaseUtilitariosRepository {
     codigoEmpresa: string,
     igv: number,
     tiempoFinanciamiento: number,
-  ): Promise<{ igv: number; tiempoFinanciamiento: number }> {
+    almacenPartes?: string | null,
+  ): Promise<{ igv: number; tiempoFinanciamiento: number; almacenPartes: string | null }> {
     const { data, error } = await this.supabase.db
       .from('parametros')
       .upsert(
-        { codigo_empresa: codigoEmpresa, igv, tiempo_financiamiento: tiempoFinanciamiento },
+        {
+          codigo_empresa: codigoEmpresa,
+          igv,
+          tiempo_financiamiento: tiempoFinanciamiento,
+          almacen_partes: almacenPartes || null,
+        },
         { onConflict: 'codigo_empresa' },
       )
-      .select('igv, tiempo_financiamiento')
+      .select('igv, tiempo_financiamiento, almacen_partes')
       .single();
     if (error) throw new InternalServerErrorException(error.message);
     return {
       igv: data.igv,
       tiempoFinanciamiento: data.tiempo_financiamiento,
+      almacenPartes: data.almacen_partes ?? null,
     };
   }
 

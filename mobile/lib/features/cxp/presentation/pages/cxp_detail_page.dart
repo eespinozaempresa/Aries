@@ -43,6 +43,10 @@ class _View extends StatelessWidget {
             ));
             Navigator.of(ctx).pop();
           }
+          if (s is CxPPagoEliminado) {
+            ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Pago eliminado'), backgroundColor: Colors.green));
+            ctx.read<CxPBloc>().add(CxPLoadDetail(cxpId));
+          }
         },
         builder: (ctx, s) {
           if (s is CxPLoading || s is CxPSaving) return const Center(child: CircularProgressIndicator());
@@ -68,8 +72,14 @@ class _View extends StatelessWidget {
               leading: const Icon(Icons.receipt),
               title: Text('Voucher ${p.numeroVoucher} — ${p.tipoPago}'),
               subtitle: Text(p.fecha),
-              trailing: Text('S/ ${p.monto.toStringAsFixed(2)}',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('S/ ${p.monto.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  onPressed: () => _confirmEliminarPago(ctx, p.id),
+                ),
+              ]),
             ))),
             if (pagos.isEmpty) const Text('Sin pagos registrados', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),
@@ -125,6 +135,27 @@ class _View extends StatelessWidget {
       Expanded(child: Text(v, style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal))),
     ]),
   );
+
+  void _confirmEliminarPago(BuildContext ctx, String pagoId) {
+    showDialog(
+      context: ctx,
+      builder: (dctx) => AlertDialog(
+        title: const Text('Eliminar pago'),
+        content: const Text('¿Seguro que desea eliminar este pago? Se recalculará el saldo de la cuenta.'),
+        actions: [
+          OutlinedButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(dctx);
+              ctx.read<CxPBloc>().add(CxPEliminarPago(pagoId));
+            },
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showPagoDialog(BuildContext ctx, CuentaPagar cxp) {
     final voucherCtrl = TextEditingController();

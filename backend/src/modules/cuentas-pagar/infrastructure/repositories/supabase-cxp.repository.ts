@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import { NumeroDocumentoService } from '../../../../shared/infrastructure/supabase/numero-documento.service';
 import {
@@ -132,6 +132,47 @@ export class SupabaseCxPRepository implements ICxPRepository {
       .order('fecha', { ascending: false });
     if (error) throw new InternalServerErrorException(error.message);
     return (data ?? []).map(this.toPago);
+  }
+
+  async eliminarPago(codigoEmpresa: string, pagoId: string): Promise<CuentaPagar> {
+    const { data: pagoRow, error: findErr } = await this.supabase.db
+      .from('pagos')
+      .select('id, cuenta_pagar_id')
+      .eq('id', pagoId)
+      .eq('codigo_empresa', codigoEmpresa)
+      .maybeSingle();
+    if (findErr) throw new InternalServerErrorException(findErr.message);
+    if (!pagoRow) throw new NotFoundException('Pago no encontrado');
+
+    const cuentaPagarId = pagoRow.cuenta_pagar_id as string;
+
+    const { error: delErr } = await this.supabase.db
+      .from('pagos').delete()
+      .eq('id', pagoId).eq('codigo_empresa', codigoEmpresa);
+    if (delErr) throw new InternalServerErrorException(delErr.message);
+
+    const cxp = await this.findById(cuentaPagarId, codigoEmpresa);
+    if (!cxp) throw new InternalServerErrorException('Cuenta por pagar no encontrada');
+
+    const { data: restantes, error: sumErr } = await this.supabase.db
+      .from('pagos')
+      .select('monto')
+      .eq('cuenta_pagar_id', cuentaPagarId)
+      .eq('codigo_empresa', codigoEmpresa);
+    if (sumErr) throw new InternalServerErrorException(sumErr.message);
+
+    const nuevoMontoPagado = parseFloat(
+      (restantes ?? []).reduce((s, r: any) => s + Number(r.monto), 0).toFixed(2),
+    );
+    const nuevoSaldo = parseFloat((cxp.montoTotal - nuevoMontoPagado).toFixed(2));
+
+    await this.supabase.db.from('cuentas_pagar').update({
+      monto_pagado: nuevoMontoPagado,
+      saldo:        nuevoSaldo,
+      pendiente:    nuevoSaldo > 0,
+    }).eq('id', cuentaPagarId).eq('codigo_empresa', codigoEmpresa);
+
+    return (await this.findById(cuentaPagarId, codigoEmpresa)) as CuentaPagar;
   }
 
   async renovar(codigoEmpresa: string, d: RenovarCxPData): Promise<CuentaPagar[]> {

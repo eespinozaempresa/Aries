@@ -13,6 +13,10 @@ export class UpdateParametrosDto {
   @Min(1)
   @Max(365)
   tiempoFinanciamiento: number;
+
+  @IsOptional()
+  @IsString()
+  almacenPartes?: string | null;
 }
 
 export class CreateUsuarioDto {

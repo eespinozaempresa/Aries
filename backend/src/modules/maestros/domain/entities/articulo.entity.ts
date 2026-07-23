@@ -20,6 +20,7 @@ export interface Articulo {
   codigoBarras?: string;
   pendiente: boolean;
   activo: boolean;
+  conFormula: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

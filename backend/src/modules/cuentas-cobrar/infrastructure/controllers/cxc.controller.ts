@@ -1,12 +1,12 @@
 import {
-  Controller, Get, Post, Param, Body, Query,
+  Controller, Get, Post, Delete, Param, Body, Query,
   UseGuards, Request, ParseBoolPipe, ParseIntPipe,
   Optional,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
 import {
   ListCxCUseCase, FindCxCUseCase,
-  RegistrarCobroUseCase, GetCobrosUseCase, RenovarCxCUseCase,
+  RegistrarCobroUseCase, GetCobrosUseCase, EliminarCobroUseCase, RenovarCxCUseCase,
 } from '../../application/use-cases/cxc.use-cases';
 import { RegistrarCobroDto, RenovarCxCDto } from '../dto/cxc.dto';
 
@@ -18,6 +18,7 @@ export class CxCController {
     private readonly findUC: FindCxCUseCase,
     private readonly registrarCobroUC: RegistrarCobroUseCase,
     private readonly getCobrosUC: GetCobrosUseCase,
+    private readonly eliminarCobroUC: EliminarCobroUseCase,
     private readonly renovarUC: RenovarCxCUseCase,
   ) {}
 
@@ -59,6 +60,11 @@ export class CxCController {
       ...dto,
       codigoUsuario: req.user.codigo,
     });
+  }
+
+  @Delete('cobros/:id')
+  eliminarCobro(@Param('id') id: string, @Request() req: any) {
+    return this.eliminarCobroUC.execute(req.user.empresa, id);
   }
 
   @Post(':id/renovar')

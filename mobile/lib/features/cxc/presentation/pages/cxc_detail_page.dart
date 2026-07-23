@@ -43,6 +43,10 @@ class _View extends StatelessWidget {
             ));
             Navigator.of(ctx).pop();
           }
+          if (s is CxCCobroEliminado) {
+            ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Cobro eliminado'), backgroundColor: Colors.green));
+            ctx.read<CxCBloc>().add(CxCLoadDetail(cxcId));
+          }
         },
         builder: (ctx, s) {
           if (s is CxCLoading || s is CxCSaving) return const Center(child: CircularProgressIndicator());
@@ -68,8 +72,14 @@ class _View extends StatelessWidget {
               leading: const Icon(Icons.payment),
               title: Text('Recibo ${c.numeroRecibo} — ${c.tipoPago}'),
               subtitle: Text(c.fecha),
-              trailing: Text('S/ ${c.monto.toStringAsFixed(2)}',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('S/ ${c.monto.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  onPressed: () => _confirmEliminarCobro(ctx, c.id),
+                ),
+              ]),
             ))),
             if (cobros.isEmpty) const Text('Sin cobros registrados', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),
@@ -125,6 +135,27 @@ class _View extends StatelessWidget {
       Expanded(child: Text(v, style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal))),
     ]),
   );
+
+  void _confirmEliminarCobro(BuildContext ctx, String cobroId) {
+    showDialog(
+      context: ctx,
+      builder: (dctx) => AlertDialog(
+        title: const Text('Eliminar cobro'),
+        content: const Text('¿Seguro que desea eliminar este cobro? Se recalculará el saldo de la cuenta.'),
+        actions: [
+          OutlinedButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(dctx);
+              ctx.read<CxCBloc>().add(CxCEliminarCobro(cobroId));
+            },
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showCobroDialog(BuildContext ctx, CuentaCobrar cxc) {
     final reciboCtrl = TextEditingController();

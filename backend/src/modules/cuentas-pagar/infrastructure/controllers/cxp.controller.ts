@@ -1,10 +1,10 @@
 import {
-  Controller, Get, Post, Param, Body, Query, UseGuards, Request,
+  Controller, Get, Post, Delete, Param, Body, Query, UseGuards, Request,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
 import {
   ListCxPUseCase, FindCxPUseCase,
-  RegistrarPagoUseCase, GetPagosUseCase, RenovarCxPUseCase,
+  RegistrarPagoUseCase, GetPagosUseCase, EliminarPagoUseCase, RenovarCxPUseCase,
 } from '../../application/use-cases/cxp.use-cases';
 import { RegistrarPagoDto, RenovarCxPDto } from '../dto/cxp.dto';
 
@@ -16,6 +16,7 @@ export class CxPController {
     private readonly findUC: FindCxPUseCase,
     private readonly registrarPagoUC: RegistrarPagoUseCase,
     private readonly getPagosUC: GetPagosUseCase,
+    private readonly eliminarPagoUC: EliminarPagoUseCase,
     private readonly renovarUC: RenovarCxPUseCase,
   ) {}
 
@@ -57,6 +58,11 @@ export class CxPController {
       ...dto,
       codigoUsuario: req.user.codigo,
     });
+  }
+
+  @Delete('pagos/:id')
+  eliminarPago(@Param('id') id: string, @Request() req: any) {
+    return this.eliminarPagoUC.execute(req.user.empresa, id);
   }
 
   @Post(':id/renovar')

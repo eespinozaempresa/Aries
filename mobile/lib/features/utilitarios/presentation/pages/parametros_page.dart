@@ -6,6 +6,9 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 import '../../../../core/widgets/number_form_field.dart';
+import '../../../maestros/domain/entities/almacen.dart';
+import '../../../maestros/domain/repositories/almacen_repository.dart';
+import '../../../maestros/presentation/widgets/maestro_picker.dart';
 
 class ParametrosPage extends StatefulWidget {
   const ParametrosPage({super.key});
@@ -22,6 +25,9 @@ class _ParametrosPageState extends State<ParametrosPage> {
   bool _loading               = false;
   bool _saving                = false;
   String? _error;
+
+  String? _almacenPartes;
+  String? _almacenPartesDescripcion;
 
   @override
   void initState() {
@@ -49,11 +55,40 @@ class _ParametrosPageState extends State<ParametrosPage> {
       final data = response.data as Map<String, dynamic>;
       _igvCtrl.text    = (data['igv'] ?? 0).toString();
       _tiempoCtrl.text = (data['tiempoFinanciamiento'] ?? 0).toString();
+      _almacenPartes = data['almacenPartes'] as String?;
+      if (_almacenPartes != null) {
+        final res = await getIt<AlmacenRepository>().findAll();
+        res.fold((_) {}, (list) {
+          final match = list.where((a) => a.codigo == _almacenPartes).toList();
+          if (match.isNotEmpty) _almacenPartesDescripcion = match.first.descripcion;
+        });
+      }
     } on DioException catch (e) {
       final msg = e.response?.data['message'] ?? 'Error al cargar parámetros';
       setState(() => _error = msg.toString());
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _pickAlmacenPartes() async {
+    final r = await MaestroPicker.show<Almacen>(
+      context,
+      title: 'Almacén de Partes',
+      onSearch: (q) async {
+        final res = await getIt<AlmacenRepository>().findAll();
+        return res.fold((_) => <Almacen>[], (list) => list
+            .where((a) => a.descripcion.toLowerCase().contains(q.toLowerCase()))
+            .toList());
+      },
+      itemTitle: (a) => a.descripcion,
+      isActive: (a) => a.activo,
+    );
+    if (r != null) {
+      setState(() {
+        _almacenPartes = r.codigo;
+        _almacenPartesDescripcion = r.descripcion;
+      });
     }
   }
 
@@ -67,6 +102,7 @@ class _ParametrosPageState extends State<ParametrosPage> {
         data: {
           'igv':                 double.tryParse(_igvCtrl.text.trim()) ?? 0.0,
           'tiempoFinanciamiento': int.tryParse(_tiempoCtrl.text.trim()) ?? 0,
+          'almacenPartes':       _almacenPartes,
         },
       );
       if (mounted) {
@@ -145,6 +181,27 @@ class _ParametrosPageState extends State<ParametrosPage> {
                             if (n < 0) return 'Debe ser mayor o igual a 0';
                             return null;
                           },
+                        ),
+                        const SizedBox(height: 16),
+                        InkWell(
+                          onTap: _pickAlmacenPartes,
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'Almacén de Partes (opcional)',
+                              prefixIcon: const Icon(Icons.warehouse_outlined),
+                              helperText: 'Almacén donde se descuentan las Partes de artículos con fórmula',
+                              suffixIcon: _almacenPartes != null
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: () => setState(() {
+                                        _almacenPartes = null;
+                                        _almacenPartesDescripcion = null;
+                                      }),
+                                    )
+                                  : const Icon(Icons.arrow_drop_down),
+                            ),
+                            child: Text(_almacenPartesDescripcion ?? _almacenPartes ?? 'Sin seleccionar'),
+                          ),
                         ),
                         const SizedBox(height: 32),
                         Row(children: [

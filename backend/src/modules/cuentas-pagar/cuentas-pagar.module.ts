@@ -5,7 +5,7 @@ import { ICxPRepository } from './domain/ports/cxp.repository.port';
 import { SupabaseCxPRepository } from './infrastructure/repositories/supabase-cxp.repository';
 import {
   ListCxPUseCase, FindCxPUseCase,
-  RegistrarPagoUseCase, GetPagosUseCase, RenovarCxPUseCase,
+  RegistrarPagoUseCase, GetPagosUseCase, EliminarPagoUseCase, RenovarCxPUseCase,
 } from './application/use-cases/cxp.use-cases';
 import { CxPController } from './infrastructure/controllers/cxp.controller';
 
@@ -32,6 +32,11 @@ import { CxPController } from './infrastructure/controllers/cxp.controller';
     {
       provide: GetPagosUseCase,
       useFactory: (r: ICxPRepository) => new GetPagosUseCase(r),
+      inject: [ICxPRepository],
+    },
+    {
+      provide: EliminarPagoUseCase,
+      useFactory: (r: ICxPRepository) => new EliminarPagoUseCase(r),
       inject: [ICxPRepository],
     },
     {

@@ -18,7 +18,7 @@ export class UtilitariosController {
 
   @Put('parametros')
   updateParametros(@Body() dto: UpdateParametrosDto, @Request() req: any) {
-    return this.repo.updateParametros(req.user.empresa, dto.igv, dto.tiempoFinanciamiento);
+    return this.repo.updateParametros(req.user.empresa, dto.igv, dto.tiempoFinanciamiento, dto.almacenPartes);
   }
 
   @Get('usuarios')

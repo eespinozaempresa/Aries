@@ -21,6 +21,11 @@ export class GetCobrosUseCase {
   execute(codigoEmpresa: string, cuentaCobrarId: string) { return this.repo.getCobros(codigoEmpresa, cuentaCobrarId); }
 }
 
+export class EliminarCobroUseCase {
+  constructor(@Inject(ICxCRepository) private readonly repo: ICxCRepository) {}
+  execute(codigoEmpresa: string, cobroId: string) { return this.repo.eliminarCobro(codigoEmpresa, cobroId); }
+}
+
 export class RenovarCxCUseCase {
   constructor(@Inject(ICxCRepository) private readonly repo: ICxCRepository) {}
   execute(codigoEmpresa: string, data: RenovarCxCData) { return this.repo.renovar(codigoEmpresa, data); }

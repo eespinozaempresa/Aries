@@ -46,5 +46,6 @@ export abstract class ICxCRepository {
   abstract findById(id: string, codigoEmpresa: string): Promise<CuentaCobrar | null>;
   abstract registrarCobro(codigoEmpresa: string, data: RegistrarCobroData): Promise<Cobro>;
   abstract getCobros(codigoEmpresa: string, cuentaCobrarId: string): Promise<Cobro[]>;
+  abstract eliminarCobro(codigoEmpresa: string, cobroId: string): Promise<CuentaCobrar>;
   abstract renovar(codigoEmpresa: string, data: RenovarCxCData): Promise<CuentaCobrar[]>;
 }

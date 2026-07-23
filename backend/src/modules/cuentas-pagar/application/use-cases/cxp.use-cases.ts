@@ -21,6 +21,11 @@ export class GetPagosUseCase {
   execute(codigoEmpresa: string, cuentaPagarId: string) { return this.repo.getPagos(codigoEmpresa, cuentaPagarId); }
 }
 
+export class EliminarPagoUseCase {
+  constructor(@Inject(ICxPRepository) private readonly repo: ICxPRepository) {}
+  execute(codigoEmpresa: string, pagoId: string) { return this.repo.eliminarPago(codigoEmpresa, pagoId); }
+}
+
 export class RenovarCxPUseCase {
   constructor(@Inject(ICxPRepository) private readonly repo: ICxPRepository) {}
   execute(codigoEmpresa: string, data: RenovarCxPData) { return this.repo.renovar(codigoEmpresa, data); }

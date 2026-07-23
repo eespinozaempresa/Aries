@@ -77,13 +77,15 @@ export class SupabaseFormulaRepository implements IFormulaRepository {
   }
 
   async create(codigoEmpresa: string, d: SaveFormulaData): Promise<Formula> {
+    const activo = d.activo ?? true;
+    const codigoArticulo = d.codigoArticulo.toUpperCase();
     const { data, error } = await this.supabase.db
       .from('formulas')
       .insert({
         codigo_empresa: codigoEmpresa,
-        codigo_articulo: d.codigoArticulo.toUpperCase(),
+        codigo_articulo: codigoArticulo,
         observacion: d.observacion ?? null,
-        activo: d.activo ?? true,
+        activo,
       })
       .select()
       .single();
@@ -95,16 +97,19 @@ export class SupabaseFormulaRepository implements IFormulaRepository {
     }
 
     await this.replaceDetalle(data.id, codigoEmpresa, d.detalle);
+    await this.syncConFormula(codigoEmpresa, codigoArticulo, activo);
     return (await this.findById(data.id, codigoEmpresa)) as Formula;
   }
 
   async update(id: string, codigoEmpresa: string, d: SaveFormulaData): Promise<Formula> {
+    const activo = d.activo ?? true;
+    const codigoArticulo = d.codigoArticulo.toUpperCase();
     const { error } = await this.supabase.db
       .from('formulas')
       .update({
-        codigo_articulo: d.codigoArticulo.toUpperCase(),
+        codigo_articulo: codigoArticulo,
         observacion: d.observacion ?? null,
-        activo: d.activo ?? true,
+        activo,
       })
       .eq('id', id)
       .eq('codigo_empresa', codigoEmpresa);
@@ -116,27 +121,39 @@ export class SupabaseFormulaRepository implements IFormulaRepository {
     }
 
     await this.replaceDetalle(id, codigoEmpresa, d.detalle);
+    await this.syncConFormula(codigoEmpresa, codigoArticulo, activo);
     return (await this.findById(id, codigoEmpresa)) as Formula;
   }
 
   async toggleActivo(codigoEmpresa: string, id: string): Promise<Formula> {
     const { data: current, error: findErr } = await this.supabase.db
       .from('formulas')
-      .select('activo')
+      .select('activo, codigo_articulo')
       .eq('id', id)
       .eq('codigo_empresa', codigoEmpresa)
       .maybeSingle();
     if (findErr) throw new InternalServerErrorException(findErr.message);
     if (!current) throw new NotFoundException('Fórmula no encontrada');
 
+    const nuevoActivo = !current.activo;
     const { error } = await this.supabase.db
       .from('formulas')
-      .update({ activo: !current.activo })
+      .update({ activo: nuevoActivo })
       .eq('id', id)
       .eq('codigo_empresa', codigoEmpresa);
     if (error) throw new InternalServerErrorException(error.message);
 
+    await this.syncConFormula(codigoEmpresa, current.codigo_articulo as string, nuevoActivo);
     return (await this.findById(id, codigoEmpresa)) as Formula;
+  }
+
+  private async syncConFormula(codigoEmpresa: string, codigoArticulo: string, conFormula: boolean): Promise<void> {
+    const { error } = await this.supabase.db
+      .from('articulos')
+      .update({ con_formula: conFormula })
+      .eq('codigo_empresa', codigoEmpresa)
+      .eq('codigo', codigoArticulo);
+    if (error) throw new InternalServerErrorException(error.message);
   }
 
   private async replaceDetalle(
