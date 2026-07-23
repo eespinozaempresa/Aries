@@ -144,11 +144,34 @@ class _ArticulosViewState extends State<_ArticulosView> {
                     'Cód: ${a.codigo}  |  P.Venta: S/. ${a.precioVenta.toStringAsFixed(2)}',
                     style: const TextStyle(fontSize: 12),
                   ),
-                  trailing: a.activo
+                  trailing: (!a.conFormula && a.activo)
                       ? null
-                      : const Chip(
-                          label: Text('Inactivo', style: TextStyle(fontSize: 10)),
-                          padding: EdgeInsets.zero,
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (a.conFormula)
+                              Tooltip(
+                                message: 'Artículo con fórmula (tiene partes)',
+                                child: CircleAvatar(
+                                  radius: 10,
+                                  backgroundColor: cs.tertiaryContainer,
+                                  child: Text(
+                                    'F',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: cs.onTertiaryContainer,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (a.conFormula && !a.activo) const SizedBox(width: 6),
+                            if (!a.activo)
+                              const Chip(
+                                label: Text('Inactivo', style: TextStyle(fontSize: 10)),
+                                padding: EdgeInsets.zero,
+                              ),
+                          ],
                         ),
                   onTap: () async {
                     final saved = await context.push<bool>('/maestros/articulos/${a.id}');

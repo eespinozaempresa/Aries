@@ -22,49 +22,64 @@ class MovimientoDetailPage extends StatelessWidget {
   }
 }
 
-class _DetailView extends StatelessWidget {
+class _DetailView extends StatefulWidget {
   const _DetailView();
 
   @override
+  State<_DetailView> createState() => _DetailViewState();
+}
+
+class _DetailViewState extends State<_DetailView> {
+  bool _anulado = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AriesAppBar(title: const Text('Movimiento')),
-      body: BlocConsumer<MovimientoBloc, MovimientoState>(
-        listener: (ctx, state) {
-          if (state is MovimientoAnulado) {
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              const SnackBar(content: Text('Movimiento anulado'), backgroundColor: Colors.orange),
-            );
-          }
-          if (state is MovimientoEliminado) {
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              const SnackBar(content: Text('Movimiento eliminado'), backgroundColor: Colors.red),
-            );
-            Navigator.pop(ctx, true);
-          }
-          if (state is MovimientoError) {
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-            );
-          }
-        },
-        builder: (ctx, state) {
-          if (state is MovimientoDetailLoading || state is MovimientoSaving) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.pop(context, _anulado);
+      },
+      child: Scaffold(
+        appBar: const AriesAppBar(title: Text('Lista Movimientos')),
+        body: BlocConsumer<MovimientoBloc, MovimientoState>(
+          listener: (ctx, state) {
+            if (state is MovimientoAnulado) {
+              setState(() => _anulado = true);
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                const SnackBar(content: Text('Movimiento anulado'), backgroundColor: Colors.orange),
+              );
+            }
+            if (state is MovimientoEliminado) {
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                const SnackBar(content: Text('Movimiento eliminado'), backgroundColor: Colors.red),
+              );
+              Navigator.pop(ctx, true);
+            }
+            if (state is MovimientoError) {
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+              );
+            }
+          },
+          builder: (ctx, state) {
+            if (state is MovimientoDetailLoading || state is MovimientoSaving) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          final mov = switch (state) {
-            MovimientoDetailLoaded(:final movimiento) => movimiento,
-            MovimientoAnulado(:final movimiento) => movimiento,
-            _ => null,
-          };
+            final mov = switch (state) {
+              MovimientoDetailLoaded(:final movimiento) => movimiento,
+              MovimientoAnulado(:final movimiento) => movimiento,
+              _ => null,
+            };
 
-          if (mov == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            if (mov == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          return _MovimientoBody(mov: mov);
-        },
+            return _MovimientoBody(mov: mov, anulado: _anulado);
+          },
+        ),
       ),
     );
   }
@@ -72,7 +87,8 @@ class _DetailView extends StatelessWidget {
 
 class _MovimientoBody extends StatelessWidget {
   final Movimiento mov;
-  const _MovimientoBody({required this.mov});
+  final bool anulado;
+  const _MovimientoBody({required this.mov, required this.anulado});
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +107,7 @@ class _MovimientoBody extends StatelessWidget {
             )),
         const SizedBox(height: 24),
         OutlinedButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, anulado),
           child: const Text('Cancelar'),
         ),
         if (!mov.anulado) ...[
