@@ -161,7 +161,12 @@ class _State extends State<CxCListPage> {
                   DateTime.tryParse(cxc.fechaVencimiento!)?.isBefore(DateTime.now()) == true &&
                   cxc.pendiente;
                 return ListTile(
-                  onTap: () => ctx.push('/cxc/${cxc.id}'),
+                  onTap: () async {
+                    await ctx.push('/cxc/${cxc.id}');
+                    if (ctx.mounted) {
+                      ctx.read<CxCBloc>().add(CxCLoad(reset: true, pendiente: _filtroPendiente));
+                    }
+                  },
                   leading: CircleAvatar(
                     backgroundColor: vencida ? Colors.red[100] : cxc.pendiente ? Colors.orange[100] : Colors.green[100],
                     child: Icon(

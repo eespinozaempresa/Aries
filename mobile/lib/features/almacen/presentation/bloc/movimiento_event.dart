@@ -47,3 +47,8 @@ class MovimientoLoadDetail extends MovimientoEvent {
   final String id;
   MovimientoLoadDetail(this.id);
 }
+
+class MovimientoEliminar extends MovimientoEvent {
+  final String id;
+  MovimientoEliminar(this.id);
+}

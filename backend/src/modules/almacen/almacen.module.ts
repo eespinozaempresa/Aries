@@ -12,6 +12,7 @@ import { SupabaseStockRepository } from './infrastructure/repositories/supabase-
 import { RegistrarMovimientoUseCase } from './application/use-cases/registrar-movimiento.use-case';
 import { AnularMovimientoUseCase } from './application/use-cases/anular-movimiento.use-case';
 import { ListMovimientosUseCase } from './application/use-cases/list-movimientos.use-case';
+import { EliminarMovimientoUseCase } from './application/use-cases/eliminar-movimiento.use-case';
 import { GetKardexUseCase } from './application/use-cases/get-kardex.use-case';
 import { GetStockUseCase } from './application/use-cases/get-stock.use-case';
 import { RecalcularKardexUseCase } from './application/use-cases/recalcular-kardex.use-case';
@@ -36,6 +37,7 @@ import { IStockRepository } from './domain/ports/stock.repository.port';
     RegistrarMovimientoUseCase,
     AnularMovimientoUseCase,
     ListMovimientosUseCase,
+    EliminarMovimientoUseCase,
     GetKardexUseCase,
     GetStockUseCase,
     RecalcularKardexUseCase,

@@ -18,6 +18,7 @@ class ArticuloModel extends Articulo {
     required super.stockMaximo,
     super.codigoBarras,
     required super.activo,
+    super.conFormula,
   });
 
   factory ArticuloModel.fromJson(Map<String, dynamic> j) => ArticuloModel(
@@ -37,5 +38,6 @@ class ArticuloModel extends Articulo {
         stockMaximo: (j['stockMaximo'] as num?)?.toDouble() ?? 0,
         codigoBarras: j['codigoBarras'] as String?,
         activo: j['activo'] as bool? ?? true,
+        conFormula: j['conFormula'] as bool? ?? false,
       );
 }

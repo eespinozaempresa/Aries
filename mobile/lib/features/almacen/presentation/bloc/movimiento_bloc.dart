@@ -23,6 +23,7 @@ class MovimientoBloc extends Bloc<MovimientoEvent, MovimientoState> {
     on<MovimientoRegistrar>(_onRegistrar);
     on<MovimientoAnular>(_onAnular);
     on<MovimientoLoadDetail>(_onLoadDetail);
+    on<MovimientoEliminar>(_onEliminar);
   }
 
   Future<void> _onLoad(MovimientoListLoad event, Emitter<MovimientoState> emit) async {
@@ -100,6 +101,15 @@ class MovimientoBloc extends Bloc<MovimientoEvent, MovimientoState> {
     result.fold(
       (e) => emit(MovimientoError(e.message)),
       (mov) => emit(MovimientoAnulado(mov)),
+    );
+  }
+
+  Future<void> _onEliminar(MovimientoEliminar event, Emitter<MovimientoState> emit) async {
+    emit(MovimientoSaving());
+    final result = await _repo.eliminar(event.id);
+    result.fold(
+      (e) => emit(MovimientoError(e.message)),
+      (_) => emit(MovimientoEliminado(event.id)),
     );
   }
 

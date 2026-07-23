@@ -156,7 +156,12 @@ class _State extends State<CxPListPage> {
                   DateTime.tryParse(cxp.fechaVencimiento!)?.isBefore(DateTime.now()) == true &&
                   cxp.pendiente;
                 return ListTile(
-                  onTap: () => ctx.push('/cxp/${cxp.id}'),
+                  onTap: () async {
+                    await ctx.push('/cxp/${cxp.id}');
+                    if (ctx.mounted) {
+                      ctx.read<CxPBloc>().add(CxPLoad(reset: true, pendiente: _filtroPendiente));
+                    }
+                  },
                   leading: CircleAvatar(
                     backgroundColor: vencida ? Colors.red[100] : cxp.pendiente ? Colors.orange[100] : Colors.green[100],
                     child: Icon(

@@ -15,6 +15,7 @@ class Articulo {
   final double stockMaximo;
   final String? codigoBarras;
   final bool activo;
+  final bool conFormula;
 
   const Articulo({
     required this.id,
@@ -33,5 +34,6 @@ class Articulo {
     required this.stockMaximo,
     this.codigoBarras,
     required this.activo,
+    this.conFormula = false,
   });
 }

@@ -36,6 +36,11 @@ class MovimientoAnulado extends MovimientoState {
   MovimientoAnulado(this.movimiento);
 }
 
+class MovimientoEliminado extends MovimientoState {
+  final String id;
+  MovimientoEliminado(this.id);
+}
+
 class MovimientoError extends MovimientoState {
   final String message;
   MovimientoError(this.message);

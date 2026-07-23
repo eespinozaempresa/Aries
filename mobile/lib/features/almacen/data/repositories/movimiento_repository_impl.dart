@@ -85,6 +85,16 @@ class MovimientoRepositoryImpl implements MovimientoRepository {
   }
 
   @override
+  Future<Either<ApiException, void>> eliminar(String id) async {
+    try {
+      await _ds.eliminar(id);
+      return const Right(null);
+    } on ApiException catch (e) {
+      return Left(e);
+    }
+  }
+
+  @override
   Future<Either<ApiException, List<KardexItem>>> getKardex({
     String? codigoAlmacen,
     String? codigoArticulo,

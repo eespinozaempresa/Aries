@@ -45,6 +45,14 @@ class AlmacenRemoteDataSource {
     }
   }
 
+  Future<void> eliminar(String id) async {
+    try {
+      await _dio.delete('/almacen/movimientos/$id');
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   Future<List<dynamic>> getKardex(Map<String, dynamic> params) async {
     try {
       final res = await _dio.get('/almacen/kardex', queryParameters: params);

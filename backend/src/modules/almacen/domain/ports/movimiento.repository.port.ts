@@ -40,4 +40,5 @@ export abstract class IMovimientoRepository {
   abstract anular(codigoEmpresa: string, movimientoId: string, codigoUsuario: string): Promise<boolean>;
   abstract list(filter: MovimientoFilter): Promise<MovimientoListResult>;
   abstract findById(id: string, codigoEmpresa: string): Promise<Movimiento | null>;
+  abstract eliminar(codigoEmpresa: string, id: string): Promise<void>;
 }

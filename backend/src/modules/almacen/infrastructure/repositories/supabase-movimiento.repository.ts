@@ -133,6 +133,19 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
     return mov;
   }
 
+  async eliminar(codigoEmpresa: string, id: string): Promise<void> {
+    const mov = await this.findById(id, codigoEmpresa);
+    if (!mov) throw new InternalServerErrorException('Movimiento no encontrado');
+    if (!mov.anulado) throw new InternalServerErrorException('Solo se pueden eliminar movimientos anulados');
+
+    await this.supabase.db.from('detalle_movimientos').delete()
+      .eq('movimiento_id', id).eq('codigo_empresa', codigoEmpresa);
+
+    const { error } = await this.supabase.db.from('movimientos_almacen').delete()
+      .eq('id', id).eq('codigo_empresa', codigoEmpresa);
+    if (error) throw new InternalServerErrorException(error.message);
+  }
+
   private toEntity(row: Record<string, unknown>): Movimiento {
     return {
       id: row.id as string,

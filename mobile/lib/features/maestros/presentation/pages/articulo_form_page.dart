@@ -39,6 +39,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
   final _stMinCtrl      = TextEditingController(text: '0');
   final _stMaxCtrl      = TextEditingController(text: '0');
   bool _activo = true;
+  bool _conFormula = false;
 
   String? _selectedLinea;
   String? _selectedMedida;
@@ -115,6 +116,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
     _stMinCtrl.text       = a.stockMinimo.toStringAsFixed(2);
     _stMaxCtrl.text       = a.stockMaximo.toStringAsFixed(2);
     _activo               = a.activo;
+    _conFormula           = a.conFormula;
     _selectedLinea  = _lineas.any((l) => l.codigo == a.codigoLinea)   ? a.codigoLinea  : null;
     _selectedMedida = _medidas.any((m) => m.codigo == a.codigoMedida) ? a.codigoMedida : null;
     _selectedMarca  = _marcas.any((m) => m.codigo == a.codigoMarca)   ? a.codigoMarca  : null;
@@ -273,6 +275,15 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
               Expanded(flex: 3, child: _field(_barrasCtrl, 'Cód. Barras', maxLength: 50)),
             ]),
             _field(_descCtrl, 'Descripción *', maxLength: 150, required: true),
+            if (_conFormula)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Chip(
+                  avatar: const Icon(Icons.account_tree_outlined, size: 18),
+                  label: const Text('Con fórmula (tiene partes)'),
+                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                ),
+              ),
             _section('Clasificación'),
             _tableDropdown<Linea>(
               label: 'Línea', items: _lineas, value: _selectedLinea,

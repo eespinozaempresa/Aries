@@ -1,11 +1,12 @@
 import {
-  Controller, Post, Get, Patch, Body, Param, Query,
+  Controller, Post, Get, Patch, Delete, Body, Param, Query,
   UseGuards, Request, ParseIntPipe, DefaultValuePipe, BadRequestException, NotFoundException,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
 import { RegistrarMovimientoUseCase } from '../../application/use-cases/registrar-movimiento.use-case';
 import { AnularMovimientoUseCase } from '../../application/use-cases/anular-movimiento.use-case';
 import { ListMovimientosUseCase } from '../../application/use-cases/list-movimientos.use-case';
+import { EliminarMovimientoUseCase } from '../../application/use-cases/eliminar-movimiento.use-case';
 import { IMovimientoRepository } from '../../domain/ports/movimiento.repository.port';
 import { RegistrarMovimientoDto } from '../dto/movimiento.dto';
 
@@ -16,6 +17,7 @@ export class MovimientosController {
     private readonly registrarUC: RegistrarMovimientoUseCase,
     private readonly anularUC: AnularMovimientoUseCase,
     private readonly listUC: ListMovimientosUseCase,
+    private readonly eliminarUC: EliminarMovimientoUseCase,
     private readonly repo: IMovimientoRepository,
   ) {}
 
@@ -62,5 +64,11 @@ export class MovimientosController {
     await this.anularUC.execute(req.user.empresa, id, req.user.codigo);
     const mov = await this.repo.findById(id, req.user.empresa);
     return mov;
+  }
+
+  @Delete(':id')
+  async eliminar(@Param('id') id: string, @Request() req: any) {
+    await this.eliminarUC.execute(req.user.empresa, id);
+    return { success: true };
   }
 }

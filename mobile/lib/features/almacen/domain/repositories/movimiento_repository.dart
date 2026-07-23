@@ -31,6 +31,8 @@ abstract class MovimientoRepository {
 
   Future<Either<ApiException, Movimiento>> anular(String id);
 
+  Future<Either<ApiException, void>> eliminar(String id);
+
   Future<Either<ApiException, List<KardexItem>>> getKardex({
     String? codigoAlmacen,
     String? codigoArticulo,

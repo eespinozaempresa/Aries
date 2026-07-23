@@ -107,7 +107,12 @@ class _MovimientosListViewState extends State<_MovimientosListView> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/almacen/movimientos/nuevo'),
+        onPressed: () async {
+          final saved = await context.push<bool>('/almacen/movimientos/nuevo');
+          if (saved == true && context.mounted) {
+            context.read<MovimientoBloc>().add(MovimientoListLoad(tipo: _tipoFiltro));
+          }
+        },
         child: const Icon(Icons.add),
       ),
       body: BlocBuilder<MovimientoBloc, MovimientoState>(
@@ -144,8 +149,11 @@ class _MovimientosListViewState extends State<_MovimientosListView> {
                 final mov = items[i];
                 return ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: _tipoColor(mov.tipo).withValues(alpha: 0.15),
-                    child: Icon(_tipoIcon(mov.tipo), color: _tipoColor(mov.tipo), size: 20),
+                    backgroundColor: mov.anulado
+                        ? Colors.grey.shade200
+                        : _tipoColor(mov.tipo).withValues(alpha: 0.15),
+                    child: Icon(_tipoIcon(mov.tipo),
+                        color: mov.anulado ? Colors.grey : _tipoColor(mov.tipo), size: 20),
                   ),
                   title: Text('${mov.abreviaturaDocumento ?? mov.codigoDocumento}-${mov.serie}-${mov.numeroDocumento}'),
                   subtitle: Text('${mov.fecha} · ${mov.descripcionAlmacenOrigen ?? mov.codigoAlmacenOrigen}'),
@@ -159,7 +167,12 @@ class _MovimientosListViewState extends State<_MovimientosListView> {
                         const Text('ANULADO', style: TextStyle(color: Colors.red, fontSize: 10)),
                     ],
                   ),
-                  onTap: () => context.push('/almacen/movimientos/${mov.id}'),
+                  onTap: () async {
+                    final changed = await context.push<bool>('/almacen/movimientos/${mov.id}');
+                    if (changed == true && context.mounted) {
+                      context.read<MovimientoBloc>().add(MovimientoListLoad(tipo: _tipoFiltro));
+                    }
+                  },
                 );
               },
             ),

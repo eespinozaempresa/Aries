@@ -217,7 +217,7 @@ class _MovimientoFormState extends State<_MovimientoForm> {
             ScaffoldMessenger.of(ctx).showSnackBar(
               SnackBar(content: Text('Movimiento registrado · $nro'), backgroundColor: Colors.green),
             );
-            ctx.pop();
+            ctx.pop(true);
           }
           if (state is MovimientoError) {
             ScaffoldMessenger.of(ctx).showSnackBar(

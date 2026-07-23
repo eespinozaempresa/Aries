@@ -36,6 +36,12 @@ class _DetailView extends StatelessWidget {
               const SnackBar(content: Text('Movimiento anulado'), backgroundColor: Colors.orange),
             );
           }
+          if (state is MovimientoEliminado) {
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              const SnackBar(content: Text('Movimiento eliminado'), backgroundColor: Colors.red),
+            );
+            Navigator.pop(ctx, true);
+          }
           if (state is MovimientoError) {
             ScaffoldMessenger.of(ctx).showSnackBar(
               SnackBar(content: Text(state.message), backgroundColor: Colors.red),
@@ -97,8 +103,47 @@ class _MovimientoBody extends StatelessWidget {
             onPressed: () => _confirmAnular(context, mov.id),
           ),
         ],
+        if (mov.anulado) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.delete_forever),
+            label: const Text('Eliminar movimiento'),
+            style: OutlinedButton.styleFrom(foregroundColor: Colors.red.shade900),
+            onPressed: () => _confirmEliminar(context, mov.id),
+          ),
+        ],
       ],
     );
+  }
+
+  void _confirmEliminar(BuildContext context, String id) {
+    showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          const Text('Eliminar movimiento'),
+          IconButton(
+            icon: const Icon(Icons.close),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+        ]),
+        content: const Text('Esta acción es irreversible. Se eliminará permanentemente el movimiento y su detalle. ¿Desea continuar?'),
+        actions: [
+          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if (confirmed == true && context.mounted) {
+        context.read<MovimientoBloc>().add(MovimientoEliminar(id));
+      }
+    });
   }
 
   void _confirmAnular(BuildContext context, String id) {
