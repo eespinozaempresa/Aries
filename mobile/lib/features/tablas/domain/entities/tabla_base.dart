@@ -76,5 +76,6 @@ class Documento extends TablaBase {
   });
 
   @override
-  String get subtitle => '$codigo-$serie';
+  String get subtitle =>
+      '${(abreviatura != null && abreviatura!.isNotEmpty) ? abreviatura! : codigo}-$serie';
 }

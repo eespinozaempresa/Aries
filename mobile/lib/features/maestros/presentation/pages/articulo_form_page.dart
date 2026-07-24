@@ -33,7 +33,6 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
 
   final _codigoCtrl     = TextEditingController();
   final _descCtrl       = TextEditingController();
-  final _barrasCtrl     = TextEditingController();
   final _pCompraBaseCtrl = TextEditingController(text: '0.0000');
   final _pVentaBaseCtrl = TextEditingController(text: '0.0000');
   final _stMinCtrl      = TextEditingController(text: '0');
@@ -62,7 +61,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
 
   @override
   void dispose() {
-    for (final c in [_codigoCtrl, _descCtrl, _barrasCtrl,
+    for (final c in [_codigoCtrl, _descCtrl,
                      _pCompraBaseCtrl, _pVentaBaseCtrl,
                      _stMinCtrl, _stMaxCtrl]) {
       c.dispose();
@@ -110,7 +109,6 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
   void _populate(Articulo a) {
     _codigoCtrl.text      = a.codigo;
     _descCtrl.text        = a.descripcion;
-    _barrasCtrl.text      = a.codigoBarras ?? '';
     _pCompraBaseCtrl.text = a.precioCompraBase.toStringAsFixed(4);
     _pVentaBaseCtrl.text  = a.precioVentaBase.toStringAsFixed(4);
     _stMinCtrl.text       = a.stockMinimo.toStringAsFixed(2);
@@ -130,7 +128,6 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
       if (!widget.isEdit) 'codigo': _codigoCtrl.text.toUpperCase(),
       'descripcion'     : _descCtrl.text,
       'activo'          : _activo,
-      if (_barrasCtrl.text.isNotEmpty) 'codigoBarras': _barrasCtrl.text,
       if (_selectedLinea  != null) 'codigoLinea' : _selectedLinea,
       if (_selectedMedida != null) 'codigoMedida': _selectedMedida,
       if (_selectedMarca  != null) 'codigoMarca' : _selectedMarca,
@@ -272,18 +269,18 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
             Row(children: [
               Expanded(flex: 2, child: _field(_codigoCtrl, 'Código', enabled: false)),
               const SizedBox(width: 12),
-              Expanded(flex: 3, child: _field(_barrasCtrl, 'Cód. Barras', maxLength: 50)),
+              Expanded(
+                flex: 3,
+                child: _conFormula
+                    ? Chip(
+                        avatar: const Icon(Icons.account_tree_outlined, size: 18),
+                        label: const Text('Con fórmula (tiene partes)'),
+                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      )
+                    : const SizedBox.shrink(),
+              ),
             ]),
             _field(_descCtrl, 'Descripción *', maxLength: 150, required: true),
-            if (_conFormula)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Chip(
-                  avatar: const Icon(Icons.account_tree_outlined, size: 18),
-                  label: const Text('Con fórmula (tiene partes)'),
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                ),
-              ),
             _section('Clasificación'),
             _tableDropdown<Linea>(
               label: 'Línea', items: _lineas, value: _selectedLinea,
