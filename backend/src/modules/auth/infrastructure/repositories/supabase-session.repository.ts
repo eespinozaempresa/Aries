@@ -59,4 +59,14 @@ export class SupabaseSessionRepository implements ISessionRepository {
       console.error('[Audit] Error al insertar registro de auditoría:', error.message, '| code:', error.code);
     }
   }
+
+  async countLoginFailSince(usuarioId: string, desde: Date): Promise<number> {
+    const { count } = await this.supabase.db
+      .from('auditoria_sesiones')
+      .select('id', { count: 'exact', head: true })
+      .eq('usuario_id', usuarioId)
+      .eq('tipo', 'LOGIN_FAIL')
+      .gte('fecha_hora', desde.toISOString());
+    return count ?? 0;
+  }
 }

@@ -3,13 +3,17 @@ import {
   UseGuards, Request, HttpCode, ForbiddenException,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
+import { IBloqueoRepository } from '../../../auth/domain/ports/bloqueo.repository.port';
 import { SupabaseUtilitariosRepository } from '../repositories/supabase-utilitarios.repository';
 import { UpdateParametrosDto, CreateUsuarioDto, UpdateUsuarioDto, ResetPasswordDto, CreatePerfilDto, UpdatePerfilDto } from '../dto/utilitarios.dto';
 
 @UseGuards(AuthGuard)
 @Controller('utilitarios')
 export class UtilitariosController {
-  constructor(private readonly repo: SupabaseUtilitariosRepository) {}
+  constructor(
+    private readonly repo: SupabaseUtilitariosRepository,
+    private readonly bloqueoRepo: IBloqueoRepository,
+  ) {}
 
   @Get('parametros')
   getParametros(@Request() req: any) {
@@ -63,6 +67,20 @@ export class UtilitariosController {
     const targetNivel = await this.repo.getUsuarioNivel(id, empresa);
     if (targetNivel?.toUpperCase() === 'ADMIN' && requestingNivel?.toUpperCase() !== 'ADMIN') {
       throw new ForbiddenException('No tiene permisos para modificar un usuario administrador');
+    }
+  }
+
+  @Patch('usuarios/:id/desbloquear')
+  @HttpCode(200)
+  async desbloquearUsuario(@Param('id') id: string, @Request() req: any) {
+    this.assertIsAdmin(req.user.nivel);
+    await this.bloqueoRepo.desbloquear(id, req.user.sub);
+    return { message: 'Usuario desbloqueado correctamente' };
+  }
+
+  private assertIsAdmin(requestingNivel: string): void {
+    if (requestingNivel?.toUpperCase() !== 'ADMIN') {
+      throw new ForbiddenException('Solo un administrador puede desbloquear usuarios');
     }
   }
 

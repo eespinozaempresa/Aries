@@ -19,4 +19,5 @@ export abstract class ISessionRepository {
   abstract revokeRefreshToken(tokenHash: string): Promise<void>;
   abstract revokeAllUserTokens(usuarioId: string): Promise<void>;
   abstract logAudit(params: LogAuditParams): Promise<void>;
+  abstract countLoginFailSince(usuarioId: string, desde: Date): Promise<number>;
 }
