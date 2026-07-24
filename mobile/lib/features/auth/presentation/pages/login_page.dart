@@ -128,7 +128,7 @@ class _LoginViewState extends State<_LoginView> {
       children: [
         Image.asset(
           'assets/images/logo_aries.png',
-          height: 56,
+          width: double.infinity,
           fit: BoxFit.contain,
         ),
         const SizedBox(height: 8),
