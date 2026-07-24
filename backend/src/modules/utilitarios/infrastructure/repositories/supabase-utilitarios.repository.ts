@@ -7,10 +7,10 @@ import { CreateUsuarioDto, UpdateUsuarioDto, CreatePerfilDto, UpdatePerfilDto } 
 export class SupabaseUtilitariosRepository {
   constructor(private readonly supabase: SupabaseService) {}
 
-  async getParametros(codigoEmpresa: string): Promise<{ igv: number; tiempoFinanciamiento: number; almacenPartes: string | null }> {
+  async getParametros(codigoEmpresa: string): Promise<{ igv: number; tiempoFinanciamiento: number; almacenPartes: string | null; operacionPartes: string | null }> {
     const { data, error } = await this.supabase.db
       .from('parametros')
-      .select('igv, tiempo_financiamiento, almacen_partes')
+      .select('igv, tiempo_financiamiento, almacen_partes, operacion_partes')
       .eq('codigo_empresa', codigoEmpresa)
       .maybeSingle();
     if (error) throw new InternalServerErrorException(error.message);
@@ -18,6 +18,7 @@ export class SupabaseUtilitariosRepository {
       igv: data?.igv ?? 0,
       tiempoFinanciamiento: data?.tiempo_financiamiento ?? 30,
       almacenPartes: data?.almacen_partes ?? null,
+      operacionPartes: data?.operacion_partes ?? null,
     };
   }
 
@@ -26,7 +27,8 @@ export class SupabaseUtilitariosRepository {
     igv: number,
     tiempoFinanciamiento: number,
     almacenPartes?: string | null,
-  ): Promise<{ igv: number; tiempoFinanciamiento: number; almacenPartes: string | null }> {
+    operacionPartes?: string | null,
+  ): Promise<{ igv: number; tiempoFinanciamiento: number; almacenPartes: string | null; operacionPartes: string | null }> {
     const { data, error } = await this.supabase.db
       .from('parametros')
       .upsert(
@@ -35,16 +37,18 @@ export class SupabaseUtilitariosRepository {
           igv,
           tiempo_financiamiento: tiempoFinanciamiento,
           almacen_partes: almacenPartes || null,
+          operacion_partes: operacionPartes || null,
         },
         { onConflict: 'codigo_empresa' },
       )
-      .select('igv, tiempo_financiamiento, almacen_partes')
+      .select('igv, tiempo_financiamiento, almacen_partes, operacion_partes')
       .single();
     if (error) throw new InternalServerErrorException(error.message);
     return {
       igv: data.igv,
       tiempoFinanciamiento: data.tiempo_financiamiento,
       almacenPartes: data.almacen_partes ?? null,
+      operacionPartes: data.operacion_partes ?? null,
     };
   }
 

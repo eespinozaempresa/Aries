@@ -298,7 +298,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
             ),
             _section('Precios'),
             Row(children: [
-              Expanded(child: _numField(_pCompraBaseCtrl, 'P. Compra Base')),
+              Expanded(child: _numField(_pCompraBaseCtrl, 'P. Compra Base *', required: true)),
               const SizedBox(width: 8),
               Expanded(child: _numField(_pVentaBaseCtrl, 'P. Venta Base *', required: true)),
             ]),

@@ -17,6 +17,10 @@ export class UpdateParametrosDto {
   @IsOptional()
   @IsString()
   almacenPartes?: string | null;
+
+  @IsOptional()
+  @IsIn(['VENTAS', 'MOVIMIENTOS'])
+  operacionPartes?: string | null;
 }
 
 export class CreateUsuarioDto {

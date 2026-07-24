@@ -8,6 +8,9 @@ import { SupabaseMovimientoRepository } from './infrastructure/repositories/supa
 import { SupabaseKardexRepository } from './infrastructure/repositories/supabase-kardex.repository';
 import { SupabaseStockRepository } from './infrastructure/repositories/supabase-stock.repository';
 
+// Services
+import { FormulaExplosionService } from './application/services/formula-explosion.service';
+
 // Use cases
 import { RegistrarMovimientoUseCase } from './application/use-cases/registrar-movimiento.use-case';
 import { AnularMovimientoUseCase } from './application/use-cases/anular-movimiento.use-case';
@@ -34,6 +37,7 @@ import { IStockRepository } from './domain/ports/stock.repository.port';
     { provide: IMovimientoRepository, useClass: SupabaseMovimientoRepository },
     { provide: IKardexRepository,     useClass: SupabaseKardexRepository },
     { provide: IStockRepository,      useClass: SupabaseStockRepository },
+    FormulaExplosionService,
     RegistrarMovimientoUseCase,
     AnularMovimientoUseCase,
     ListMovimientosUseCase,
@@ -42,6 +46,6 @@ import { IStockRepository } from './domain/ports/stock.repository.port';
     GetStockUseCase,
     RecalcularKardexUseCase,
   ],
-  exports: [RecalcularKardexUseCase],
+  exports: [RecalcularKardexUseCase, FormulaExplosionService],
 })
 export class AlmacenModule {}

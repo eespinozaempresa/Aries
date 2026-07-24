@@ -2,6 +2,7 @@ import { Injectable, InternalServerErrorException, ConflictException } from '@ne
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import { NumeroDocumentoService } from '../../../../shared/infrastructure/supabase/numero-documento.service';
 import { IFormulaRepository } from '../../../maestros/domain/ports/formula.repository.port';
+import { FormulaExplosionService, ParametrosPartes } from '../../../almacen/application/services/formula-explosion.service';
 import { IVentaRepository, RegistrarVentaData, VentaFilter, VentaListResult, ReporteVentasFilter, ReporteGeneralFilter } from '../../domain/ports/venta.repository.port';
 import { Venta } from '../../domain/entities/venta.entity';
 import { DetalleVenta } from '../../domain/entities/detalle-venta.entity';
@@ -12,6 +13,7 @@ export class SupabaseVentaRepository implements IVentaRepository {
     private readonly supabase: SupabaseService,
     private readonly numeracion: NumeroDocumentoService,
     private readonly formulas: IFormulaRepository,
+    private readonly explosion: FormulaExplosionService,
   ) {}
 
   async registrar(codigoEmpresa: string, d: RegistrarVentaData): Promise<Venta> {
@@ -19,7 +21,7 @@ export class SupabaseVentaRepository implements IVentaRepository {
 
     // IGV dinámico: leer de parametros y verificar aplica_igv del documento
     const [paramRes, docRes] = await Promise.all([
-      this.supabase.db.from('parametros').select('igv, almacen_partes')
+      this.supabase.db.from('parametros').select('igv, almacen_partes, operacion_partes')
         .eq('codigo_empresa', codigoEmpresa).maybeSingle(),
       this.supabase.db.from('documentos').select('aplica_igv')
         .eq('codigo_empresa', codigoEmpresa)
@@ -32,6 +34,15 @@ export class SupabaseVentaRepository implements IVentaRepository {
     // Almacén de Partes: si está configurado, las Partes explotadas de una fórmula
     // se descuentan de ese almacén; si no, caen en el almacén elegido en la venta.
     const almacenPartesDestino = (paramRes.data as any)?.almacen_partes || d.codigoAlmacen;
+    // operacion_partes: si está configurado junto a almacen_partes, define en qué
+    // módulo (Ventas o Movimientos) se "produce" el Principal y se explota su fórmula.
+    // Si falta cualquiera de los dos, Ventas mantiene su comportamiento legado (siempre explota).
+    const paramsPartes: ParametrosPartes = {
+      almacenPartes: (paramRes.data as any)?.almacen_partes || null,
+      operacionPartes: ((paramRes.data as any)?.operacion_partes || null) as ParametrosPartes['operacionPartes'],
+    };
+    const explotaEnMovimientos = this.explosion.activaPara(paramsPartes, 'MOVIMIENTOS');
+    const explotaEnVentas      = this.explosion.activaPara(paramsPartes, 'VENTAS');
 
     const lineasProc = d.lineas.map((l) => {
       const descPct     = l.descuentoPct ?? 0;
@@ -103,37 +114,64 @@ export class SupabaseVentaRepository implements IVentaRepository {
       })));
     if (detErr) throw new InternalServerErrorException(detErr.message);
 
-    // Explosión de fórmula (BOM): además del Principal, descontar sus Partes
+    // Explosión de fórmula (BOM): además del Principal, descontar sus Partes.
+    // El módulo que la ejecuta depende de `operacion_partes` (ver arriba); si no está
+    // configurado, se mantiene el comportamiento legado (Ventas siempre explota).
     const codigosVendidos = [...new Set(lineasProc.map((l) => l.codigoArticulo))];
-    const formulasActivas = await this.formulas.findActivasByArticulos(codigoEmpresa, codigosVendidos);
 
-    const lineasPartes: { codigoArticulo: string; cantidad: number; precioUnitario: number }[] = [];
-    if (formulasActivas.size) {
-      const codigosComponentes = [...new Set(
-        [...formulasActivas.values()].flat().map((c) => c.codigoArticulo),
-      )];
-      const { data: stockComponentes } = await this.supabase.db
-        .from('stock')
-        .select('codigo_articulo, costo_promedio')
-        .eq('codigo_empresa', codigoEmpresa)
-        .eq('codigo_almacen', almacenPartesDestino)
-        .in('codigo_articulo', codigosComponentes);
-      const costoMap = new Map((stockComponentes ?? []).map((s: any) => [s.codigo_articulo, Number(s.costo_promedio)]));
+    let lineasPartes: { codigoArticulo: string; cantidad: number; precioUnitario: number }[] = [];
+    let lineasIngresoAutomatico: { codigoArticulo: string; cantidad: number; precioUnitario: number }[] = [];
+    let costoPrincipalMap: Map<string, number>;
 
-      for (const l of lineasProc) {
-        const componentes = formulasActivas.get(l.codigoArticulo);
-        if (!componentes) continue;
-        for (const c of componentes) {
-          lineasPartes.push({
-            codigoArticulo: c.codigoArticulo,
-            cantidad:       l.cantidad * c.cantidad,
-            precioUnitario: costoMap.get(c.codigoArticulo) ?? 0,
-          });
+    if (explotaEnMovimientos) {
+      // La "producción" (consumo de Partes) del Principal ya ocurrió al registrar su
+      // Ingreso en Movimientos: esta venta es simple, sin explosión ni Ingreso automático.
+      costoPrincipalMap = await this.explosion.costoBaseMap(codigoEmpresa, codigosVendidos);
+    } else if (explotaEnVentas) {
+      const formulasActivas = await this.explosion.getFormulasActivas(codigoEmpresa, codigosVendidos);
+      costoPrincipalMap = await this.explosion.costoConRespaldo(codigoEmpresa, d.codigoAlmacen, codigosVendidos);
+      lineasPartes = await this.explosion.explotarPartes(codigoEmpresa, almacenPartesDestino, lineasProc);
+      lineasIngresoAutomatico = lineasProc
+        .filter((l) => formulasActivas.has(l.codigoArticulo))
+        .map((l) => ({
+          codigoArticulo: l.codigoArticulo,
+          cantidad:       l.cantidad,
+          precioUnitario: costoPrincipalMap.get(l.codigoArticulo) ?? 0,
+        }));
+    } else {
+      // Comportamiento legado (sin `operacion_partes` configurado): Ventas siempre
+      // explota, y el Principal se costea con costo_promedio (si es > 0), si no
+      // con precio_compra_base.
+      const formulasActivas = await this.formulas.findActivasByArticulos(codigoEmpresa, codigosVendidos);
+      costoPrincipalMap = await this.explosion.costoConRespaldo(codigoEmpresa, d.codigoAlmacen, codigosVendidos);
+
+      if (formulasActivas.size) {
+        const codigosComponentes = [...new Set(
+          [...formulasActivas.values()].flat().map((c) => c.codigoArticulo),
+        )];
+        const { data: stockComponentes } = await this.supabase.db
+          .from('stock')
+          .select('codigo_articulo, costo_promedio')
+          .eq('codigo_empresa', codigoEmpresa)
+          .eq('codigo_almacen', almacenPartesDestino)
+          .in('codigo_articulo', codigosComponentes);
+        const costoMap = new Map((stockComponentes ?? []).map((s: any) => [s.codigo_articulo, Number(s.costo_promedio)]));
+
+        for (const l of lineasProc) {
+          const componentes = formulasActivas.get(l.codigoArticulo);
+          if (!componentes) continue;
+          for (const c of componentes) {
+            lineasPartes.push({
+              codigoArticulo: c.codigoArticulo,
+              cantidad:       l.cantidad * c.cantidad,
+              precioUnitario: costoMap.get(c.codigoArticulo) ?? 0,
+            });
+          }
         }
       }
     }
 
-    // Salida de almacén via RPC (Principal + Partes explotadas de su fórmula).
+    // Salida de almacén via RPC (Principal + Partes explotadas de su fórmula, si aplica).
     // Si el Almacén de Partes configurado difiere del almacén de la venta, se
     // generan dos movimientos: uno para el/los Principal(es) en el almacén de
     // la venta (como siempre), y otro (sufijo "-P") para las Partes en el
@@ -141,32 +179,46 @@ export class SupabaseVentaRepository implements IVentaRepository {
     const lineasPrincipales = lineasProc.map((l) => ({
       codigoArticulo: l.codigoArticulo,
       cantidad:       l.cantidad,
-      precioUnitario: l.precioUnitario,
+      precioUnitario: costoPrincipalMap.get(l.codigoArticulo) ?? 0,
     }));
-    const registrarSalida = (numDoc: string, almOrigen: string, lineas: typeof lineasPrincipales) =>
+    const registrarMovimiento = (
+      numDoc: string,
+      tipo: 'INGRESO' | 'SALIDA',
+      almOrigen: string,
+      concepto: string,
+      lineas: typeof lineasPrincipales,
+    ) =>
       this.supabase.db.rpc('registrar_movimiento', {
         p_empresa:     codigoEmpresa,
         p_cod_doc:     d.codigoDocumento,
         p_num_doc:     numDoc,
         p_fecha:       d.fecha,
-        p_tipo:        'SALIDA',
+        p_tipo:        tipo,
         p_alm_origen:  almOrigen,
         p_alm_dest:    null,
         p_observacion: d.observacion ?? null,
-        p_concepto:    'VENTA',
+        p_concepto:    concepto,
         p_cod_usuario: d.codigoUsuario,
         p_lineas:      lineas,
         p_serie:       d.serie ?? '0001',
       });
 
+    // Ingreso automático del Principal (modo Ventas): se "produce" justo antes de venderse.
+    if (lineasIngresoAutomatico.length) {
+      const { error: rpcErrIngreso } = await registrarMovimiento(
+        `${numeroDocumento}-I`, 'INGRESO', d.codigoAlmacen, 'PRODUCCION', lineasIngresoAutomatico,
+      );
+      if (rpcErrIngreso) throw new InternalServerErrorException(`Stock error (ingreso automático): ${rpcErrIngreso.message}`);
+    }
+
     if (lineasPartes.length && almacenPartesDestino !== d.codigoAlmacen) {
-      const { error: rpcErr1 } = await registrarSalida(numeroDocumento, d.codigoAlmacen, lineasPrincipales);
+      const { error: rpcErr1 } = await registrarMovimiento(numeroDocumento, 'SALIDA', d.codigoAlmacen, 'VENTA', lineasPrincipales);
       if (rpcErr1) throw new InternalServerErrorException(`Stock error: ${rpcErr1.message}`);
 
-      const { error: rpcErr2 } = await registrarSalida(`${numeroDocumento}-P`, almacenPartesDestino, lineasPartes);
+      const { error: rpcErr2 } = await registrarMovimiento(`${numeroDocumento}-P`, 'SALIDA', almacenPartesDestino, 'VENTA', lineasPartes);
       if (rpcErr2) throw new InternalServerErrorException(`Stock error (partes): ${rpcErr2.message}`);
     } else {
-      const { error: rpcErr } = await registrarSalida(numeroDocumento, d.codigoAlmacen, [...lineasPrincipales, ...lineasPartes]);
+      const { error: rpcErr } = await registrarMovimiento(numeroDocumento, 'SALIDA', d.codigoAlmacen, 'VENTA', [...lineasPrincipales, ...lineasPartes]);
       if (rpcErr) throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
     }
 
@@ -211,11 +263,12 @@ export class SupabaseVentaRepository implements IVentaRepository {
       .select().single();
     if (error) throw new InternalServerErrorException(error.message);
 
-    // Revertir movimiento(s) de almacén. Si la venta incluía artículos con fórmula
-    // y el Almacén de Partes difería del almacén de la venta, se generaron dos
-    // movimientos (el propio y uno con sufijo "-P" para las Partes); se revierten
-    // ambos si existen.
-    const numerosDocumento = [venta.numeroDocumento, `${venta.numeroDocumento}-P`];
+    // Revertir movimiento(s) de almacén. Si la venta incluía artículos con fórmula,
+    // pudieron generarse hasta tres movimientos: el propio, uno con sufijo "-I" para
+    // el Ingreso automático del Principal (modo Ventas) y otro con sufijo "-P" para
+    // las Partes (si el Almacén de Partes difería del almacén de la venta); se
+    // revierten los que existan.
+    const numerosDocumento = [venta.numeroDocumento, `${venta.numeroDocumento}-I`, `${venta.numeroDocumento}-P`];
     for (const numDoc of numerosDocumento) {
       const { data: movRow } = await this.supabase.db
         .from('movimientos_almacen')

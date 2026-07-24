@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import { NumeroDocumentoService } from '../../../../shared/infrastructure/supabase/numero-documento.service';
+import { FormulaExplosionService } from '../../application/services/formula-explosion.service';
 import {
   IMovimientoRepository,
   RegistrarMovimientoData,
@@ -15,6 +16,7 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
   constructor(
     private readonly supabase: SupabaseService,
     private readonly numeracion: NumeroDocumentoService,
+    private readonly explosion: FormulaExplosionService,
   ) {}
 
   async registrar(codigoEmpresa: string, data: RegistrarMovimientoData): Promise<string> {
@@ -38,10 +40,65 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
       if (error.code === '23505') throw new ConflictException('Número de documento ya existe');
       throw new InternalServerErrorException(error.message);
     }
+
+    // Ingreso de un Principal con fórmula activa (modo Movimientos): se "produce" al
+    // ingresarlo, descontando automáticamente sus Partes del Almacén de Partes.
+    if (data.tipo === 'INGRESO') {
+      const params = await this.explosion.getParametrosPartes(codigoEmpresa);
+      if (this.explosion.activaPara(params, 'MOVIMIENTOS')) {
+        const lineasPartes = await this.explosion.explotarPartes(codigoEmpresa, params.almacenPartes as string, data.lineas);
+        if (lineasPartes.length) {
+          const { error: rpcErrPartes } = await this.supabase.db.rpc('registrar_movimiento', {
+            p_empresa:     codigoEmpresa,
+            p_cod_doc:     data.codigoDocumento,
+            p_num_doc:     `${numeroDocumento}-P`,
+            p_fecha:       data.fecha,
+            p_tipo:        'SALIDA',
+            p_alm_origen:  params.almacenPartes,
+            p_alm_dest:    null,
+            p_observacion: data.observacion ?? null,
+            p_concepto:    'INGRESO-PARTES',
+            p_cod_usuario: data.codigoUsuario,
+            p_lineas:      lineasPartes,
+            p_serie:       data.serie ?? '0001',
+          });
+          if (rpcErrPartes) throw new InternalServerErrorException(`Stock error (partes): ${rpcErrPartes.message}`);
+        }
+      }
+    }
+
     return result as string;
   }
 
   async anular(codigoEmpresa: string, movimientoId: string, codigoUsuario: string): Promise<boolean> {
+    const { data: movRow, error: findError } = await this.supabase.db
+      .from('movimientos_almacen')
+      .select('codigo_documento, numero_documento, tipo')
+      .eq('id', movimientoId)
+      .eq('codigo_empresa', codigoEmpresa)
+      .maybeSingle();
+    if (findError) throw new InternalServerErrorException(findError.message);
+
+    // Si es un Ingreso que generó automáticamente una Salida de Partes (modo
+    // Movimientos), anular también ese movimiento hermano (sufijo "-P"), en modo
+    // "blando" (igual que este mismo método hace con el movimiento principal:
+    // solo revierte contadores/kardex vía RPC, sin borrar filas).
+    if (movRow?.tipo === 'INGRESO') {
+      const { data: partesRow } = await this.supabase.db
+        .from('movimientos_almacen')
+        .select('id')
+        .eq('codigo_empresa', codigoEmpresa)
+        .eq('codigo_documento', movRow.codigo_documento)
+        .eq('numero_documento', `${movRow.numero_documento}-P`)
+        .eq('anulado', false)
+        .maybeSingle();
+      if (partesRow) {
+        await this.supabase.db.rpc('anular_movimiento', {
+          p_empresa: codigoEmpresa, p_mov_id: partesRow.id, p_cod_usuario: codigoUsuario,
+        });
+      }
+    }
+
     const { data, error } = await this.supabase.db.rpc('anular_movimiento', {
       p_empresa:     codigoEmpresa,
       p_mov_id:      movimientoId,

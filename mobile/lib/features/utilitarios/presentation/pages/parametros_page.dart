@@ -28,6 +28,7 @@ class _ParametrosPageState extends State<ParametrosPage> {
 
   String? _almacenPartes;
   String? _almacenPartesDescripcion;
+  String? _operacionPartes;
 
   @override
   void initState() {
@@ -56,6 +57,7 @@ class _ParametrosPageState extends State<ParametrosPage> {
       _igvCtrl.text    = (data['igv'] ?? 0).toString();
       _tiempoCtrl.text = (data['tiempoFinanciamiento'] ?? 0).toString();
       _almacenPartes = data['almacenPartes'] as String?;
+      _operacionPartes = data['operacionPartes'] as String?;
       if (_almacenPartes != null) {
         final res = await getIt<AlmacenRepository>().findAll();
         res.fold((_) {}, (list) {
@@ -103,6 +105,7 @@ class _ParametrosPageState extends State<ParametrosPage> {
           'igv':                 double.tryParse(_igvCtrl.text.trim()) ?? 0.0,
           'tiempoFinanciamiento': int.tryParse(_tiempoCtrl.text.trim()) ?? 0,
           'almacenPartes':       _almacenPartes,
+          'operacionPartes':     _operacionPartes,
         },
       );
       if (mounted) {
@@ -202,6 +205,22 @@ class _ParametrosPageState extends State<ParametrosPage> {
                             ),
                             child: Text(_almacenPartesDescripcion ?? _almacenPartes ?? 'Sin seleccionar'),
                           ),
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          initialValue: _operacionPartes,
+                          decoration: const InputDecoration(
+                            labelText: '¿Dónde se descuentan las Partes? (opcional)',
+                            prefixIcon: Icon(Icons.sync_alt_outlined),
+                            helperText: 'Ventas: se producen al vender. Movimientos: se producen al '
+                                'registrar su Ingreso',
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: null, child: Text('Sin seleccionar')),
+                            DropdownMenuItem(value: 'VENTAS', child: Text('Ventas')),
+                            DropdownMenuItem(value: 'MOVIMIENTOS', child: Text('Movimientos')),
+                          ],
+                          onChanged: (v) => setState(() => _operacionPartes = v),
                         ),
                         const SizedBox(height: 32),
                         Row(children: [
