@@ -8,7 +8,7 @@ import { Request } from 'express';
 import { JwtTokenService } from '../jwt/jwt.service';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class PreAuthGuard implements CanActivate {
   constructor(private readonly jwtService: JwtTokenService) {}
 
   canActivate(context: ExecutionContext): boolean {
@@ -18,8 +18,8 @@ export class AuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException('Token no proporcionado');
 
     try {
-      const payload = this.jwtService.verifyAccessToken(token);
-      if ((payload as unknown as { purpose?: string }).purpose === 'SELECT_EMPRESA') {
+      const payload = this.jwtService.verifyPreAuthToken(token);
+      if (payload.purpose !== 'SELECT_EMPRESA') {
         throw new UnauthorizedException('Token inválido o expirado');
       }
       request['user'] = payload;

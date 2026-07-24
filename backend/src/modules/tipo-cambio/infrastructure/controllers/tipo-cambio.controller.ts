@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
+import { EmpresaPreviewGuard } from '../../../auth/infrastructure/guards/empresa-preview.guard';
 import { JwtPayload } from '../../../../shared/infrastructure/jwt/jwt.service';
 import { GetTipoCambioHoyUseCase } from '../../application/use-cases/get-tipo-cambio-hoy.use-case';
 import { GetTipoCambioByFechaUseCase } from '../../application/use-cases/get-tipo-cambio-by-fecha.use-case';
@@ -16,7 +17,6 @@ import { DeleteTipoCambioUseCase } from '../../application/use-cases/delete-tipo
 import { RegistrarTipoCambioDto } from '../dto/registrar-tipo-cambio.dto';
 
 @Controller('tipo-cambio')
-@UseGuards(AuthGuard)
 export class TipoCambioController {
   constructor(
     private readonly getHoyUC: GetTipoCambioHoyUseCase,
@@ -28,18 +28,27 @@ export class TipoCambioController {
   ) {}
 
   @Get('hoy')
+  @UseGuards(AuthGuard)
   async getHoy(@Req() req: Request) {
     const user = req['user'] as JwtPayload;
     return { data: await this.getHoyUC.execute(user.empresa) };
   }
 
+  @Get('preview/:codigoEmpresa')
+  @UseGuards(EmpresaPreviewGuard)
+  async preview(@Param('codigoEmpresa') codigoEmpresa: string) {
+    return { data: await this.getHoyUC.execute(codigoEmpresa.toUpperCase()) };
+  }
+
   @Get('fecha/:fecha')
+  @UseGuards(AuthGuard)
   async getByFecha(@Param('fecha') fecha: string, @Req() req: Request) {
     const user = req['user'] as JwtPayload;
     return { data: await this.getByFechaUC.execute(user.empresa, fecha) };
   }
 
   @Get()
+  @UseGuards(AuthGuard)
   list(
     @Req() req: Request,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
@@ -51,12 +60,14 @@ export class TipoCambioController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AuthGuard)
   async registrar(@Body() dto: RegistrarTipoCambioDto, @Req() req: Request) {
     const user = req['user'] as JwtPayload;
     return { data: await this.registrarUC.execute(user.empresa, dto.tipoCambio, user.codigo) };
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard)
   async update(
     @Param('id') id: string,
     @Body() dto: RegistrarTipoCambioDto,
@@ -68,6 +79,7 @@ export class TipoCambioController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(AuthGuard)
   async delete(@Param('id') id: string, @Req() req: Request) {
     const user = req['user'] as JwtPayload;
     await this.deleteUC.execute(user.empresa, id);

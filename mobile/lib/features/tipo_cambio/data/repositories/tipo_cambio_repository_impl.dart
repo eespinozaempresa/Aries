@@ -19,6 +19,16 @@ class TipoCambioRepositoryImpl implements TipoCambioRepository {
   }
 
   @override
+  Future<Either<ApiException, TipoCambio?>> preview(String codigoEmpresa, {String? bearerOverride}) async {
+    try {
+      final result = await _remote.preview(codigoEmpresa, bearerOverride: bearerOverride);
+      return Right(result);
+    } on ApiException catch (e) {
+      return Left(e);
+    }
+  }
+
+  @override
   Future<Either<ApiException, TipoCambio>> registrar(double tipoCambio) async {
     try {
       return Right(await _remote.registrar(tipoCambio));

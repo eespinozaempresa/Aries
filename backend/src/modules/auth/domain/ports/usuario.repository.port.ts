@@ -5,4 +5,5 @@ export abstract class IUsuarioRepository {
     codigoEmpresa: string,
     codigo: string,
   ): Promise<Usuario | null>;
+  abstract findAllByCodigo(codigo: string): Promise<Usuario[]>;
 }

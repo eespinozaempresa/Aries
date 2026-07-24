@@ -10,6 +10,7 @@ export class Usuario {
     public readonly dni?: string,
     public readonly email?: string,
     public readonly menus?: string[],
+    public readonly nombreEmpresa?: string,
   ) {}
 
   isActive(): boolean {

@@ -41,7 +41,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     final result = await _loginUseCase(
-      empresa: event.empresa,
       usuario: event.usuario,
       clave: event.clave,
       captchaA: event.captchaA,
@@ -50,7 +49,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
-      (usuario) => emit(AuthAuthenticated(usuario)),
+      (data) => emit(AuthEmpresaSelectionRequired(
+        preAuthToken: data.preAuthToken,
+        empresas: data.empresas,
+        usuarioCodigo: data.usuarioCodigo,
+        usuarioNombre: data.usuarioNombre,
+      )),
     );
   }
 

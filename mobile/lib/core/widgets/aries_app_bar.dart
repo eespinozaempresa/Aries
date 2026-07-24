@@ -6,6 +6,7 @@ import '../constants/api_constants.dart';
 import '../di/injection.dart';
 import '../services/menu_permission_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/seleccionar_empresa/seleccionar_empresa_args.dart';
 
 /// AppBar estándar de la app: agrega siempre, al final de [actions],
 /// el botón Inicio (oculto en /home); en /home se muestra en su lugar
@@ -88,6 +89,19 @@ class AriesAppBar extends StatelessWidget implements PreferredSizeWidget {
                 context.push('/utilitarios/cambiar-clave');
               },
             ),
+            if (usuario?.multiEmpresa == true)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.domain_outlined),
+                title: const Text('Cambiar Empresa'),
+                onTap: () {
+                  Navigator.pop(dialogCtx);
+                  context.push(
+                    '/seleccionar-empresa',
+                    extra: const SeleccionarEmpresaArgs.cambiarEmpresa(),
+                  );
+                },
+              ),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.logout),

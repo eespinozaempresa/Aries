@@ -7,7 +7,6 @@ sealed class AuthEvent extends Equatable {
 }
 
 final class LoginRequested extends AuthEvent {
-  final String empresa;
   final String usuario;
   final String clave;
   final int captchaA;
@@ -15,7 +14,6 @@ final class LoginRequested extends AuthEvent {
   final int captchaAnswer;
 
   const LoginRequested({
-    required this.empresa,
     required this.usuario,
     required this.clave,
     required this.captchaA,
@@ -24,8 +22,7 @@ final class LoginRequested extends AuthEvent {
   });
 
   @override
-  List<Object> get props =>
-      [empresa, usuario, clave, captchaA, captchaB, captchaAnswer];
+  List<Object> get props => [usuario, clave, captchaA, captchaB, captchaAnswer];
 }
 
 final class LogoutRequested extends AuthEvent {

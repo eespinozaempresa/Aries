@@ -13,21 +13,11 @@ class TipoCambioBloc extends Bloc<TipoCambioEvent, TipoCambioState> {
   List<TipoCambio> _items = [];
 
   TipoCambioBloc(this._repo) : super(TipoCambioInitial()) {
-    on<TipoCambioCheckHoy>(_onCheckHoy);
     on<TipoCambioRegistrar>(_onRegistrar);
     on<TipoCambioListLoad>(_onListLoad);
     on<TipoCambioListLoadMore>(_onListLoadMore);
     on<TipoCambioActualizar>(_onActualizar);
     on<TipoCambioEliminar>(_onEliminar);
-  }
-
-  Future<void> _onCheckHoy(TipoCambioCheckHoy event, Emitter<TipoCambioState> emit) async {
-    emit(TipoCambioLoading());
-    final result = await _repo.getHoy();
-    result.fold(
-      (e) => emit(TipoCambioError(e.message)),
-      (data) => data != null ? emit(TipoCambioYaRegistrado(data)) : emit(TipoCambioPendiente()),
-    );
   }
 
   Future<void> _onRegistrar(TipoCambioRegistrar event, Emitter<TipoCambioState> emit) async {

@@ -47,4 +47,56 @@ export class SupabaseUsuarioRepository implements IUsuarioRepository {
       menus,
     );
   }
+
+  async findAllByCodigo(codigo: string): Promise<Usuario[]> {
+    const { data, error } = await this.supabase.db
+      .from('usuarios')
+      .select('id, codigo_empresa, codigo, nombre, password_hash, nivel, activo, dni, email, perfil_id')
+      .ilike('codigo', codigo);
+
+    if (error) {
+      console.error('[Auth] Supabase error buscando usuarios por código:', error.message, error.code);
+      return [];
+    }
+    if (!data || data.length === 0) return [];
+
+    const perfilIds = [...new Set(data.map((u) => u.perfil_id).filter(Boolean))];
+    const menusPorPerfil = new Map<string, string[]>();
+    if (perfilIds.length > 0) {
+      const { data: perfiles } = await this.supabase.db
+        .from('perfiles')
+        .select('id, menus')
+        .in('id', perfilIds);
+      for (const p of perfiles ?? []) {
+        menusPorPerfil.set(p.id as string, (p.menus as string[] | null) ?? []);
+      }
+    }
+
+    const codigosEmpresa = [...new Set(data.map((u) => u.codigo_empresa))];
+    const { data: empresas } = await this.supabase.db
+      .from('empresas')
+      .select('codigo, nombre')
+      .in('codigo', codigosEmpresa);
+    const nombresPorEmpresa = new Map<string, string>();
+    for (const e of empresas ?? []) {
+      nombresPorEmpresa.set(e.codigo as string, e.nombre as string);
+    }
+
+    return data.map(
+      (u) =>
+        new Usuario(
+          u.id,
+          u.codigo_empresa,
+          u.codigo,
+          u.nombre,
+          u.password_hash,
+          u.nivel,
+          u.activo,
+          u.dni,
+          u.email,
+          u.perfil_id ? menusPorPerfil.get(u.perfil_id) ?? [] : [],
+          nombresPorEmpresa.get(u.codigo_empresa),
+        ),
+    );
+  }
 }

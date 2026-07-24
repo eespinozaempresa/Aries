@@ -1,7 +1,8 @@
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
-import '../../features/tipo_cambio/presentation/pages/tipo_cambio_page.dart';
+import '../../features/seleccionar_empresa/presentation/pages/seleccionar_empresa_page.dart';
+import '../../features/seleccionar_empresa/seleccionar_empresa_args.dart';
 import '../../features/maestros/presentation/pages/maestros_hub_page.dart';
 import '../../features/maestros/presentation/pages/articulos_list_page.dart';
 import '../../features/maestros/presentation/pages/articulo_form_page.dart';
@@ -48,7 +49,7 @@ import '../services/menu_permission_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 
 class AppRouter {
-  static final _publicRoutes = {'/login'};
+  static final _publicRoutes = {'/login', '/seleccionar-empresa'};
 
   static final router = GoRouter(
     initialLocation: '/login',
@@ -60,12 +61,15 @@ class AppRouter {
       if (loggedIn && !MenuPermissionService.instance.initialized) {
         await repo.getCachedUsuario();
       }
-      if (loggedIn && state.matchedLocation == '/login') return '/tipo-cambio';
+      if (loggedIn && state.matchedLocation == '/login') return '/seleccionar-empresa';
       return null;
     },
     routes: [
       GoRoute(path: '/login',      builder: (_, __) => const LoginPage()),
-      GoRoute(path: '/tipo-cambio',builder: (_, __) => const TipoCambioPage()),
+      GoRoute(
+        path: '/seleccionar-empresa',
+        builder: (_, state) => SeleccionarEmpresaPage(args: state.extra as SeleccionarEmpresaArgs?),
+      ),
       GoRoute(path: '/home',       builder: (_, __) => const HomePage()),
 
       // Compras

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../domain/entities/usuario.dart';
+import '../../domain/entities/empresa_opcion.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
 import '../models/usuario_model.dart';
@@ -16,9 +17,8 @@ class AuthRepositoryImpl implements AuthRepository {
   const AuthRepositoryImpl(this._remote, this._storage);
 
   @override
-  Future<Either<ApiException, ({String accessToken, String refreshToken, Usuario usuario})>>
+  Future<Either<ApiException, ({String preAuthToken, List<EmpresaOpcion> empresas, String usuarioCodigo, String usuarioNombre})>>
       login({
-    required String empresa,
     required String usuario,
     required String clave,
     required int captchaA,
@@ -27,20 +27,54 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       final data = await _remote.login(
-        empresa: empresa,
         usuario: usuario,
         clave: clave,
         captchaA: captchaA,
         captchaB: captchaB,
         captchaAnswer: captchaAnswer,
       );
+      return Right(data);
+    } on ApiException catch (e) {
+      return Left(e);
+    }
+  }
+
+  @override
+  Future<Either<ApiException, Usuario>> seleccionarEmpresa({
+    required String preAuthToken,
+    required String codigoEmpresa,
+  }) async {
+    try {
+      final data = await _remote.seleccionarEmpresa(
+        preAuthToken: preAuthToken,
+        codigoEmpresa: codigoEmpresa,
+      );
       await _persistSession(data.accessToken, data.refreshToken, data.usuario);
       MenuPermissionService.instance.load(data.usuario.menus, data.usuario.nivel);
-      return Right((
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        usuario: data.usuario,
-      ));
+      return Right(data.usuario);
+    } on ApiException catch (e) {
+      return Left(e);
+    }
+  }
+
+  @override
+  Future<Either<ApiException, Usuario>> cambiarEmpresa({
+    required String codigoEmpresa,
+  }) async {
+    try {
+      final data = await _remote.cambiarEmpresa(codigoEmpresa: codigoEmpresa);
+      await _persistSession(data.accessToken, data.refreshToken, data.usuario);
+      MenuPermissionService.instance.load(data.usuario.menus, data.usuario.nivel);
+      return Right(data.usuario);
+    } on ApiException catch (e) {
+      return Left(e);
+    }
+  }
+
+  @override
+  Future<Either<ApiException, List<EmpresaOpcion>>> misEmpresas() async {
+    try {
+      return Right(await _remote.misEmpresas());
     } on ApiException catch (e) {
       return Left(e);
     }

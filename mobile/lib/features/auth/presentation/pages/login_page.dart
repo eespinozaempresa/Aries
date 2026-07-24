@@ -1,11 +1,9 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
-import '../../../../core/network/dio_client.dart';
 import '../../../../core/utils/captcha_generator.dart';
+import '../../../seleccionar_empresa/seleccionar_empresa_args.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/use_cases/login_use_case.dart';
 import '../../domain/use_cases/logout_use_case.dart';
@@ -30,12 +28,6 @@ class LoginPage extends StatelessWidget {
   }
 }
 
-class _Empresa {
-  final String codigo;
-  final String nombre;
-  const _Empresa(this.codigo, this.nombre);
-}
-
 class _LoginView extends StatefulWidget {
   const _LoginView();
 
@@ -52,29 +44,10 @@ class _LoginViewState extends State<_LoginView> {
   bool _obscurePassword = true;
   late Captcha _captcha;
 
-  List<_Empresa> _empresas    = [];
-  _Empresa?      _empresa;
-  bool           _loadingEmpresas = true;
-
   @override
   void initState() {
     super.initState();
     _refreshCaptcha();
-    _fetchEmpresas();
-  }
-
-  Future<void> _fetchEmpresas() async {
-    try {
-      final dio = getIt<DioClient>().dio;
-      final res = await dio.get('${ApiConstants.baseUrl}/auth/empresas');
-      final list = (res.data as List).map((e) => _Empresa(
-        e['codigo'] as String,
-        e['nombre'] as String,
-      )).toList();
-      if (mounted) setState(() { _empresas = list; _loadingEmpresas = false; });
-    } catch (_) {
-      if (mounted) setState(() => _loadingEmpresas = false);
-    }
   }
 
   void _refreshCaptcha() {
@@ -96,7 +69,6 @@ class _LoginViewState extends State<_LoginView> {
     if (!_formKey.currentState!.validate()) return;
     context.read<AuthBloc>().add(
       LoginRequested(
-        empresa: _empresa!.codigo,
         usuario: _usuarioCtrl.text.trim(),
         clave: _claveCtrl.text,
         captchaA: _captcha.a,
@@ -112,8 +84,14 @@ class _LoginViewState extends State<_LoginView> {
       backgroundColor: const Color(0xFFF3F6FA),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthAuthenticated) {
-            context.go('/tipo-cambio');
+          if (state is AuthEmpresaSelectionRequired) {
+            context.go(
+              '/seleccionar-empresa',
+              extra: SeleccionarEmpresaArgs.postLogin(
+                preAuthToken: state.preAuthToken,
+                empresas: state.empresas,
+              ),
+            );
           } else if (state is AuthFailure) {
             _refreshCaptcha();
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -188,30 +166,6 @@ class _LoginViewState extends State<_LoginView> {
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF1A2B45)),
               ),
               const SizedBox(height: 14),
-
-              // Empresa — dropdown
-              const _FieldLabel('Empresa'),
-              _loadingEmpresas
-                  ? const Center(child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 14),
-                      child: SizedBox(width: 20, height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2)),
-                    ))
-                  : DropdownButtonFormField<_Empresa>(
-                      initialValue: _empresa,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.domain, size: 20),
-                        hintText: 'Seleccione una empresa',
-                      ),
-                      items: _empresas.map((e) => DropdownMenuItem(
-                        value: e,
-                        child: Text(e.nombre, overflow: TextOverflow.ellipsis),
-                      )).toList(),
-                      onChanged: (v) => setState(() => _empresa = v),
-                      validator: (_) => _empresa == null ? 'Seleccione una empresa' : null,
-                    ),
-              const SizedBox(height: 12),
 
               // Usuario
               const _FieldLabel('Usuario'),

@@ -4,6 +4,7 @@ import '../models/tipo_cambio_model.dart';
 
 abstract class TipoCambioRemoteDataSource {
   Future<TipoCambioModel?> getHoy();
+  Future<TipoCambioModel?> preview(String codigoEmpresa, {String? bearerOverride});
   Future<TipoCambioModel?> getByFecha(String fecha);
   Future<TipoCambioModel> registrar(double tipoCambio);
   Future<Map<String, dynamic>> list({int page = 1, int limit = 20});
@@ -19,6 +20,23 @@ class TipoCambioRemoteDataSourceImpl implements TipoCambioRemoteDataSource {
   Future<TipoCambioModel?> getHoy() async {
     try {
       final res = await _dio.get('/tipo-cambio/hoy');
+      final data = res.data['data'];
+      if (data == null) return null;
+      return TipoCambioModel.fromJson(data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<TipoCambioModel?> preview(String codigoEmpresa, {String? bearerOverride}) async {
+    try {
+      final res = await _dio.get(
+        '/tipo-cambio/preview/$codigoEmpresa',
+        options: bearerOverride != null
+            ? Options(headers: {'Authorization': 'Bearer $bearerOverride'})
+            : null,
+      );
       final data = res.data['data'];
       if (data == null) return null;
       return TipoCambioModel.fromJson(data as Map<String, dynamic>);

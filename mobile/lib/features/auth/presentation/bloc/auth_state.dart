@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/usuario.dart';
+import '../../domain/entities/empresa_opcion.dart';
 
 sealed class AuthState extends Equatable {
   const AuthState();
@@ -24,6 +25,23 @@ final class AuthAuthenticated extends AuthState {
 
 final class AuthUnauthenticated extends AuthState {
   const AuthUnauthenticated();
+}
+
+final class AuthEmpresaSelectionRequired extends AuthState {
+  final String preAuthToken;
+  final List<EmpresaOpcion> empresas;
+  final String usuarioCodigo;
+  final String usuarioNombre;
+
+  const AuthEmpresaSelectionRequired({
+    required this.preAuthToken,
+    required this.empresas,
+    required this.usuarioCodigo,
+    required this.usuarioNombre,
+  });
+
+  @override
+  List<Object> get props => [preAuthToken, empresas, usuarioCodigo, usuarioNombre];
 }
 
 final class AuthFailure extends AuthState {

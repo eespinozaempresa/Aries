@@ -2,13 +2,12 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import * as bcrypt from 'bcrypt';
 import { IUsuarioRepository } from '../../domain/ports/usuario.repository.port';
 import { ISessionRepository } from '../../domain/ports/session.repository.port';
-import { BloqueoActivo, IBloqueoRepository } from '../../domain/ports/bloqueo.repository.port';
+import { IBloqueoRepository } from '../../domain/ports/bloqueo.repository.port';
 import { ITiemposConfigRepository } from '../../domain/ports/tiempos-config.repository.port';
+import { Usuario } from '../../domain/entities/usuario.entity';
 import { JwtTokenService } from '../../../../shared/infrastructure/jwt/jwt.service';
-import { ConfigService } from '@nestjs/config';
 
 export interface LoginCommand {
-  empresa: string;
   usuario: string;
   clave: string;
   captchaA: number;
@@ -18,17 +17,15 @@ export interface LoginCommand {
   dispositivo?: string;
 }
 
+export interface EmpresaCandidata {
+  codigo: string;
+  nombre: string;
+}
+
 export interface LoginResult {
-  accessToken: string;
-  refreshToken: string;
-  usuario: {
-    id: string;
-    codigo: string;
-    nombre: string;
-    nivel: string;
-    empresa: string;
-    menus: string[];
-  };
+  preAuthToken: string;
+  usuario: { codigo: string; nombre: string };
+  empresas: EmpresaCandidata[];
 }
 
 @Injectable()
@@ -39,7 +36,6 @@ export class LoginUseCase {
     private readonly bloqueoRepo: IBloqueoRepository,
     private readonly tiemposConfigRepo: ITiemposConfigRepository,
     private readonly jwtService: JwtTokenService,
-    private readonly config: ConfigService,
   ) {}
 
   async execute(cmd: LoginCommand): Promise<LoginResult> {
@@ -47,16 +43,13 @@ export class LoginUseCase {
       throw new BadRequestException('Captcha incorrecto');
     }
 
-    const usuario = await this.usuarioRepo.findByCodigoEmpresaAndCodigo(
-      cmd.empresa.toUpperCase(),
-      cmd.usuario.toUpperCase(),
-    );
+    const codigo = cmd.usuario.toUpperCase();
+    const filas = await this.usuarioRepo.findAllByCodigo(codigo);
 
-    if (!usuario || !usuario.canLogin()) {
+    if (filas.length === 0) {
       await this.sessionRepo.logAudit({
-        codigoEmpresa: cmd.empresa.toUpperCase(),
-        usuarioId: usuario?.id,
-        usuarioCodigo: cmd.usuario.toUpperCase(),
+        codigoEmpresa: 'N/A',
+        usuarioCodigo: codigo,
         tipo: 'LOGIN_FAIL',
         ip: cmd.ip,
         dispositivo: cmd.dispositivo,
@@ -64,65 +57,55 @@ export class LoginUseCase {
       throw new UnauthorizedException('Usuario o contraseña incorrectos');
     }
 
-    const bloqueoActivo = await this.bloqueoRepo.getActivo(usuario.id);
-    if (bloqueoActivo) {
-      throw new UnauthorizedException(this.mensajeBloqueo(bloqueoActivo));
-    }
-
-    const passwordValid = await bcrypt.compare(cmd.clave, usuario.passwordHash);
-    if (!passwordValid) {
+    const coincidencias: Usuario[] = [];
+    for (const fila of filas) {
+      const passwordValida = await bcrypt.compare(cmd.clave, fila.passwordHash);
+      if (passwordValida) {
+        coincidencias.push(fila);
+        continue;
+      }
       await this.sessionRepo.logAudit({
-        codigoEmpresa: cmd.empresa.toUpperCase(),
-        usuarioId: usuario.id,
-        usuarioCodigo: usuario.codigo,
+        codigoEmpresa: fila.codigoEmpresa,
+        usuarioId: fila.id,
+        usuarioCodigo: fila.codigo,
         tipo: 'LOGIN_FAIL',
         ip: cmd.ip,
         dispositivo: cmd.dispositivo,
       }).catch(() => {});
-      await this.evaluarBloqueoPorIntentos(usuario.id);
+      await this.evaluarBloqueoPorIntentos(fila.id);
+    }
+
+    if (coincidencias.length === 0) {
       throw new UnauthorizedException('Usuario o contraseña incorrectos');
     }
 
-    const { raw: refreshRaw, hash: refreshHash } = this.jwtService.generateRefreshToken();
-    const accessToken = this.jwtService.signAccessToken({
-      sub: usuario.id,
-      empresa: usuario.codigoEmpresa,
-      codigo: usuario.codigo,
-      nivel: usuario.nivel,
+    const disponibles: Usuario[] = [];
+    for (const fila of coincidencias) {
+      if (!fila.canLogin()) continue;
+      const bloqueoActivo = await this.bloqueoRepo.getActivo(fila.id);
+      if (bloqueoActivo) continue;
+      disponibles.push(fila);
+    }
+
+    if (disponibles.length === 0) {
+      throw new UnauthorizedException(
+        'Usuario inactivo o bloqueado en todas sus empresas. Contacte al administrador.',
+      );
+    }
+
+    const preAuthToken = this.jwtService.signPreAuthToken({
+      purpose: 'SELECT_EMPRESA',
+      codigo,
+      empresas: disponibles.map((u) => u.codigoEmpresa),
     });
-
-    const refreshDays = this.config.get<number>('jwt.refreshDays', 7);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + refreshDays);
-
-    await this.sessionRepo.storeRefreshToken({
-      usuarioId: usuario.id,
-      tokenHash: refreshHash,
-      expiresAt,
-    });
-
-    await this.sessionRepo.logAudit({
-      codigoEmpresa: usuario.codigoEmpresa,
-      usuarioId: usuario.id,
-      usuarioCodigo: usuario.codigo,
-      tipo: 'LOGIN',
-      ip: cmd.ip,
-      dispositivo: cmd.dispositivo,
-    });
-
-    const menus = usuario.nivel?.toUpperCase() === 'ADMIN' ? ['*'] : (usuario.menus ?? []);
 
     return {
-      accessToken,
-      refreshToken: refreshRaw,
-      usuario: {
-        id: usuario.id,
-        codigo: usuario.codigo,
-        nombre: usuario.nombre,
-        nivel: usuario.nivel,
-        empresa: usuario.codigoEmpresa,
-        menus,
-      },
+      preAuthToken,
+      usuario: { codigo, nombre: disponibles[0].nombre },
+      empresas: disponibles.map((u) => ({
+        codigo: u.codigoEmpresa,
+        nombre: u.nombreEmpresa ?? u.codigoEmpresa,
+      })),
     };
   }
 
@@ -151,13 +134,5 @@ export class LoginUseCase {
         `Bloqueo indefinido tras ${config.maxBloqueosTemporales} bloqueos temporales en ${config.ventanaBloqueosMinutos} minutos`,
       );
     }
-  }
-
-  private mensajeBloqueo(bloqueo: BloqueoActivo): string {
-    if (bloqueo.tipo === 'INDEFINIDO') {
-      return 'Usuario bloqueado. Contacte al administrador para desbloquearlo.';
-    }
-    const minutosRestantes = Math.max(1, Math.ceil((bloqueo.fechaFin!.getTime() - Date.now()) / 60_000));
-    return `Usuario bloqueado temporalmente. Intente nuevamente en ${minutosRestantes} minuto(s).`;
   }
 }

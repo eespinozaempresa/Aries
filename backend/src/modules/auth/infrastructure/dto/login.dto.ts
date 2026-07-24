@@ -4,11 +4,6 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty()
   @Length(1, 10)
-  empresa: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 10)
   usuario: string;
 
   @IsString()
