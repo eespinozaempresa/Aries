@@ -34,6 +34,6 @@ import { EmpresaPreviewGuard } from './infrastructure/guards/empresa-preview.gua
     RefreshTokenUseCase,
     SeleccionarEmpresaUseCase,
   ],
-  exports: [JwtTokenService, AuthGuard, IBloqueoRepository, EmpresaPreviewGuard],
+  exports: [JwtTokenService, AuthGuard, IUsuarioRepository, IBloqueoRepository, EmpresaPreviewGuard],
 })
 export class AuthModule {}

@@ -126,10 +126,12 @@ class _LoginViewState extends State<_LoginView> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Image.asset(
-          'assets/images/logo_aries.png',
-          width: double.infinity,
-          fit: BoxFit.contain,
+        FractionallySizedBox(
+          widthFactor: 0.75,
+          child: Image.asset(
+            'assets/images/logo_aries.png',
+            fit: BoxFit.contain,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(
