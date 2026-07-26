@@ -210,7 +210,7 @@ class _FormState extends State<_Form> {
             Form(key: _formKey, child: ListView(padding: const EdgeInsets.all(16), children: [
               // Documento
               DropdownButtonFormField<Documento>(
-                value: _documento,
+                initialValue: _documento,
                 decoration: const InputDecoration(labelText: 'Documento *', border: OutlineInputBorder(), isDense: true),
                 items: _documentos.map((d) => DropdownMenuItem(
                   value: d,

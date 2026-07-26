@@ -440,7 +440,7 @@ class _UsuarioSheetState extends State<_UsuarioSheet> {
                   Expanded(
                     flex: 3,
                     child: DropdownButtonFormField<String>(
-                      value: _nivel,
+                      initialValue: _nivel,
                       isExpanded: true,
                       decoration: const InputDecoration(labelText: 'Nivel'),
                       items: _niveles
@@ -495,7 +495,7 @@ class _UsuarioSheetState extends State<_UsuarioSheet> {
                             child: SizedBox(
                                 width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
                         : DropdownButtonFormField<String>(
-                            value: _perfiles.any((p) => p['id'] == _perfilId)
+                            initialValue: _perfiles.any((p) => p['id'] == _perfilId)
                                 ? _perfilId
                                 : null,
                             isExpanded: true,

@@ -21,6 +21,9 @@ export class UpdateParametrosDto {
   @IsOptional()
   @IsIn(['VENTAS', 'MOVIMIENTOS'])
   operacionPartes?: string | null;
+
+  @IsIn(['SI', 'NO'])
+  controlStockSalidas: string;
 }
 
 export class CreateUsuarioDto {

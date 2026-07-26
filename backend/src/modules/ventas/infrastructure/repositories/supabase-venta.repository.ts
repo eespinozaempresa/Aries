@@ -1,7 +1,8 @@
-import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, ConflictException, BadRequestException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import { NumeroDocumentoService } from '../../../../shared/infrastructure/supabase/numero-documento.service';
 import { FormulaExplosionService, ParametrosPartes } from '../../../almacen/application/services/formula-explosion.service';
+import { STOCK_INSUFICIENTE_PG_CODE, STOCK_INSUFICIENTE_MESSAGE } from '../../../almacen/domain/errors/stock-insuficiente.error';
 import { IVentaRepository, RegistrarVentaData, VentaFilter, VentaListResult, ReporteVentasFilter, ReporteGeneralFilter } from '../../domain/ports/venta.repository.port';
 import { Venta } from '../../domain/entities/venta.entity';
 import { DetalleVenta } from '../../domain/entities/detalle-venta.entity';
@@ -186,18 +187,30 @@ export class SupabaseVentaRepository implements IVentaRepository {
       const { error: rpcErrIngreso } = await registrarMovimiento(
         `${numeroDocumento}-I`, 'INGRESO', d.codigoAlmacen, 'PRODUCCION', lineasIngresoAutomatico,
       );
-      if (rpcErrIngreso) throw new InternalServerErrorException(`Stock error (ingreso automático): ${rpcErrIngreso.message}`);
+      if (rpcErrIngreso) {
+        if (rpcErrIngreso.code === STOCK_INSUFICIENTE_PG_CODE) throw new BadRequestException(STOCK_INSUFICIENTE_MESSAGE);
+        throw new InternalServerErrorException(`Stock error (ingreso automático): ${rpcErrIngreso.message}`);
+      }
     }
 
     if (lineasPartes.length && almacenPartesDestino !== d.codigoAlmacen) {
       const { error: rpcErr1 } = await registrarMovimiento(numeroDocumento, 'SALIDA', d.codigoAlmacen, 'VENTA', lineasPrincipales);
-      if (rpcErr1) throw new InternalServerErrorException(`Stock error: ${rpcErr1.message}`);
+      if (rpcErr1) {
+        if (rpcErr1.code === STOCK_INSUFICIENTE_PG_CODE) throw new BadRequestException(STOCK_INSUFICIENTE_MESSAGE);
+        throw new InternalServerErrorException(`Stock error: ${rpcErr1.message}`);
+      }
 
       const { error: rpcErr2 } = await registrarMovimiento(`${numeroDocumento}-P`, 'SALIDA', almacenPartesDestino, 'VENTA', lineasPartes);
-      if (rpcErr2) throw new InternalServerErrorException(`Stock error (partes): ${rpcErr2.message}`);
+      if (rpcErr2) {
+        if (rpcErr2.code === STOCK_INSUFICIENTE_PG_CODE) throw new BadRequestException(STOCK_INSUFICIENTE_MESSAGE);
+        throw new InternalServerErrorException(`Stock error (partes): ${rpcErr2.message}`);
+      }
     } else {
       const { error: rpcErr } = await registrarMovimiento(numeroDocumento, 'SALIDA', d.codigoAlmacen, 'VENTA', [...lineasPrincipales, ...lineasPartes]);
-      if (rpcErr) throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
+      if (rpcErr) {
+        if (rpcErr.code === STOCK_INSUFICIENTE_PG_CODE) throw new BadRequestException(STOCK_INSUFICIENTE_MESSAGE);
+        throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
+      }
     }
 
     // CxC automática para ventas a crédito

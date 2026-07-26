@@ -196,7 +196,7 @@ class _View extends StatelessWidget {
           if (tiposPago.isNotEmpty) ...[
             const SizedBox(height: 8),
             DropdownButtonFormField<TipoPago>(
-              value: tipoPagoSeleccionado,
+              initialValue: tipoPagoSeleccionado,
               decoration: const InputDecoration(labelText: 'Tipo de Pago'),
               items: tiposPago.map((t) => DropdownMenuItem(
                 value: t,
@@ -432,7 +432,7 @@ class _BalanceDialogState extends State<_BalanceDialog> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String?>(
-                value: _filtroPago,
+                initialValue: _filtroPago,
                 decoration: const InputDecoration(
                   labelText: 'Tipo de Pago',
                   isDense: true,

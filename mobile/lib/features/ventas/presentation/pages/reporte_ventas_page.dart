@@ -314,7 +314,7 @@ class _ReporteVentasPageState extends State<ReporteVentasPage> {
   Widget _dropdown(String label, List<_Combo> items, String? value, ValueChanged<String?> onChange) {
     final valid = items.any((i) => i.code == value) ? value : null;
     return DropdownButtonFormField<String>(
-      value: valid,
+      initialValue: valid,
       decoration: InputDecoration(labelText: label, isDense: true),
       isExpanded: true,
       items: [

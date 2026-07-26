@@ -390,7 +390,7 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
               decoration: const InputDecoration(labelText: 'Monto')),
           const SizedBox(height: 8),
           DropdownButtonFormField<TipoPago>(
-            value: tipoPagoSeleccionado,
+            initialValue: tipoPagoSeleccionado,
             decoration: const InputDecoration(labelText: 'Tipo Pago'),
             items: tiposPago.map((t) => DropdownMenuItem(value: t, child: Text(t.descripcion))).toList(),
             onChanged: (v) => setSt(() {

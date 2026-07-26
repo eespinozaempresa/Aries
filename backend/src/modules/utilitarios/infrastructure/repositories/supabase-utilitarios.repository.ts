@@ -7,10 +7,10 @@ import { CreateUsuarioDto, UpdateUsuarioDto, CreatePerfilDto, UpdatePerfilDto } 
 export class SupabaseUtilitariosRepository {
   constructor(private readonly supabase: SupabaseService) {}
 
-  async getParametros(codigoEmpresa: string): Promise<{ igv: number; tiempoFinanciamiento: number; almacenPartes: string | null; operacionPartes: string | null }> {
+  async getParametros(codigoEmpresa: string): Promise<{ igv: number; tiempoFinanciamiento: number; almacenPartes: string | null; operacionPartes: string | null; controlStockSalidas: string }> {
     const { data, error } = await this.supabase.db
       .from('parametros')
-      .select('igv, tiempo_financiamiento, almacen_partes, operacion_partes')
+      .select('igv, tiempo_financiamiento, almacen_partes, operacion_partes, control_stock_salidas')
       .eq('codigo_empresa', codigoEmpresa)
       .maybeSingle();
     if (error) throw new InternalServerErrorException(error.message);
@@ -19,6 +19,7 @@ export class SupabaseUtilitariosRepository {
       tiempoFinanciamiento: data?.tiempo_financiamiento ?? 30,
       almacenPartes: data?.almacen_partes ?? null,
       operacionPartes: data?.operacion_partes ?? null,
+      controlStockSalidas: data?.control_stock_salidas ?? 'NO',
     };
   }
 
@@ -28,7 +29,8 @@ export class SupabaseUtilitariosRepository {
     tiempoFinanciamiento: number,
     almacenPartes?: string | null,
     operacionPartes?: string | null,
-  ): Promise<{ igv: number; tiempoFinanciamiento: number; almacenPartes: string | null; operacionPartes: string | null }> {
+    controlStockSalidas?: string,
+  ): Promise<{ igv: number; tiempoFinanciamiento: number; almacenPartes: string | null; operacionPartes: string | null; controlStockSalidas: string }> {
     const { data, error } = await this.supabase.db
       .from('parametros')
       .upsert(
@@ -38,10 +40,11 @@ export class SupabaseUtilitariosRepository {
           tiempo_financiamiento: tiempoFinanciamiento,
           almacen_partes: almacenPartes || null,
           operacion_partes: operacionPartes || null,
+          control_stock_salidas: controlStockSalidas || 'NO',
         },
         { onConflict: 'codigo_empresa' },
       )
-      .select('igv, tiempo_financiamiento, almacen_partes, operacion_partes')
+      .select('igv, tiempo_financiamiento, almacen_partes, operacion_partes, control_stock_salidas')
       .single();
     if (error) throw new InternalServerErrorException(error.message);
     return {
@@ -49,6 +52,7 @@ export class SupabaseUtilitariosRepository {
       tiempoFinanciamiento: data.tiempo_financiamiento,
       almacenPartes: data.almacen_partes ?? null,
       operacionPartes: data.operacion_partes ?? null,
+      controlStockSalidas: data.control_stock_salidas ?? 'NO',
     };
   }
 

@@ -29,6 +29,7 @@ class _ParametrosPageState extends State<ParametrosPage> {
   String? _almacenPartes;
   String? _almacenPartesDescripcion;
   String? _operacionPartes;
+  String _controlStockSalidas = 'NO';
 
   @override
   void initState() {
@@ -58,6 +59,7 @@ class _ParametrosPageState extends State<ParametrosPage> {
       _tiempoCtrl.text = (data['tiempoFinanciamiento'] ?? 0).toString();
       _almacenPartes = data['almacenPartes'] as String?;
       _operacionPartes = data['operacionPartes'] as String?;
+      _controlStockSalidas = (data['controlStockSalidas'] as String?) ?? 'NO';
       if (_almacenPartes != null) {
         final res = await getIt<AlmacenRepository>().findAll();
         res.fold((_) {}, (list) {
@@ -106,6 +108,7 @@ class _ParametrosPageState extends State<ParametrosPage> {
           'tiempoFinanciamiento': int.tryParse(_tiempoCtrl.text.trim()) ?? 0,
           'almacenPartes':       _almacenPartes,
           'operacionPartes':     _operacionPartes,
+          'controlStockSalidas': _controlStockSalidas,
         },
       );
       if (mounted) {
@@ -184,6 +187,20 @@ class _ParametrosPageState extends State<ParametrosPage> {
                             if (n < 0) return 'Debe ser mayor o igual a 0';
                             return null;
                           },
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          initialValue: _controlStockSalidas,
+                          decoration: const InputDecoration(
+                            labelText: 'Control de Operaciones de Salidas con Stock',
+                            prefixIcon: Icon(Icons.inventory_2_outlined),
+                            helperText: 'SI: bloquea Movimientos de Salida/Traslado y Ventas sin stock suficiente',
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'NO', child: Text('No')),
+                            DropdownMenuItem(value: 'SI', child: Text('Sí')),
+                          ],
+                          onChanged: (v) => setState(() => _controlStockSalidas = v ?? 'NO'),
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../maestros/domain/repositories/articulo_repository.dart';
 import '../../../maestros/domain/repositories/almacen_repository.dart' as maestro_alm;
 import '../../../maestros/domain/entities/articulo.dart';
@@ -73,12 +75,29 @@ class _MovimientoFormState extends State<_MovimientoForm> {
 
   final List<_LineaEntry> _lineas = [];
 
+  String _controlStockSalidas = 'NO';
+
   bool get _needsDest => _tipo == TipoMovimiento.TRASLADO;
+  bool get _esOperacionSalida => _tipo != TipoMovimiento.INGRESO;
 
   @override
   void initState() {
     super.initState();
     _loadDocumentos();
+    _loadParametros();
+  }
+
+  Future<void> _loadParametros() async {
+    try {
+      final dio = getIt<DioClient>().dio;
+      final response = await dio.get('${ApiConstants.baseUrl}/utilitarios/parametros');
+      final data = response.data as Map<String, dynamic>;
+      if (mounted) {
+        setState(() {
+          _controlStockSalidas = (data['controlStockSalidas'] as String?) ?? 'NO';
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadDocumentos() async {
@@ -128,6 +147,13 @@ class _MovimientoFormState extends State<_MovimientoForm> {
   }
 
   Future<void> _addLinea() async {
+    if (_controlStockSalidas == 'SI' && _esOperacionSalida && _almacenOrigen == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Seleccione el almacén origen antes de agregar artículos')),
+      );
+      return;
+    }
+
     final repo = getIt<ArticuloRepository>();
     final art = await MaestroPicker.show<Articulo>(
       context,
@@ -143,22 +169,56 @@ class _MovimientoFormState extends State<_MovimientoForm> {
     // Pedir cantidad y precio
     final qtyCtrl   = TextEditingController(text: '1');
     final priceCtrl = TextEditingController(text: art.precioVenta.toStringAsFixed(4) ?? '0.0000');
+    String? stockError;
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(art.descripcion),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          NumberFormField(controller: qtyCtrl,
-              decoration: const InputDecoration(labelText: 'Cantidad')),
-          const SizedBox(height: 8),
-          NumberFormField(controller: priceCtrl,
-              decoration: const InputDecoration(labelText: 'Precio unitario')),
-        ]),
-        actions: [
-          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Agregar')),
-        ],
+      builder: (_) => StatefulBuilder(
+        builder: (context, setLocalState) => AlertDialog(
+          title: Text(art.descripcion),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            NumberFormField(controller: qtyCtrl,
+                decoration: const InputDecoration(labelText: 'Cantidad')),
+            const SizedBox(height: 8),
+            NumberFormField(controller: priceCtrl,
+                decoration: const InputDecoration(labelText: 'Precio unitario')),
+            if (stockError != null) ...[
+              const SizedBox(height: 8),
+              Text(stockError!, style: const TextStyle(color: Colors.red)),
+            ],
+          ]),
+          actions: [
+            OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+            FilledButton(
+              onPressed: () async {
+                final cantidad = double.tryParse(qtyCtrl.text) ?? 0;
+                if (_controlStockSalidas == 'SI' && _esOperacionSalida && _almacenOrigen != null) {
+                  final yaEnCola = _lineas
+                      .where((l) => l.codigoArticulo == art.codigo)
+                      .fold<double>(0, (s, l) => s + l.cantidad);
+                  final res = await getIt<MovimientoRepository>().getStock(
+                    codigoAlmacen: _almacenOrigen,
+                    codigoArticulo: art.codigo,
+                  );
+                  final stockActual = res.fold(
+                    (_) => 0.0,
+                    (list) => list.isNotEmpty ? list.first.stockActual : 0.0,
+                  );
+                  if (stockActual - yaEnCola < cantidad) {
+                    setLocalState(() {
+                      stockError = 'Articulo no tiene stock necesario\n'
+                          'No se puede realizar esta operación\n'
+                          'Realice un Ingreso/Compra para tener stock';
+                    });
+                    return;
+                  }
+                }
+                if (context.mounted) Navigator.pop(context, true);
+              },
+              child: const Text('Agregar'),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -248,7 +308,7 @@ class _MovimientoFormState extends State<_MovimientoForm> {
 
                   // Documento
                   DropdownButtonFormField<Documento>(
-                    value: _documento,
+                    initialValue: _documento,
                     decoration: const InputDecoration(labelText: 'Documento *', border: OutlineInputBorder(), isDense: true),
                     items: _documentos.map((d) => DropdownMenuItem(
                       value: d,

@@ -14,6 +14,7 @@ import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
 import '../../../tablas/data/models/tabla_model.dart';
 import '../../../tablas/domain/entities/tabla_base.dart';
 import '../../../tipo_cambio/data/datasources/tipo_cambio_remote_datasource.dart';
+import '../../../almacen/domain/repositories/movimiento_repository.dart';
 import '../../data/datasources/ventas_remote_datasource.dart';
 import '../../domain/entities/venta.dart';
 import '../bloc/venta_bloc.dart';
@@ -69,6 +70,8 @@ class _FormState extends State<_Form> {
 
   double _igvPct    = 18.0;
   bool   _aplicaIgv = true;
+  String _controlStockSalidas = 'NO';
+  int _tiempoFinanciamiento = 30;
 
   @override
   void initState() {
@@ -92,6 +95,8 @@ class _FormState extends State<_Form> {
       if (mounted) {
         setState(() {
           _igvPct    = (params['igv'] as num?)?.toDouble() ?? 18.0;
+          _controlStockSalidas = (params['controlStockSalidas'] as String?) ?? 'NO';
+          _tiempoFinanciamiento = (params['tiempoFinanciamiento'] as num?)?.toInt() ?? 30;
           _documentos = docs;
           if (docs.length == 1) {
             _documento = docs.first;
@@ -159,6 +164,13 @@ class _FormState extends State<_Form> {
   }
 
   Future<void> _addLinea() async {
+    if (_controlStockSalidas == 'SI' && _almacen == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Seleccione el almacén antes de agregar artículos')),
+      );
+      return;
+    }
+
     final art = await MaestroPicker.show<Articulo>(context,
       title: 'Artículo', onSearch: (q) async {
         final res = await getIt<ArticuloRepository>().search(q: q, activo: true, page: 1);
@@ -185,23 +197,57 @@ class _FormState extends State<_Form> {
     final qCtrl   = TextEditingController(text: '1');
     final pCtrl   = TextEditingController(text: precioSugerido.toStringAsFixed(4));
     final dscCtrl = TextEditingController(text: '0');
+    String? stockError;
     if (!mounted) return;
-    final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
-      title: Text(art.descripcion),
-      content: Column(mainAxisSize: MainAxisSize.min, children: [
-        NumberFormField(controller: qCtrl,
-            decoration: const InputDecoration(labelText: 'Cantidad')),
-        const SizedBox(height: 8),
-        NumberFormField(controller: pCtrl,
-            decoration: InputDecoration(labelText: 'Precio unitario ($_moneda)')),
-        const SizedBox(height: 8),
-        NumberFormField(controller: dscCtrl,
-            decoration: const InputDecoration(labelText: 'Descuento %')),
-      ]),
-      actions: [
-        OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-        FilledButton(onPressed: () => Navigator.pop(context, true),  child: const Text('Agregar')),
-      ],
+    final ok = await showDialog<bool>(context: context, builder: (_) => StatefulBuilder(
+      builder: (context, setLocalState) => AlertDialog(
+        title: Text(art.descripcion),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          NumberFormField(controller: qCtrl,
+              decoration: const InputDecoration(labelText: 'Cantidad')),
+          const SizedBox(height: 8),
+          NumberFormField(controller: pCtrl,
+              decoration: InputDecoration(labelText: 'Precio unitario ($_moneda)')),
+          const SizedBox(height: 8),
+          NumberFormField(controller: dscCtrl,
+              decoration: const InputDecoration(labelText: 'Descuento %')),
+          if (stockError != null) ...[
+            const SizedBox(height: 8),
+            Text(stockError!, style: const TextStyle(color: Colors.red)),
+          ],
+        ]),
+        actions: [
+          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () async {
+              final cantidad = double.tryParse(qCtrl.text) ?? 0;
+              if (_controlStockSalidas == 'SI' && _almacen != null) {
+                final yaEnCola = _lineas
+                    .where((l) => l.codigo == art.codigo)
+                    .fold<double>(0, (s, l) => s + l.cantidad);
+                final res = await getIt<MovimientoRepository>().getStock(
+                  codigoAlmacen: _almacen,
+                  codigoArticulo: art.codigo,
+                );
+                final stockActual = res.fold(
+                  (_) => 0.0,
+                  (list) => list.isNotEmpty ? list.first.stockActual : 0.0,
+                );
+                if (stockActual - yaEnCola < cantidad) {
+                  setLocalState(() {
+                    stockError = 'Articulo no tiene stock necesario\n'
+                        'No se puede realizar esta operación\n'
+                        'Realice un Ingreso/Compra para tener stock';
+                  });
+                  return;
+                }
+              }
+              if (context.mounted) Navigator.pop(context, true);
+            },
+            child: const Text('Agregar'),
+          ),
+        ],
+      ),
     ));
     if (ok == true) {
       setState(() => _lineas.add(_Linea(
@@ -254,7 +300,7 @@ class _FormState extends State<_Form> {
   Widget build(BuildContext context) {
     final currLabel = _moneda == 'USD' ? 'USD' : 'S/';
     return Scaffold(
-      appBar: AriesAppBar(title: const Text('Nueva Venta')),
+      appBar: const AriesAppBar(title: Text('Nueva Venta')),
       body: BlocConsumer<VentaBloc, VentaState>(
         listener: (ctx, state) {
           if (state is VentaSaved) {
@@ -275,7 +321,7 @@ class _FormState extends State<_Form> {
             Form(key: _formKey, child: ListView(padding: const EdgeInsets.all(16), children: [
               // Documento
               DropdownButtonFormField<Documento>(
-                value: _documento,
+                initialValue: _documento,
                 decoration: const InputDecoration(labelText: 'Documento *', border: OutlineInputBorder(), isDense: true),
                 items: _documentos.map((d) => DropdownMenuItem(
                   value: d,
@@ -311,7 +357,11 @@ class _FormState extends State<_Form> {
                     onSelected: (_) => setState(() => _tipo = TipoVenta.CONTADO)),
                 const SizedBox(width: 8),
                 ChoiceChip(label: const Text('Crédito'), selected: _tipo == TipoVenta.CREDITO,
-                    onSelected: (_) => setState(() => _tipo = TipoVenta.CREDITO)),
+                    onSelected: (_) => setState(() {
+                      final entrandoACredito = _tipo != TipoVenta.CREDITO;
+                      _tipo = TipoVenta.CREDITO;
+                      if (entrandoACredito) _plazo = _tiempoFinanciamiento;
+                    })),
                 if (_tipo == TipoVenta.CREDITO) ...[
                   const SizedBox(width: 12),
                   SizedBox(width: 60, child: NumberFormField(

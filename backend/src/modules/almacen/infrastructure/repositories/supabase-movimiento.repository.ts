@@ -1,7 +1,8 @@
-import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, ConflictException, BadRequestException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import { NumeroDocumentoService } from '../../../../shared/infrastructure/supabase/numero-documento.service';
 import { FormulaExplosionService } from '../../application/services/formula-explosion.service';
+import { STOCK_INSUFICIENTE_PG_CODE, STOCK_INSUFICIENTE_MESSAGE } from '../../domain/errors/stock-insuficiente.error';
 import {
   IMovimientoRepository,
   RegistrarMovimientoData,
@@ -38,6 +39,7 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
     });
     if (error) {
       if (error.code === '23505') throw new ConflictException('Número de documento ya existe');
+      if (error.code === STOCK_INSUFICIENTE_PG_CODE) throw new BadRequestException(STOCK_INSUFICIENTE_MESSAGE);
       throw new InternalServerErrorException(error.message);
     }
 
@@ -62,7 +64,10 @@ export class SupabaseMovimientoRepository implements IMovimientoRepository {
             p_lineas:      lineasPartes,
             p_serie:       data.serie ?? '0001',
           });
-          if (rpcErrPartes) throw new InternalServerErrorException(`Stock error (partes): ${rpcErrPartes.message}`);
+          if (rpcErrPartes) {
+            if (rpcErrPartes.code === STOCK_INSUFICIENTE_PG_CODE) throw new BadRequestException(STOCK_INSUFICIENTE_MESSAGE);
+            throw new InternalServerErrorException(`Stock error (partes): ${rpcErrPartes.message}`);
+          }
         }
       }
     }
