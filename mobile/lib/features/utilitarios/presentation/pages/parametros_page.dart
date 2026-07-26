@@ -186,27 +186,6 @@ class _ParametrosPageState extends State<ParametrosPage> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        InkWell(
-                          onTap: _pickAlmacenPartes,
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: 'Almacén de Partes (opcional)',
-                              prefixIcon: const Icon(Icons.warehouse_outlined),
-                              helperText: 'Almacén donde se descuentan las Partes de artículos con fórmula',
-                              suffixIcon: _almacenPartes != null
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: () => setState(() {
-                                        _almacenPartes = null;
-                                        _almacenPartesDescripcion = null;
-                                      }),
-                                    )
-                                  : const Icon(Icons.arrow_drop_down),
-                            ),
-                            child: Text(_almacenPartesDescripcion ?? _almacenPartes ?? 'Sin seleccionar'),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
                           initialValue: _operacionPartes,
                           decoration: const InputDecoration(
@@ -219,8 +198,37 @@ class _ParametrosPageState extends State<ParametrosPage> {
                             DropdownMenuItem(value: 'VENTAS', child: Text('Ventas')),
                             DropdownMenuItem(value: 'MOVIMIENTOS', child: Text('Movimientos')),
                           ],
-                          onChanged: (v) => setState(() => _operacionPartes = v),
+                          onChanged: (v) => setState(() {
+                            _operacionPartes = v;
+                            if (v == null) {
+                              _almacenPartes = null;
+                              _almacenPartesDescripcion = null;
+                            }
+                          }),
                         ),
+                        if (_operacionPartes != null) ...[
+                          const SizedBox(height: 16),
+                          InkWell(
+                            onTap: _pickAlmacenPartes,
+                            child: InputDecorator(
+                              decoration: InputDecoration(
+                                labelText: 'Almacén de Partes (opcional)',
+                                prefixIcon: const Icon(Icons.warehouse_outlined),
+                                helperText: 'Almacén donde se descuentan las Partes de artículos con fórmula',
+                                suffixIcon: _almacenPartes != null
+                                    ? IconButton(
+                                        icon: const Icon(Icons.clear),
+                                        onPressed: () => setState(() {
+                                          _almacenPartes = null;
+                                          _almacenPartesDescripcion = null;
+                                        }),
+                                      )
+                                    : const Icon(Icons.arrow_drop_down),
+                              ),
+                              child: Text(_almacenPartesDescripcion ?? _almacenPartes ?? 'Sin seleccionar'),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 32),
                         Row(children: [
                           Expanded(

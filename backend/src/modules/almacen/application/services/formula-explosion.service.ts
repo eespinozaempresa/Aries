@@ -67,6 +67,25 @@ export class FormulaExplosionService {
     return new Map((data ?? []).map((s: any) => [s.codigo_articulo, Number(s.costo_promedio)]));
   }
 
+  /** Stock actual por artículo en `codigoAlmacen` (0 si el artículo no tiene fila en `stock`). */
+  async stockActualMap(codigoEmpresa: string, codigoAlmacen: string, codigos: string[]): Promise<Map<string, number>> {
+    if (!codigos.length) return new Map();
+    const { data, error } = await this.supabase.db
+      .from('stock')
+      .select('codigo_articulo, stock_inicial, stock_compras, stock_ventas, stock_entradas, stock_salidas, stock_traslados_in, stock_traslados_out')
+      .eq('codigo_empresa', codigoEmpresa)
+      .eq('codigo_almacen', codigoAlmacen)
+      .in('codigo_articulo', codigos);
+    if (error) throw new InternalServerErrorException(error.message);
+    const map = new Map<string, number>();
+    for (const s of (data ?? []) as any[]) {
+      const actual = Number(s.stock_inicial) + Number(s.stock_compras) + Number(s.stock_entradas) + Number(s.stock_traslados_in)
+        - Number(s.stock_ventas) - Number(s.stock_salidas) - Number(s.stock_traslados_out);
+      map.set(s.codigo_articulo, actual);
+    }
+    return map;
+  }
+
   /** costo_promedio en `codigoAlmacen` si es > 0; si no, precio_compra_base del artículo. */
   async costoConRespaldo(codigoEmpresa: string, codigoAlmacen: string, codigos: string[]): Promise<Map<string, number>> {
     if (!codigos.length) return new Map();

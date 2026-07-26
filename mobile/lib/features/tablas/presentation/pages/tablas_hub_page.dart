@@ -11,7 +11,7 @@ class TablasHubPage extends StatelessWidget {
     final svc = MenuPermissionService.instance;
     final tiles = [
       if (svc.canAccess('tablas.tipos-lista'))
-        const _Tile('Tipos de Lista', Icons.price_change_outlined, '/tablas/tipos-lista'),
+        const _Tile('Tipos de Lista Precios', Icons.price_change_outlined, '/tablas/tipos-lista'),
       if (svc.canAccess('tablas.tipos-pago'))
         const _Tile('Tipos de Pago', Icons.payment_outlined, '/tablas/tipos-pago'),
       if (svc.canAccess('tablas.lineas'))

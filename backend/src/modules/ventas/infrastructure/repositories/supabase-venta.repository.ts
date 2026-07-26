@@ -1,7 +1,6 @@
 import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import { NumeroDocumentoService } from '../../../../shared/infrastructure/supabase/numero-documento.service';
-import { IFormulaRepository } from '../../../maestros/domain/ports/formula.repository.port';
 import { FormulaExplosionService, ParametrosPartes } from '../../../almacen/application/services/formula-explosion.service';
 import { IVentaRepository, RegistrarVentaData, VentaFilter, VentaListResult, ReporteVentasFilter, ReporteGeneralFilter } from '../../domain/ports/venta.repository.port';
 import { Venta } from '../../domain/entities/venta.entity';
@@ -12,7 +11,6 @@ export class SupabaseVentaRepository implements IVentaRepository {
   constructor(
     private readonly supabase: SupabaseService,
     private readonly numeracion: NumeroDocumentoService,
-    private readonly formulas: IFormulaRepository,
     private readonly explosion: FormulaExplosionService,
   ) {}
 
@@ -36,7 +34,7 @@ export class SupabaseVentaRepository implements IVentaRepository {
     const almacenPartesDestino = (paramRes.data as any)?.almacen_partes || d.codigoAlmacen;
     // operacion_partes: si está configurado junto a almacen_partes, define en qué
     // módulo (Ventas o Movimientos) se "produce" el Principal y se explota su fórmula.
-    // Si falta cualquiera de los dos, Ventas mantiene su comportamiento legado (siempre explota).
+    // Si falta cualquiera de los dos, no se ejecuta ningún BOM en Ventas.
     const paramsPartes: ParametrosPartes = {
       almacenPartes: (paramRes.data as any)?.almacen_partes || null,
       operacionPartes: ((paramRes.data as any)?.operacion_partes || null) as ParametrosPartes['operacionPartes'],
@@ -116,7 +114,7 @@ export class SupabaseVentaRepository implements IVentaRepository {
 
     // Explosión de fórmula (BOM): además del Principal, descontar sus Partes.
     // El módulo que la ejecuta depende de `operacion_partes` (ver arriba); si no está
-    // configurado, se mantiene el comportamiento legado (Ventas siempre explota).
+    // configurado (o no aplica a Ventas ni a Movimientos), no se ejecuta ningún BOM.
     const codigosVendidos = [...new Set(lineasProc.map((l) => l.codigoArticulo))];
 
     let lineasPartes: { codigoArticulo: string; cantidad: number; precioUnitario: number }[] = [];
@@ -131,44 +129,24 @@ export class SupabaseVentaRepository implements IVentaRepository {
       const formulasActivas = await this.explosion.getFormulasActivas(codigoEmpresa, codigosVendidos);
       costoPrincipalMap = await this.explosion.costoConRespaldo(codigoEmpresa, d.codigoAlmacen, codigosVendidos);
       lineasPartes = await this.explosion.explotarPartes(codigoEmpresa, almacenPartesDestino, lineasProc);
+
+      // El Ingreso automático del Principal (su "producción") solo se genera si aún
+      // no tiene stock en el almacén de la venta; si ya tiene, se asume producido
+      // previamente y esta venta solo lo descuenta (sus Partes se siguen consumiendo igual).
+      const codigosConFormula = codigosVendidos.filter((c) => formulasActivas.has(c));
+      const stockPrincipal = await this.explosion.stockActualMap(codigoEmpresa, d.codigoAlmacen, codigosConFormula);
       lineasIngresoAutomatico = lineasProc
-        .filter((l) => formulasActivas.has(l.codigoArticulo))
+        .filter((l) => formulasActivas.has(l.codigoArticulo) && (stockPrincipal.get(l.codigoArticulo) ?? 0) <= 0)
         .map((l) => ({
           codigoArticulo: l.codigoArticulo,
           cantidad:       l.cantidad,
           precioUnitario: costoPrincipalMap.get(l.codigoArticulo) ?? 0,
         }));
     } else {
-      // Comportamiento legado (sin `operacion_partes` configurado): Ventas siempre
-      // explota, y el Principal se costea con costo_promedio (si es > 0), si no
-      // con precio_compra_base.
-      const formulasActivas = await this.formulas.findActivasByArticulos(codigoEmpresa, codigosVendidos);
+      // Sin `operacion_partes` configurado (o sin `almacen_partes`): no se ejecuta
+      // BOM, el Principal se costea con costo_promedio (si es > 0), si no con
+      // precio_compra_base.
       costoPrincipalMap = await this.explosion.costoConRespaldo(codigoEmpresa, d.codigoAlmacen, codigosVendidos);
-
-      if (formulasActivas.size) {
-        const codigosComponentes = [...new Set(
-          [...formulasActivas.values()].flat().map((c) => c.codigoArticulo),
-        )];
-        const { data: stockComponentes } = await this.supabase.db
-          .from('stock')
-          .select('codigo_articulo, costo_promedio')
-          .eq('codigo_empresa', codigoEmpresa)
-          .eq('codigo_almacen', almacenPartesDestino)
-          .in('codigo_articulo', codigosComponentes);
-        const costoMap = new Map((stockComponentes ?? []).map((s: any) => [s.codigo_articulo, Number(s.costo_promedio)]));
-
-        for (const l of lineasProc) {
-          const componentes = formulasActivas.get(l.codigoArticulo);
-          if (!componentes) continue;
-          for (const c of componentes) {
-            lineasPartes.push({
-              codigoArticulo: c.codigoArticulo,
-              cantidad:       l.cantidad * c.cantidad,
-              precioUnitario: costoMap.get(c.codigoArticulo) ?? 0,
-            });
-          }
-        }
-      }
     }
 
     // Salida de almacén via RPC (Principal + Partes explotadas de su fórmula, si aplica).
