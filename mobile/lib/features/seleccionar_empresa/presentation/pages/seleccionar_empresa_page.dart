@@ -130,7 +130,8 @@ class _SeleccionarEmpresaViewState extends State<_SeleccionarEmpresaView> {
                                 prefixIcon: Icon(Icons.domain_outlined),
                                 border: OutlineInputBorder(),
                               ),
-                              items: state.empresas
+                              items: (List.of(state.empresas)
+                                    ..sort((a, b) => a.nombre.toLowerCase().compareTo(b.nombre.toLowerCase())))
                                   .map((e) => DropdownMenuItem(
                                         value: e,
                                         child: Text(e.nombre, overflow: TextOverflow.ellipsis),

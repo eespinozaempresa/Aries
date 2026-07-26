@@ -78,6 +78,8 @@ class _MaestroPickerState<T> extends State<MaestroPicker<T>> {
     setState(() => _loading = true);
     try {
       final results = await widget.onSearch(q);
+      results.sort((a, b) =>
+          widget.itemTitle(a).toLowerCase().compareTo(widget.itemTitle(b).toLowerCase()));
       if (mounted) setState(() { _results = results; _loading = false; });
     } catch (_) {
       if (mounted) setState(() => _loading = false);

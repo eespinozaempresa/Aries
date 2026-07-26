@@ -210,10 +210,9 @@ class _ParametrosPageState extends State<ParametrosPage> {
                         DropdownButtonFormField<String>(
                           initialValue: _operacionPartes,
                           decoration: const InputDecoration(
-                            labelText: '¿Dónde se descuentan las Partes? (opcional)',
+                            labelText: '¿En que Proceso se descuentan las Partes? (opcional)',
                             prefixIcon: Icon(Icons.sync_alt_outlined),
-                            helperText: 'Ventas: se producen al vender. Movimientos: se producen al '
-                                'registrar su Ingreso',
+                            helperText: 'Ventas: al vender. Movimientos: al registrar su Ingreso',
                           ),
                           items: const [
                             DropdownMenuItem(value: null, child: Text('Sin seleccionar')),

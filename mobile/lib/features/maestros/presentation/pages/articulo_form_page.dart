@@ -5,12 +5,16 @@ import '../../../../core/utils/unique_id.dart';
 import '../../domain/entities/articulo.dart';
 import '../../domain/entities/lista_precio.dart';
 import '../../domain/repositories/articulo_repository.dart';
+import '../../domain/repositories/formula_repository.dart';
 import '../../data/datasources/maestros_remote_datasource.dart';
 import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
 import '../../../tablas/data/models/tabla_model.dart';
 import '../../../tablas/domain/entities/tabla_base.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 import '../../../../core/widgets/number_form_field.dart';
+
+int _byDescripcion(TablaBase a, TablaBase b) =>
+    a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase());
 
 class ArticuloFormPage extends StatefulWidget {
   final String? articuloId;
@@ -39,6 +43,7 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
   final _stMaxCtrl      = TextEditingController(text: '0');
   bool _activo = true;
   bool _conFormula = false;
+  bool _loadingFormula = false;
 
   String? _selectedLinea;
   String? _selectedMedida;
@@ -79,10 +84,10 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
 
     if (!mounted) return;
     setState(() {
-      _lineas     = results[0].map(TablaModel.lineaFromJson).toList();
-      _medidas    = results[1].map(TablaModel.medidaFromJson).toList();
-      _marcas     = results[2].map(TablaModel.marcaFromJson).toList();
-      _tiposLista = results[3].map(TablaModel.tipoListaFromJson).toList();
+      _lineas     = results[0].map(TablaModel.lineaFromJson).toList()..sort(_byDescripcion);
+      _medidas    = results[1].map(TablaModel.medidaFromJson).toList()..sort(_byDescripcion);
+      _marcas     = results[2].map(TablaModel.marcaFromJson).toList()..sort(_byDescripcion);
+      _tiposLista = results[3].map(TablaModel.tipoListaFromJson).toList()..sort(_byDescripcion);
     });
 
     if (widget.isEdit) {
@@ -240,6 +245,68 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
     );
   }
 
+  Future<void> _showFormulaPopup() async {
+    setState(() => _loadingFormula = true);
+    final codigo = _codigoCtrl.text;
+    final findResult = await getIt<FormulaRepository>().findAll(q: codigo, activo: true);
+    final resumen = findResult.fold(
+      (_) => null,
+      (list) => list
+          .where((f) => f.codigoArticulo.toUpperCase() == codigo.toUpperCase())
+          .firstOrNull,
+    );
+    if (resumen == null) {
+      if (!mounted) return;
+      setState(() => _loadingFormula = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se encontró la fórmula del artículo')),
+      );
+      return;
+    }
+
+    final detailResult = await getIt<FormulaRepository>().getById(resumen.id);
+    if (!mounted) return;
+    setState(() => _loadingFormula = false);
+
+    detailResult.fold(
+      (e) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Theme.of(context).colorScheme.error),
+      ),
+      (formula) => showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text('Fórmula: ${_descCtrl.text}'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if ((formula.observacion ?? '').isNotEmpty) ...[
+                    Text('Observación: ${formula.observacion}'),
+                    const SizedBox(height: 12),
+                  ],
+                  Text('Partes', style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 4),
+                  ...formula.detalle.map((d) => ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(d.descripcionArticulo ?? d.codigoArticulo),
+                        subtitle: Text('${d.codigoArticulo} · Cantidad: ${d.cantidad}'),
+                      )),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _deletePrecio(ListaPrecio lp) {
     setState(() {
       _listaPrecios.removeWhere((p) => p.id == lp.id);
@@ -272,10 +339,20 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
               Expanded(
                 flex: 3,
                 child: _conFormula
-                    ? Chip(
-                        avatar: const Icon(Icons.account_tree_outlined, size: 18),
-                        label: const Text('Con fórmula (tiene partes)'),
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    ? InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: _loadingFormula ? null : _showFormulaPopup,
+                        child: Chip(
+                          avatar: _loadingFormula
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.account_tree_outlined, size: 18),
+                          label: const Text('Con fórmula (tiene partes)'),
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                        ),
                       )
                     : const SizedBox.shrink(),
               ),

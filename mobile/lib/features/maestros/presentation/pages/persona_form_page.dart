@@ -68,7 +68,8 @@ class _PersonaFormPageState extends State<PersonaFormPage> {
       try {
         final rows = await _tablasDs.list('tipos-lista', activo: true);
         if (mounted) {
-          setState(() => _tiposLista = rows.map(TablaModel.tipoListaFromJson).toList());
+          setState(() => _tiposLista = rows.map(TablaModel.tipoListaFromJson).toList()
+            ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase())));
         }
       } catch (_) {}
     }

@@ -87,7 +87,8 @@ class _FormState extends State<_Form> {
       ]);
       final params = results[0] as Map<String, dynamic>;
       final docs   = (results[1] as List<Map<String, dynamic>>)
-          .map(TablaModel.documentoFromJson).toList();
+          .map(TablaModel.documentoFromJson).toList()
+        ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase()));
       if (mounted) {
         setState(() {
           _igvPct    = (params['igv'] as num?)?.toDouble() ?? 18.0;

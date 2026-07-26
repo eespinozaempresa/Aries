@@ -166,7 +166,8 @@ class _View extends StatelessWidget {
       if (!_fetched) {
         _fetched = true;
         getIt<TablasRemoteDataSource>().list('tipos-pago', activo: true).then((raw) {
-          setSt(() => tiposPago = raw.map(TablaModel.tipoPagoFromJson).toList());
+          setSt(() => tiposPago = raw.map(TablaModel.tipoPagoFromJson).toList()
+            ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase())));
         }).catchError((_) {});
       }
       return AlertDialog(

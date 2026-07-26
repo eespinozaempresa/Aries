@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../constants/api_constants.dart';
 import '../di/injection.dart';
 import '../services/menu_permission_service.dart';
+import '../../features/auth/domain/entities/usuario.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/seleccionar_empresa/seleccionar_empresa_args.dart';
 
@@ -44,6 +45,20 @@ class AriesAppBar extends StatelessWidget implements PreferredSizeWidget {
             icon: const Icon(Icons.home_outlined),
             tooltip: 'Inicio',
             onPressed: () => context.go('/home'),
+          ),
+        if (isHome)
+          FutureBuilder<Usuario?>(
+            future: getIt<AuthRepository>().getCachedUsuario(),
+            builder: (context, snapshot) {
+              final usuario = snapshot.data;
+              if (usuario == null) return const SizedBox.shrink();
+              return Center(
+                child: Text(
+                  '${usuario.codigo} / ${usuario.empresa}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              );
+            },
           ),
         if (isHome)
           IconButton(

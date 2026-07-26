@@ -334,7 +334,10 @@ class _UsuarioSheetState extends State<_UsuarioSheet> {
           _perfiles = (res.data as List)
               .cast<Map<String, dynamic>>()
               .where((p) => p['activo'] == true)
-              .toList();
+              .toList()
+            ..sort((a, b) => (a['descripcion']?.toString() ?? '')
+                .toLowerCase()
+                .compareTo((b['descripcion']?.toString() ?? '').toLowerCase()));
         });
       }
     } catch (_) {

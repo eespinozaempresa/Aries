@@ -76,7 +76,8 @@ class _FormState extends State<_Form> {
       final raw = await ds.list('documentos', activo: true, tipo: 'COMPRA');
       if (mounted) {
         setState(() {
-          _documentos = raw.map(TablaModel.documentoFromJson).toList();
+          _documentos = raw.map(TablaModel.documentoFromJson).toList()
+            ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase()));
           if (_documentos.length == 1) _documento = _documentos.first;
         });
       }

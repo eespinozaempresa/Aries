@@ -99,7 +99,9 @@ class _TablaListPageState<T extends TablaBase> extends State<TablaListPage<T>> {
                 builder: (ctx, state) {
                   if (state is TablaLoading) return const Center(child: CircularProgressIndicator());
                   if (state is TablaError) return Center(child: Text(state.message));
-                  final items = state is TablaLoaded<T> ? state.items : <T>[];
+                  final items = (state is TablaLoaded<T> ? state.items : <T>[])
+                    ..sort((a, b) =>
+                        a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase()));
                   if (items.isEmpty) return const Center(child: Text('Sin registros'));
                   return ListView.builder(
                     itemCount: items.length,

@@ -93,7 +93,8 @@ class _ReporteVentasPageState extends State<ReporteVentasPage> {
           .map((f) => m[f]?.toString())
           .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => code) ?? code;
       return _Combo(code, label);
-    }).where((c) => c.code.isNotEmpty).toList();
+    }).where((c) => c.code.isNotEmpty).toList()
+      ..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
   }
 
   Future<void> _pickDate(bool isDesde) async {
