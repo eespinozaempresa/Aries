@@ -121,32 +121,9 @@ class _TablaListPageState<T extends TablaBase> extends State<TablaListPage<T>> {
                         ),
                         title: Text(t.descripcion),
                         subtitle: Text(t.subtitle),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Switch(
-                              value: t.activo,
-                              onChanged: (_) => widget.bloc.add(TablaToggle(t.id)),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              tooltip: 'Eliminar',
-                              onPressed: () async {
-                                final confirmed = await showDialog<bool>(
-                                  context: ctx,
-                                  builder: (dctx) => AlertDialog(
-                                    title: const Text('Eliminar'),
-                                    content: Text('¿Eliminar "${t.descripcion}"? Esta acción no se puede deshacer.'),
-                                    actions: [
-                                      TextButton(onPressed: () => Navigator.of(dctx).pop(false), child: const Text('Cancelar')),
-                                      FilledButton(onPressed: () => Navigator.of(dctx).pop(true), child: const Text('Eliminar')),
-                                    ],
-                                  ),
-                                );
-                                if (confirmed == true) widget.bloc.add(TablaDelete(t.id));
-                              },
-                            ),
-                          ],
+                        trailing: Switch(
+                          value: t.activo,
+                          onChanged: (_) => widget.bloc.add(TablaToggle(t.id)),
                         ),
                         onTap: () => _openForm(ctx, t),
                       );
@@ -248,6 +225,26 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
     Navigator.pop(context);
   }
 
+  Future<void> _delete() async {
+    final item = widget.item;
+    if (item == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        title: const Text('Eliminar'),
+        content: Text('¿Eliminar "${item.descripcion}"? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dctx).pop(false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.of(dctx).pop(true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (!mounted) return;
+    context.read<TablaBloc<T>>().add(TablaDelete(item.id));
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -317,6 +314,14 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
                 child: FilledButton(onPressed: _submit, child: const Text('Guardar')),
               ),
             ]),
+            if (widget.item != null) ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: _delete,
+                icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+                label: Text('Eliminar', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              ),
+            ],
           ],
         ),
       ),

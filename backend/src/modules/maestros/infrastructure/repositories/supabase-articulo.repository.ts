@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
+import { assertNotInUse } from '../../../../shared/infrastructure/supabase/usage-check.util';
 import {
   IArticuloRepository,
   ArticuloSearchParams,
@@ -7,6 +8,12 @@ import {
   SaveArticuloData,
 } from '../../domain/ports/articulo.repository.port';
 import { Articulo } from '../../domain/entities/articulo.entity';
+
+const USAGE_CHECKS = [
+  { table: 'detalle_compras', column: 'codigo_articulo' },
+  { table: 'detalle_ventas', column: 'codigo_articulo' },
+  { table: 'detalle_movimientos', column: 'codigo_articulo' },
+] as const;
 
 @Injectable()
 export class SupabaseArticuloRepository implements IArticuloRepository {
@@ -88,6 +95,11 @@ export class SupabaseArticuloRepository implements IArticuloRepository {
   }
 
   async remove(id: string, codigoEmpresa: string): Promise<void> {
+    const articulo = await this.findById(id, codigoEmpresa);
+    if (articulo) {
+      await assertNotInUse(this.supabase.db, USAGE_CHECKS, codigoEmpresa, { codigo: articulo.codigo });
+    }
+
     const { error } = await this.supabase.db
       .from('articulos')
       .delete()

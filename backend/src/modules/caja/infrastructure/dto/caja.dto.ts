@@ -15,6 +15,8 @@ export class RegistrarMovCajaDto {
   @IsString() concepto: string;
   @IsOptional() @IsString() referencia?: string;
   @IsOptional() @IsString() tipoPago?: string;
+  @IsOptional() @IsString() numeroOperacion?: string;
+  @IsOptional() @IsString() codigoBanco?: string;
   @IsNumber() @Min(0.01) monto: number;
   @IsDateString() fecha: string;
 }

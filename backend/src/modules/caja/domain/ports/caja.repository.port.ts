@@ -17,6 +17,8 @@ export interface RegistrarMovCajaData {
   concepto: string;
   referencia?: string;
   tipoPago?: string;
+  numeroOperacion?: string;
+  codigoBanco?: string;
   monto: number;
   fecha: string;
   codigoUsuario: string;

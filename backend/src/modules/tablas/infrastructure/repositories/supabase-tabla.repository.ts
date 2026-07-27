@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException, ConflictException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
+import { assertNotInUse, UsageCheck } from '../../../../shared/infrastructure/supabase/usage-check.util';
 import { TablaBase, Documento, TipoLista, TipoPago } from '../../domain/entities/tabla-base.entity';
 import { ITablaRepository, TablaFilter } from '../../domain/ports/tabla.repository.port';
 
@@ -45,29 +46,20 @@ function makeRepo<T extends TablaBase>(tableName: string, fromRow: (r: Record<st
     }
 
     async remove(codigoEmpresa: string, id: string): Promise<void> {
-      // "documentos" y "tipo_pago" no tienen FK real hacia las tablas que los
-      // usan (el código se referencia como texto suelto en varios módulos),
-      // así que se valida explícitamente contra las operaciones conocidas.
+      // Validación explícita previa al DELETE: cubre tanto relaciones sin FK
+      // real (el código se referencia como texto suelto, ej. documentos/tipo_pago)
+      // como relaciones con FK pero con ON DELETE SET NULL (ej. tipos_lista en
+      // clientes), donde el DELETE no fallaría por sí solo.
       const usageChecks = USAGE_CHECKS[tableName];
       if (usageChecks) {
         const { data: row, error: findError } = await this.supabase.db
-          .from(tableName).select('codigo')
+          .from(tableName).select('id, codigo')
           .eq('id', id).eq('codigo_empresa', codigoEmpresa).maybeSingle();
         if (findError) throw new InternalServerErrorException(findError.message);
         if (!row) throw new NotFoundException();
-        const codigo = (row as { codigo: string }).codigo;
+        const { id: rowId, codigo } = row as { id: string; codigo: string };
 
-        for (const { table, column } of usageChecks) {
-          const { count, error } = await this.supabase.db
-            .from(table)
-            .select('id', { count: 'exact', head: true })
-            .eq('codigo_empresa', codigoEmpresa)
-            .eq(column, codigo);
-          if (error) throw new InternalServerErrorException(error.message);
-          if ((count ?? 0) > 0) {
-            throw new ConflictException('No se puede eliminar: tiene operaciones asociadas');
-          }
-        }
+        await assertNotInUse(this.supabase.db, usageChecks, codigoEmpresa, { codigo, id: rowId });
       }
 
       const { error } = await this.supabase.db
@@ -81,9 +73,9 @@ function makeRepo<T extends TablaBase>(tableName: string, fromRow: (r: Record<st
   return SupabaseTablaRepo;
 }
 
-// "documentos" y "tipo_pago" se referencian como código suelto (sin FK real)
-// en varias tablas transaccionales; se valida su uso antes de eliminar.
-const USAGE_CHECKS: Record<string, { table: string; column: string }[]> = {
+const USAGE_CHECKS: Record<string, UsageCheck[]> = {
+  // "documentos" y "tipo_pago" se referencian como código suelto (sin FK real)
+  // en varias tablas transaccionales; se valida su uso antes de eliminar.
   documentos: [
     { table: 'movimientos_almacen', column: 'codigo_documento' },
     { table: 'compras', column: 'codigo_documento' },
@@ -97,6 +89,17 @@ const USAGE_CHECKS: Record<string, { table: string; column: string }[]> = {
     { table: 'pagos', column: 'tipo_pago' },
     { table: 'movimientos_caja', column: 'tipo_pago' },
   ],
+  lineas:  [{ table: 'articulos', column: 'codigo_linea' }],
+  medidas: [{ table: 'articulos', column: 'codigo_medida' }],
+  marcas:  [{ table: 'articulos', column: 'codigo_marca' }],
+  bancos: [
+    { table: 'cobros', column: 'codigo_banco' },
+    { table: 'pagos', column: 'codigo_banco' },
+    { table: 'movimientos_caja', column: 'codigo_banco' },
+  ],
+  // clientes.id_tipo_lista es FK con ON DELETE SET NULL: sin este chequeo,
+  // borrar un tipo de lista en uso "tendría éxito" y solo desvincularía al cliente.
+  tipos_lista: [{ table: 'clientes', column: 'id_tipo_lista', matchOn: 'id' }],
 };
 
 function toRow(d: Record<string, unknown>): Record<string, unknown> {

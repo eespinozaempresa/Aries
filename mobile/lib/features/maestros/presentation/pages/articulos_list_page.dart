@@ -7,7 +7,6 @@ import '../../domain/repositories/articulo_repository.dart';
 import '../bloc/articulos_bloc.dart';
 import '../bloc/maestro_list_event.dart';
 import '../bloc/maestro_list_state.dart';
-import '../widgets/confirm_delete.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 
 class ArticulosListPage extends StatelessWidget {
@@ -170,20 +169,6 @@ class _ArticulosViewState extends State<_ArticulosView> {
                           label: Text('Inactivo', style: TextStyle(fontSize: 10)),
                           padding: EdgeInsets.zero,
                         ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        tooltip: 'Eliminar',
-                        onPressed: () async {
-                          final deleted = await confirmAndDelete(
-                            context,
-                            itemName: a.descripcion,
-                            onDelete: () => getIt<ArticuloRepository>().remove(a.id),
-                          );
-                          if (deleted && context.mounted) {
-                            context.read<ArticulosBloc>().add(MaestroListRefresh(q: _searchCtrl.text));
-                          }
-                        },
-                      ),
                     ],
                   ),
                   onTap: () async {

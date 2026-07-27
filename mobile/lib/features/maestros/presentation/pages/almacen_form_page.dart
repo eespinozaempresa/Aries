@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/utils/unique_id.dart';
 import '../../domain/repositories/almacen_repository.dart';
+import '../widgets/confirm_delete.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 
 class AlmacenFormPage extends StatefulWidget {
@@ -87,6 +88,16 @@ class _AlmacenFormPageState extends State<AlmacenFormPage> {
     );
   }
 
+  Future<void> _delete() async {
+    if (!widget.isEdit) return;
+    final deleted = await confirmAndDelete(
+      context,
+      itemName: _descCtrl.text,
+      onDelete: () => getIt<AlmacenRepository>().remove(widget.almacenId!),
+    );
+    if (deleted && mounted) context.pop(true);
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AriesAppBar(
@@ -155,6 +166,14 @@ class _AlmacenFormPageState extends State<AlmacenFormPage> {
                   ),
                 ),
               ]),
+              if (widget.isEdit) ...[
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: _saving ? null : _delete,
+                  icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+                  label: Text('Eliminar', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                ),
+              ],
               const SizedBox(height: 40),
             ],
           ),

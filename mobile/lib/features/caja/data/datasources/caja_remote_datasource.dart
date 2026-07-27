@@ -61,6 +61,8 @@ class CajaRemoteDataSource {
     required String fecha,
     String? referencia,
     String? tipoPago,
+    String? numeroOperacion,
+    String? codigoBanco,
   }) async {
     try {
       final r = await _dio.post('/caja/movimientos', data: {
@@ -71,6 +73,8 @@ class CajaRemoteDataSource {
         'fecha': fecha,
         if (referencia != null) 'referencia': referencia,
         if (tipoPago != null) 'tipoPago': tipoPago,
+        if (numeroOperacion != null) 'numeroOperacion': numeroOperacion,
+        if (codigoBanco != null) 'codigoBanco': codigoBanco,
       });
       return r.data as Map<String, dynamic>;
     } on DioException catch (e) {

@@ -47,6 +47,8 @@ class MovimientoCaja {
   final String concepto;
   final String? referencia;
   final String? tipoPago;
+  final String? numeroOperacion;
+  final String? codigoBanco;
   final double monto;
   final String fecha;
 
@@ -57,6 +59,8 @@ class MovimientoCaja {
     required this.concepto,
     this.referencia,
     this.tipoPago,
+    this.numeroOperacion,
+    this.codigoBanco,
     required this.monto,
     required this.fecha,
   });
@@ -68,6 +72,8 @@ class MovimientoCaja {
     concepto: j['concepto'] as String,
     referencia: j['referencia'] as String?,
     tipoPago: j['tipoPago'] as String?,
+    numeroOperacion: j['numeroOperacion'] as String?,
+    codigoBanco: j['codigoBanco'] as String?,
     monto: (j['monto'] as num).toDouble(),
     fecha: j['fecha'] as String,
   );

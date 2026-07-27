@@ -1,11 +1,19 @@
 import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
+import { assertNotInUse } from '../../../../shared/infrastructure/supabase/usage-check.util';
 import {
   IAlmacenRepository,
   AlmacenSearchParams,
   SaveAlmacenData,
 } from '../../domain/ports/almacen.repository.port';
 import { Almacen } from '../../domain/entities/almacen.entity';
+
+const USAGE_CHECKS = [
+  { table: 'movimientos_almacen', column: 'codigo_almacen_origen' },
+  { table: 'movimientos_almacen', column: 'codigo_almacen_dest' },
+  { table: 'compras', column: 'codigo_almacen' },
+  { table: 'ventas', column: 'codigo_almacen' },
+] as const;
 
 @Injectable()
 export class SupabaseAlmacenRepository implements IAlmacenRepository {
@@ -75,6 +83,11 @@ export class SupabaseAlmacenRepository implements IAlmacenRepository {
   }
 
   async remove(id: string, codigoEmpresa: string): Promise<void> {
+    const almacen = await this.findById(id, codigoEmpresa);
+    if (almacen) {
+      await assertNotInUse(this.supabase.db, USAGE_CHECKS, codigoEmpresa, { codigo: almacen.codigo });
+    }
+
     const { error } = await this.supabase.db
       .from('almacenes')
       .delete()

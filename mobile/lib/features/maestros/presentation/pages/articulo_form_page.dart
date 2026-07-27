@@ -10,6 +10,7 @@ import '../../data/datasources/maestros_remote_datasource.dart';
 import '../../../tablas/data/datasources/tablas_remote_datasource.dart';
 import '../../../tablas/data/models/tabla_model.dart';
 import '../../../tablas/domain/entities/tabla_base.dart';
+import '../widgets/confirm_delete.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 import '../../../../core/widgets/number_form_field.dart';
 
@@ -177,6 +178,16 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
         }
       },
     );
+  }
+
+  Future<void> _delete() async {
+    if (!widget.isEdit) return;
+    final deleted = await confirmAndDelete(
+      context,
+      itemName: _descCtrl.text,
+      onDelete: () => _repo.remove(widget.articuloId!),
+    );
+    if (deleted && mounted) context.pop(true);
   }
 
   double get _precioVentaBase => double.tryParse(_pVentaBaseCtrl.text) ?? 0;
@@ -458,6 +469,14 @@ class _ArticuloFormPageState extends State<ArticuloFormPage> {
                 ),
               ),
             ]),
+            if (widget.isEdit) ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: _saving ? null : _delete,
+                icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+                label: Text('Eliminar', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              ),
+            ],
             const SizedBox(height: 40),
           ],
         ),

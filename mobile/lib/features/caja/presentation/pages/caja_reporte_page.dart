@@ -160,6 +160,8 @@ class _View extends StatelessWidget {
     DateTime fecha = DateTime.now();
     List<TipoPago> tiposPago = [];
     TipoPago? tipoPagoSeleccionado;
+    List<Banco> bancos = [];
+    Banco? bancoSeleccionado;
     bool _fetched = false;
 
     showDialog(context: ctx, builder: (dctx) => StatefulBuilder(builder: (dctx, setSt) {
@@ -167,6 +169,10 @@ class _View extends StatelessWidget {
         _fetched = true;
         getIt<TablasRemoteDataSource>().list('tipos-pago', activo: true).then((raw) {
           setSt(() => tiposPago = raw.map(TablaModel.tipoPagoFromJson).toList()
+            ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase())));
+        }).catchError((_) {});
+        getIt<TablasRemoteDataSource>().list('bancos', activo: true).then((raw) {
+          setSt(() => bancos = raw.map(TablaModel.bancoFromJson).toList()
             ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase())));
         }).catchError((_) {});
       }
@@ -205,10 +211,18 @@ class _View extends StatelessWidget {
               onChanged: (v) => setSt(() {
                 tipoPagoSeleccionado = v;
                 nroOpCtrl.clear();
+                bancoSeleccionado = null;
               }),
             ),
           ],
           if (tipoPagoSeleccionado?.requiereOperacion == true) ...[
+            const SizedBox(height: 8),
+            DropdownButtonFormField<Banco>(
+              initialValue: bancoSeleccionado,
+              decoration: const InputDecoration(labelText: 'Banco'),
+              items: bancos.map((b) => DropdownMenuItem(value: b, child: Text(b.descripcion))).toList(),
+              onChanged: (v) => setSt(() => bancoSeleccionado = v),
+            ),
             const SizedBox(height: 8),
             TextField(controller: nroOpCtrl, decoration: const InputDecoration(labelText: 'N° Operación')),
           ],
@@ -237,6 +251,8 @@ class _View extends StatelessWidget {
                 fecha: fecha.toIso8601String().substring(0, 10),
                 referencia: refCtrl.text.isNotEmpty ? refCtrl.text.trim() : null,
                 tipoPago: tipoPagoSeleccionado?.descripcion,
+                numeroOperacion: nroOpCtrl.text.isNotEmpty ? nroOpCtrl.text.trim() : null,
+                codigoBanco: bancoSeleccionado?.codigo,
               ));
             },
             child: const Text('Guardar'),
