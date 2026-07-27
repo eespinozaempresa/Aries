@@ -168,7 +168,7 @@ class _MovimientoFormState extends State<_MovimientoForm> {
 
     // Pedir cantidad y precio
     final qtyCtrl   = TextEditingController(text: '1');
-    final priceCtrl = TextEditingController(text: art.precioVenta.toStringAsFixed(4) ?? '0.0000');
+    final priceCtrl = TextEditingController(text: art.precioCompraBase.toStringAsFixed(4));
     String? stockError;
 
     final confirmed = await showDialog<bool>(
