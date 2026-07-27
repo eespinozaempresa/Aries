@@ -221,6 +221,12 @@ class _FormState extends State<_Form> {
           FilledButton(
             onPressed: () async {
               final cantidad = double.tryParse(qCtrl.text) ?? 0;
+              if (cantidad <= 0) {
+                setLocalState(() {
+                  stockError = 'La cantidad debe ser mayor que 0';
+                });
+                return;
+              }
               if (_controlStockSalidas == 'SI' && _almacen != null) {
                 final yaEnCola = _lineas
                     .where((l) => l.codigo == art.codigo)

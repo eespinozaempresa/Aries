@@ -192,6 +192,12 @@ class _MovimientoFormState extends State<_MovimientoForm> {
             FilledButton(
               onPressed: () async {
                 final cantidad = double.tryParse(qtyCtrl.text) ?? 0;
+                if (cantidad <= 0) {
+                  setLocalState(() {
+                    stockError = 'La cantidad debe ser mayor que 0';
+                  });
+                  return;
+                }
                 if (_controlStockSalidas == 'SI' && _esOperacionSalida && _almacenOrigen != null) {
                   final yaEnCola = _lineas
                       .where((l) => l.codigoArticulo == art.codigo)

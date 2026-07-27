@@ -136,17 +136,36 @@ class _FormState extends State<_Form> {
 
     final qCtrl = TextEditingController(text: '1');
     final pCtrl = TextEditingController(text: art.precioCompraBase.toStringAsFixed(4) ?? '0.0000');
-    final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
-      title: Text(art.descripcion),
-      content: Column(mainAxisSize: MainAxisSize.min, children: [
-        NumberFormField(controller: qCtrl, decoration: const InputDecoration(labelText: 'Cantidad')),
-        const SizedBox(height: 8),
-        NumberFormField(controller: pCtrl, decoration: const InputDecoration(labelText: 'Precio unitario')),
-      ]),
-      actions: [
-        OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-        FilledButton(onPressed: () => Navigator.pop(context, true),  child: const Text('Agregar')),
-      ],
+    String? qtyError;
+    final ok = await showDialog<bool>(context: context, builder: (_) => StatefulBuilder(
+      builder: (context, setLocalState) => AlertDialog(
+        title: Text(art.descripcion),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          NumberFormField(controller: qCtrl, decoration: const InputDecoration(labelText: 'Cantidad')),
+          const SizedBox(height: 8),
+          NumberFormField(controller: pCtrl, decoration: const InputDecoration(labelText: 'Precio unitario')),
+          if (qtyError != null) ...[
+            const SizedBox(height: 8),
+            Text(qtyError!, style: const TextStyle(color: Colors.red)),
+          ],
+        ]),
+        actions: [
+          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () {
+              final cantidad = double.tryParse(qCtrl.text) ?? 0;
+              if (cantidad <= 0) {
+                setLocalState(() {
+                  qtyError = 'La cantidad debe ser mayor que 0';
+                });
+                return;
+              }
+              Navigator.pop(context, true);
+            },
+            child: const Text('Agregar'),
+          ),
+        ],
+      ),
     ));
     if (ok == true) {
       setState(() => _lineas.add(_LineaEntry(
