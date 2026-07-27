@@ -19,23 +19,28 @@ abstract class MaestrosRemoteDataSource {
   Future<PageResult<ArticuloModel>> searchArticulos({String? q, bool? activo, int page = 1, int limit = 20});
   Future<ArticuloModel> getArticulo(String id);
   Future<ArticuloModel> saveArticulo(Map<String, dynamic> data, {String? id});
+  Future<void> deleteArticulo(String id);
 
   Future<PageResult<ClienteModel>> searchClientes({String? q, bool? activo, int page = 1, int limit = 20});
   Future<ClienteModel> getCliente(String id);
   Future<ClienteModel> saveCliente(Map<String, dynamic> data, {String? id});
+  Future<void> deleteCliente(String id);
 
   Future<PageResult<ProveedorModel>> searchProveedores({String? q, bool? activo, int page = 1, int limit = 20});
   Future<ProveedorModel> getProveedor(String id);
   Future<ProveedorModel> saveProveedor(Map<String, dynamic> data, {String? id});
+  Future<void> deleteProveedor(String id);
 
   Future<List<AlmacenModel>> findAllAlmacenes({String? q, bool? activo});
   Future<AlmacenModel> getAlmacen(String id);
   Future<AlmacenModel> saveAlmacen(Map<String, dynamic> data, {String? id});
+  Future<void> deleteAlmacen(String id);
 
   Future<List<FormulaModel>> findAllFormulas({String? q, bool? activo});
   Future<FormulaModel> getFormula(String id);
   Future<FormulaModel> saveFormula(Map<String, dynamic> data, {String? id});
   Future<FormulaModel> toggleFormula(String id);
+  Future<void> deleteFormula(String id);
 
   Future<List<ListaPrecio>> listPrecios(String articuloId);
   Future<ListaPrecio> saveListaPrecio(Map<String, dynamic> data, {String? id});
@@ -82,6 +87,13 @@ class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 
+  @override
+  Future<void> deleteArticulo(String id) async {
+    try {
+      await _dio.delete('/maestros/articulos/$id');
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
   // ── Clientes ───────────────────────────────────────────────────────────────
 
   @override
@@ -114,6 +126,13 @@ class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
           ? await _dio.put('/maestros/clientes/$id', data: data)
           : await _dio.post('/maestros/clientes', data: data);
       return ClienteModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<void> deleteCliente(String id) async {
+    try {
+      await _dio.delete('/maestros/clientes/$id');
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 
@@ -152,6 +171,13 @@ class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 
+  @override
+  Future<void> deleteProveedor(String id) async {
+    try {
+      await _dio.delete('/maestros/proveedores/$id');
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
   // ── Almacenes ──────────────────────────────────────────────────────────────
 
   @override
@@ -182,6 +208,13 @@ class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
           ? await _dio.put('/maestros/almacenes/$id', data: data)
           : await _dio.post('/maestros/almacenes', data: data);
       return AlmacenModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<void> deleteAlmacen(String id) async {
+    try {
+      await _dio.delete('/maestros/almacenes/$id');
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 
@@ -223,6 +256,13 @@ class MaestrosRemoteDataSourceImpl implements MaestrosRemoteDataSource {
     try {
       final res = await _dio.patch('/maestros/formulas/$id/toggle');
       return FormulaModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
+  @override
+  Future<void> deleteFormula(String id) async {
+    try {
+      await _dio.delete('/maestros/formulas/$id');
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 

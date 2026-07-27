@@ -24,4 +24,12 @@ class ClienteRepositoryImpl implements ClienteRepository {
       return Right(await _remote.saveCliente(data, id: id));
     } on ApiException catch (e) { return Left(e); }
   }
+
+  @override
+  Future<Either<ApiException, void>> remove(String id) async {
+    try {
+      await _remote.deleteCliente(id);
+      return const Right(null);
+    } on ApiException catch (e) { return Left(e); }
+  }
 }

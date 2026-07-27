@@ -7,6 +7,7 @@ import '../../domain/repositories/almacen_repository.dart';
 import '../bloc/almacenes_bloc.dart';
 import '../bloc/maestro_list_event.dart';
 import '../bloc/maestro_list_state.dart';
+import '../widgets/confirm_delete.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 
 class AlmacenesListPage extends StatelessWidget {
@@ -65,6 +66,18 @@ class _AlmacenesViewState extends State<_AlmacenesView> {
                   title: Text(a.descripcion, style: const TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text('${a.tipo}${a.ubicacion != null ? '  |  ${a.ubicacion}' : ''}',
                       style: const TextStyle(fontSize: 12)),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: 'Eliminar',
+                    onPressed: () async {
+                      final deleted = await confirmAndDelete(
+                        ctx,
+                        itemName: a.descripcion,
+                        onDelete: () => getIt<AlmacenRepository>().remove(a.id),
+                      );
+                      if (deleted && ctx.mounted) ctx.read<AlmacenesBloc>().add(const MaestroListRefresh());
+                    },
+                  ),
                   onTap: () async {
                     final saved = await ctx.push<bool>('/maestros/almacenes/${a.id}');
                     if (saved == true && ctx.mounted) ctx.read<AlmacenesBloc>().add(const MaestroListRefresh());

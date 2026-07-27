@@ -30,4 +30,6 @@ export abstract class IFormulaRepository {
   abstract create(codigoEmpresa: string, data: SaveFormulaData): Promise<Formula>;
   abstract update(id: string, codigoEmpresa: string, data: SaveFormulaData): Promise<Formula>;
   abstract toggleActivo(codigoEmpresa: string, id: string): Promise<Formula>;
+  /** Solo permite eliminar fórmulas inactivas; sincroniza articulos.con_formula = false. */
+  abstract remove(id: string, codigoEmpresa: string): Promise<void>;
 }

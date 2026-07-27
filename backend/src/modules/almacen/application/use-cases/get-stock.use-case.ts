@@ -8,11 +8,11 @@ export class GetStockUseCase {
 
   execute(
     codigoEmpresa: string,
-    codigoAlmacen?: string,
-    codigoArticulo?: string,
+    codigosAlmacen?: string[],
+    codigosArticulo?: string[],
     q?: string,
     soloConStock?: boolean,
   ): Promise<StockItem[]> {
-    return this.repo.query({ codigoEmpresa, codigoAlmacen, codigoArticulo, q, soloConStock });
+    return this.repo.query({ codigoEmpresa, codigosAlmacen, codigosArticulo, q, soloConStock });
   }
 }

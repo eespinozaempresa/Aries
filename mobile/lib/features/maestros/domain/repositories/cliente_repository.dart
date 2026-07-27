@@ -13,4 +13,5 @@ class ClientePage {
 abstract class ClienteRepository {
   Future<Either<ApiException, ClientePage>> search({String? q, bool? activo, int page = 1, int limit = 20});
   Future<Either<ApiException, Cliente>> save(Map<String, dynamic> data, {String? id});
+  Future<Either<ApiException, void>> remove(String id);
 }

@@ -24,4 +24,12 @@ class ArticuloRepositoryImpl implements ArticuloRepository {
       return Right(await _remote.saveArticulo(data, id: id));
     } on ApiException catch (e) { return Left(e); }
   }
+
+  @override
+  Future<Either<ApiException, void>> remove(String id) async {
+    try {
+      await _remote.deleteArticulo(id);
+      return const Right(null);
+    } on ApiException catch (e) { return Left(e); }
+  }
 }

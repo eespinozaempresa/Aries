@@ -31,4 +31,12 @@ class ProveedorRepositoryImpl implements ProveedorRepository {
       return Right(await _remote.saveProveedor(data, id: id));
     } on ApiException catch (e) { return Left(e); }
   }
+
+  @override
+  Future<Either<ApiException, void>> remove(String id) async {
+    try {
+      await _remote.deleteProveedor(id);
+      return const Right(null);
+    } on ApiException catch (e) { return Left(e); }
+  }
 }

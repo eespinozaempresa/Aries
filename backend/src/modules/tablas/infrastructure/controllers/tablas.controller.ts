@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Patch, Body, Param, Query,
+  Controller, Get, Post, Put, Patch, Delete, Body, Param, Query,
   UseGuards, Request, NotFoundException,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
@@ -7,7 +7,7 @@ import {
   ILineaRepository, IMedidaRepository, IBancoRepository,
   IMarcaRepository, IDocumentoRepository, ITipoListaRepository, ITipoPagoRepository,
 } from '../../domain/ports/tabla.repository.port';
-import { ListTablaUseCase, SaveTablaUseCase } from '../../application/use-cases/tabla.use-cases';
+import { ListTablaUseCase, SaveTablaUseCase, RemoveTablaUseCase } from '../../application/use-cases/tabla.use-cases';
 import {
   CreateTablaDto, UpdateTablaDto,
   CreateDocumentoDto, UpdateDocumentoDto,
@@ -89,6 +89,10 @@ export class LineasController {
     if (!found) throw new NotFoundException();
     return new SaveTablaUseCase<Linea>(this.repo).execute(req.user.empresa, { activo: !found.activo }, id);
   }
+  @Delete(':id')
+  remove(@Param('id') id: string, @Request() req: any) {
+    return new RemoveTablaUseCase<Linea>(this.repo).execute(req.user.empresa, id);
+  }
 }
 
 @UseGuards(AuthGuard)
@@ -114,6 +118,10 @@ export class MedidasController {
     const found = all.find((i) => i.id === id);
     if (!found) throw new NotFoundException();
     return new SaveTablaUseCase<Medida>(this.repo).execute(req.user.empresa, { activo: !found.activo }, id);
+  }
+  @Delete(':id')
+  remove(@Param('id') id: string, @Request() req: any) {
+    return new RemoveTablaUseCase<Medida>(this.repo).execute(req.user.empresa, id);
   }
 }
 
@@ -141,6 +149,10 @@ export class BancosController {
     if (!found) throw new NotFoundException();
     return new SaveTablaUseCase<Banco>(this.repo).execute(req.user.empresa, { activo: !found.activo }, id);
   }
+  @Delete(':id')
+  remove(@Param('id') id: string, @Request() req: any) {
+    return new RemoveTablaUseCase<Banco>(this.repo).execute(req.user.empresa, id);
+  }
 }
 
 @UseGuards(AuthGuard)
@@ -166,6 +178,10 @@ export class MarcasController {
     const found = all.find((i) => i.id === id);
     if (!found) throw new NotFoundException();
     return new SaveTablaUseCase<Marca>(this.repo).execute(req.user.empresa, { activo: !found.activo }, id);
+  }
+  @Delete(':id')
+  remove(@Param('id') id: string, @Request() req: any) {
+    return new RemoveTablaUseCase<Marca>(this.repo).execute(req.user.empresa, id);
   }
 }
 
@@ -193,6 +209,10 @@ export class TiposListaController {
     if (!found) throw new NotFoundException();
     return new SaveTablaUseCase<TipoLista>(this.repo).execute(req.user.empresa, { activo: !found.activo }, id);
   }
+  @Delete(':id')
+  remove(@Param('id') id: string, @Request() req: any) {
+    return new RemoveTablaUseCase<TipoLista>(this.repo).execute(req.user.empresa, id);
+  }
 }
 
 @UseGuards(AuthGuard)
@@ -218,6 +238,10 @@ export class TiposPagoController {
     const found = all.find((i) => i.id === id);
     if (!found) throw new NotFoundException();
     return new SaveTablaUseCase<TipoPago>(this.repo).execute(req.user.empresa, { activo: !found.activo }, id);
+  }
+  @Delete(':id')
+  remove(@Param('id') id: string, @Request() req: any) {
+    return new RemoveTablaUseCase<TipoPago>(this.repo).execute(req.user.empresa, id);
   }
 }
 
@@ -252,5 +276,9 @@ export class DocumentosController {
     const found = all.find((i) => i.id === id);
     if (!found) throw new NotFoundException();
     return new SaveTablaUseCase<Documento>(this.repo).execute(req.user.empresa, { activo: !found.activo }, id);
+  }
+  @Delete(':id')
+  remove(@Param('id') id: string, @Request() req: any) {
+    return new RemoveTablaUseCase<Documento>(this.repo).execute(req.user.empresa, id);
   }
 }

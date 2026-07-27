@@ -32,4 +32,5 @@ export abstract class IClienteRepository {
   abstract findById(id: string, codigoEmpresa: string): Promise<Cliente | null>;
   abstract create(codigoEmpresa: string, data: SaveClienteData): Promise<Cliente>;
   abstract update(id: string, codigoEmpresa: string, data: Partial<SaveClienteData>): Promise<Cliente>;
+  abstract remove(id: string, codigoEmpresa: string): Promise<void>;
 }

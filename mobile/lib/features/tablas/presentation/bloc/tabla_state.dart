@@ -17,3 +17,4 @@ class TablaError    extends TablaState {
   final String message;
   TablaError(this.message);
 }
+class TablaDeleted  extends TablaState {}

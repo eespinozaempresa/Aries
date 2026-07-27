@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dartz/dartz.dart' hide State;
 import '../../../../core/di/injection.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../domain/entities/cliente.dart';
 import '../../domain/entities/proveedor.dart';
 import '../../domain/repositories/cliente_repository.dart';
@@ -10,6 +12,7 @@ import '../bloc/clientes_bloc.dart';
 import '../bloc/proveedores_bloc.dart';
 import '../bloc/maestro_list_event.dart';
 import '../bloc/maestro_list_state.dart';
+import '../widgets/confirm_delete.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 
 // ── Clientes ──────────────────────────────────────────────────────────────────
@@ -118,6 +121,7 @@ class _PersonaListViewState extends State<_PersonaListView> {
           subtitle: (c) => 'RUC/DNI: ${c.rucDni ?? '-'}  |  ${c.telefono ?? ''}',
           avatarText: (c) => c.codigo.substring(0, c.codigo.length.clamp(0, 2)),
           isActive: (c) => c.activo,
+          onRemove: (c) => getIt<ClienteRepository>().remove(c.id),
         ),
       );
     }
@@ -127,6 +131,7 @@ class _PersonaListViewState extends State<_PersonaListView> {
         subtitle: (p) => 'RUC/DNI: ${p.rucDni ?? '-'}  |  ${p.telefono ?? ''}',
         avatarText: (p) => p.codigo.substring(0, p.codigo.length.clamp(0, 2)),
         isActive: (p) => p.activo,
+        onRemove: (p) => getIt<ProveedorRepository>().remove(p.id),
       ),
     );
   }
@@ -139,6 +144,7 @@ class _PersonaListViewState extends State<_PersonaListView> {
     required String Function(T) subtitle,
     required String Function(T) avatarText,
     required bool Function(T) isActive,
+    required Future<Either<ApiException, void>> Function(T) onRemove,
   }) {
     if (state is MaestroListInitial<T> || (state is MaestroListLoading<T> && state.previousItems.isEmpty)) {
       return const Center(child: CircularProgressIndicator());
@@ -167,6 +173,18 @@ class _PersonaListViewState extends State<_PersonaListView> {
             ),
             title: Text(title(item), style: const TextStyle(fontWeight: FontWeight.w500)),
             subtitle: Text(subtitle(item), style: const TextStyle(fontSize: 12)),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete_outline),
+              tooltip: 'Eliminar',
+              onPressed: () async {
+                final deleted = await confirmAndDelete(
+                  context,
+                  itemName: title(item),
+                  onDelete: () => onRemove(item),
+                );
+                if (deleted && context.mounted) _refresh(_ctrl.text);
+              },
+            ),
             onTap: () async {
               final saved = await context.push<bool>('${widget.editRoute}/${_idOf(item)}');
               if (saved == true && context.mounted) _refresh(_ctrl.text);

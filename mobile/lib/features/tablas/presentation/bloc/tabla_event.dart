@@ -16,3 +16,8 @@ class TablaToggle extends TablaEvent {
   final String id;
   TablaToggle(this.id);
 }
+
+class TablaDelete extends TablaEvent {
+  final String id;
+  TablaDelete(this.id);
+}

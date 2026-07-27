@@ -34,8 +34,8 @@ abstract class MovimientoRepository {
   Future<Either<ApiException, void>> eliminar(String id);
 
   Future<Either<ApiException, List<KardexItem>>> getKardex({
-    String? codigoAlmacen,
-    String? codigoArticulo,
+    List<String>? codigosAlmacen,
+    List<String>? codigosArticulo,
     String? desde,
     String? hasta,
   });
@@ -43,8 +43,8 @@ abstract class MovimientoRepository {
   Future<Either<ApiException, Map<String, dynamic>>> recalcularKardex();
 
   Future<Either<ApiException, List<StockItem>>> getStock({
-    String? codigoAlmacen,
-    String? codigoArticulo,
+    List<String>? codigosAlmacen,
+    List<String>? codigosArticulo,
     String? q,
     bool soloConStock = false,
   });

@@ -13,4 +13,5 @@ class ArticuloPage {
 abstract class ArticuloRepository {
   Future<Either<ApiException, ArticuloPage>> search({String? q, bool? activo, int page = 1, int limit = 20});
   Future<Either<ApiException, Articulo>> save(Map<String, dynamic> data, {String? id});
+  Future<Either<ApiException, void>> remove(String id);
 }

@@ -16,15 +16,15 @@ export class KardexController {
   @Get()
   get(
     @Request() req: any,
-    @Query('almacen') codigoAlmacen?: string,
-    @Query('articulo') codigoArticulo?: string,
+    @Query('almacen') almacen?: string,
+    @Query('articulo') articulo?: string,
     @Query('desde') desde?: string,
     @Query('hasta') hasta?: string,
   ) {
     return this.getKardexUC.execute(
       req.user.empresa,
-      codigoAlmacen || undefined,
-      codigoArticulo || undefined,
+      almacen ? almacen.split(',') : undefined,
+      articulo ? articulo.split(',') : undefined,
       desde,
       hasta,
     );

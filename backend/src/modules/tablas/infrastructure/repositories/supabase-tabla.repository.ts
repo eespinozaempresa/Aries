@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, ConflictException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import { TablaBase, Documento, TipoLista, TipoPago } from '../../domain/entities/tabla-base.entity';
 import { ITablaRepository, TablaFilter } from '../../domain/ports/tabla.repository.port';
@@ -43,9 +43,61 @@ function makeRepo<T extends TablaBase>(tableName: string, fromRow: (r: Record<st
       }
       return fromRow(inserted as Record<string, unknown>);
     }
+
+    async remove(codigoEmpresa: string, id: string): Promise<void> {
+      // "documentos" y "tipo_pago" no tienen FK real hacia las tablas que los
+      // usan (el código se referencia como texto suelto en varios módulos),
+      // así que se valida explícitamente contra las operaciones conocidas.
+      const usageChecks = USAGE_CHECKS[tableName];
+      if (usageChecks) {
+        const { data: row, error: findError } = await this.supabase.db
+          .from(tableName).select('codigo')
+          .eq('id', id).eq('codigo_empresa', codigoEmpresa).maybeSingle();
+        if (findError) throw new InternalServerErrorException(findError.message);
+        if (!row) throw new NotFoundException();
+        const codigo = (row as { codigo: string }).codigo;
+
+        for (const { table, column } of usageChecks) {
+          const { count, error } = await this.supabase.db
+            .from(table)
+            .select('id', { count: 'exact', head: true })
+            .eq('codigo_empresa', codigoEmpresa)
+            .eq(column, codigo);
+          if (error) throw new InternalServerErrorException(error.message);
+          if ((count ?? 0) > 0) {
+            throw new ConflictException('No se puede eliminar: tiene operaciones asociadas');
+          }
+        }
+      }
+
+      const { error } = await this.supabase.db
+        .from(tableName).delete().eq('id', id).eq('codigo_empresa', codigoEmpresa);
+      if (error) {
+        if (error.code === '23503') throw new ConflictException('No se puede eliminar: tiene operaciones asociadas');
+        throw new InternalServerErrorException(error.message);
+      }
+    }
   }
   return SupabaseTablaRepo;
 }
+
+// "documentos" y "tipo_pago" se referencian como código suelto (sin FK real)
+// en varias tablas transaccionales; se valida su uso antes de eliminar.
+const USAGE_CHECKS: Record<string, { table: string; column: string }[]> = {
+  documentos: [
+    { table: 'movimientos_almacen', column: 'codigo_documento' },
+    { table: 'compras', column: 'codigo_documento' },
+    { table: 'ventas', column: 'codigo_documento' },
+    { table: 'cuentas_cobrar', column: 'codigo_documento' },
+    { table: 'cuentas_pagar', column: 'codigo_documento' },
+    { table: 'caja', column: 'codigo_documento' },
+  ],
+  tipo_pago: [
+    { table: 'cobros', column: 'tipo_pago' },
+    { table: 'pagos', column: 'tipo_pago' },
+    { table: 'movimientos_caja', column: 'tipo_pago' },
+  ],
+};
 
 function toRow(d: Record<string, unknown>): Record<string, unknown> {
   const map: Record<string, string> = {

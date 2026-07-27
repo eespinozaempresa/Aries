@@ -10,15 +10,15 @@ export class StockController {
   @Get()
   get(
     @Request() req: any,
-    @Query('almacen') codigoAlmacen?: string,
-    @Query('articulo') codigoArticulo?: string,
+    @Query('almacen') almacen?: string,
+    @Query('articulo') articulo?: string,
     @Query('q') q?: string,
     @Query('soloConStock') soloConStock?: string,
   ) {
     return this.getStockUC.execute(
       req.user.empresa,
-      codigoAlmacen,
-      codigoArticulo,
+      almacen ? almacen.split(',') : undefined,
+      articulo ? articulo.split(',') : undefined,
       q,
       soloConStock === 'true',
     );

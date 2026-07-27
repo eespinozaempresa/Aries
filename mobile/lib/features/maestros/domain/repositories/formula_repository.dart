@@ -7,4 +7,5 @@ abstract class FormulaRepository {
   Future<Either<ApiException, Formula>> getById(String id);
   Future<Either<ApiException, Formula>> save(Map<String, dynamic> data, {String? id});
   Future<Either<ApiException, Formula>> toggleActivo(String id);
+  Future<Either<ApiException, void>> remove(String id);
 }

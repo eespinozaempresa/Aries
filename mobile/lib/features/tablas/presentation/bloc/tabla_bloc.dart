@@ -24,6 +24,7 @@ class TablaBloc<T extends TablaBase> extends Bloc<TablaEvent, TablaState> {
     on<TablaLoad>(_onLoad);
     on<TablaSave>(_onSave);
     on<TablaToggle>(_onToggle);
+    on<TablaDelete>(_onDelete);
   }
 
   Future<void> _onLoad(TablaLoad event, Emitter<TablaState> emit) async {
@@ -47,6 +48,14 @@ class TablaBloc<T extends TablaBase> extends Bloc<TablaEvent, TablaState> {
     try {
       final raw = await _ds.toggle(_path, event.id);
       emit(TablaSaved<T>(_fromJson(raw)));
+    } on ApiException catch (e) { emit(TablaError(e.message)); }
+  }
+
+  Future<void> _onDelete(TablaDelete event, Emitter<TablaState> emit) async {
+    emit(TablaSaving());
+    try {
+      await _ds.delete(_path, event.id);
+      emit(TablaDeleted());
     } on ApiException catch (e) { emit(TablaError(e.message)); }
   }
 }

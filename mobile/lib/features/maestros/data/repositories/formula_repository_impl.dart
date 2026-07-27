@@ -35,4 +35,12 @@ class FormulaRepositoryImpl implements FormulaRepository {
       return Right(await _remote.toggleFormula(id));
     } on ApiException catch (e) { return Left(e); }
   }
+
+  @override
+  Future<Either<ApiException, void>> remove(String id) async {
+    try {
+      await _remote.deleteFormula(id);
+      return const Right(null);
+    } on ApiException catch (e) { return Left(e); }
+  }
 }

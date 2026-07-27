@@ -91,6 +91,11 @@ class _TablaListPageState<T extends TablaBase> extends State<TablaListPage<T>> {
                       const SnackBar(content: Text('Guardado'), backgroundColor: Colors.green));
                     widget.bloc.add(TablaLoad(q: _searchCtrl.text.isEmpty ? null : _searchCtrl.text));
                   }
+                  if (state is TablaDeleted) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      const SnackBar(content: Text('Eliminado'), backgroundColor: Colors.green));
+                    widget.bloc.add(TablaLoad(q: _searchCtrl.text.isEmpty ? null : _searchCtrl.text));
+                  }
                   if (state is TablaError) {
                     ScaffoldMessenger.of(ctx).showSnackBar(
                       SnackBar(content: Text(state.message), backgroundColor: Colors.red));
@@ -116,9 +121,32 @@ class _TablaListPageState<T extends TablaBase> extends State<TablaListPage<T>> {
                         ),
                         title: Text(t.descripcion),
                         subtitle: Text(t.subtitle),
-                        trailing: Switch(
-                          value: t.activo,
-                          onChanged: (_) => widget.bloc.add(TablaToggle(t.id)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Switch(
+                              value: t.activo,
+                              onChanged: (_) => widget.bloc.add(TablaToggle(t.id)),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              tooltip: 'Eliminar',
+                              onPressed: () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: ctx,
+                                  builder: (dctx) => AlertDialog(
+                                    title: const Text('Eliminar'),
+                                    content: Text('¿Eliminar "${t.descripcion}"? Esta acción no se puede deshacer.'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.of(dctx).pop(false), child: const Text('Cancelar')),
+                                      FilledButton(onPressed: () => Navigator.of(dctx).pop(true), child: const Text('Eliminar')),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed == true) widget.bloc.add(TablaDelete(t.id));
+                              },
+                            ),
+                          ],
                         ),
                         onTap: () => _openForm(ctx, t),
                       );

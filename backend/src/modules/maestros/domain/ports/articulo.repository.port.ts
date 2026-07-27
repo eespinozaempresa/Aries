@@ -42,4 +42,5 @@ export abstract class IArticuloRepository {
   abstract findByCodigo(codigo: string, codigoEmpresa: string): Promise<Articulo | null>;
   abstract create(codigoEmpresa: string, data: SaveArticuloData): Promise<Articulo>;
   abstract update(id: string, codigoEmpresa: string, data: Partial<SaveArticuloData>): Promise<Articulo>;
+  abstract remove(id: string, codigoEmpresa: string): Promise<void>;
 }

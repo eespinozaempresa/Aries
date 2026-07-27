@@ -44,6 +44,9 @@ class _Linea {
   double get importe => base * (1 - descPct / 100);
 }
 
+String _fmtCantidad(double n) =>
+    n == n.roundToDouble() ? n.toStringAsFixed(0) : n.toStringAsFixed(2);
+
 class _Form extends StatefulWidget {
   const _Form();
   @override
@@ -239,18 +242,21 @@ class _FormState extends State<_Form> {
                     .where((l) => l.codigo == art.codigo)
                     .fold<double>(0, (s, l) => s + l.cantidad);
                 final res = await getIt<MovimientoRepository>().getStock(
-                  codigoAlmacen: _almacen,
-                  codigoArticulo: art.codigo,
+                  codigosAlmacen: [_almacen!],
+                  codigosArticulo: [art.codigo],
                 );
                 final stockActual = res.fold(
                   (_) => 0.0,
                   (list) => list.isNotEmpty ? list.first.stockActual : 0.0,
                 );
-                if (stockActual - yaEnCola < cantidad) {
+                final disponible = stockActual - yaEnCola;
+                if (disponible < cantidad) {
+                  final faltante = cantidad - disponible;
                   setLocalState(() {
-                    stockError = 'Articulo no tiene stock necesario\n'
-                        'No se puede realizar esta operación\n'
-                        'Realice un Ingreso/Compra para tener stock';
+                    stockError = 'Stock disponible: ${_fmtCantidad(disponible)}. '
+                        'Cantidad solicitada: ${_fmtCantidad(cantidad)}.\n'
+                        'Faltan ${_fmtCantidad(faltante)} unidad(es): realice un '
+                        'Ingreso/Compra para completar esta operación.';
                   });
                   return;
                 }

@@ -18,10 +18,8 @@ class StockPage extends StatefulWidget {
 }
 
 class _StockPageState extends State<StockPage> {
-  String? _almacen;
-  String? _almacenNombre;
-  String? _articulo;
-  String? _articuloNombre;
+  List<maestro_alm_ent.Almacen> _almacenes = [];
+  List<Articulo> _articulos = [];
   bool _soloConStock = true;
 
   List<StockItem>? _items;
@@ -30,9 +28,9 @@ class _StockPageState extends State<StockPage> {
 
   Future<void> _pickAlmacen() async {
     final repo = getIt<maestro_alm.AlmacenRepository>();
-    final result = await MaestroPicker.show<maestro_alm_ent.Almacen>(
+    final result = await MaestroPicker.showMulti<maestro_alm_ent.Almacen>(
       context,
-      title: 'Almacén',
+      title: 'Almacenes',
       onSearch: (q) async {
         final res = await repo.findAll();
         return res.fold((_) => [], (l) => l.where((a) =>
@@ -40,25 +38,29 @@ class _StockPageState extends State<StockPage> {
           a.codigo.toLowerCase().contains(q.toLowerCase())).toList());
       },
       itemTitle: (a) => a.descripcion,
+      itemId: (a) => a.codigo,
+      initialSelected: _almacenes,
     );
     if (result != null) {
-      setState(() { _almacen = result.codigo; _almacenNombre = result.descripcion; });
+      setState(() => _almacenes = result);
     }
   }
 
   Future<void> _pickArticulo() async {
     final repo = getIt<ArticuloRepository>();
-    final result = await MaestroPicker.show<Articulo>(
+    final result = await MaestroPicker.showMulti<Articulo>(
       context,
-      title: 'Artículo',
+      title: 'Artículos',
       onSearch: (q) async {
         final res = await repo.search(q: q, page: 1);
         return res.fold((_) => [], (page) => page.data);
       },
       itemTitle: (a) => a.descripcion,
+      itemId: (a) => a.codigo,
+      initialSelected: _articulos,
     );
     if (result != null) {
-      setState(() { _articulo = result.codigo; _articuloNombre = result.descripcion; });
+      setState(() => _articulos = result);
     }
   }
 
@@ -66,8 +68,8 @@ class _StockPageState extends State<StockPage> {
     setState(() { _loading = true; _error = null; });
     final repo = getIt<MovimientoRepository>();
     final result = await repo.getStock(
-      codigoAlmacen: _almacen,
-      codigoArticulo: _articulo,
+      codigosAlmacen: _almacenes.map((a) => a.codigo).toList(),
+      codigosArticulo: _articulos.map((a) => a.codigo).toList(),
       soloConStock: _soloConStock,
     );
     result.fold(
@@ -78,8 +80,18 @@ class _StockPageState extends State<StockPage> {
 
   @override
   Widget build(BuildContext context) {
-    final showAlmacenCol = _almacen == null;
-    final showArticuloCol = _articulo == null;
+    final showAlmacenCol = _almacenes.isEmpty;
+    final showArticuloCol = _articulos.isEmpty;
+    final almacenLabel = _almacenes.isEmpty
+        ? 'Todos los almacenes'
+        : _almacenes.length == 1
+            ? _almacenes.first.descripcion
+            : '${_almacenes.length} almacenes seleccionados';
+    final articuloLabel = _articulos.isEmpty
+        ? 'Todos los artículos'
+        : _articulos.length == 1
+            ? _articulos.first.descripcion
+            : '${_articulos.length} artículos seleccionados';
 
     return Scaffold(
       appBar: AriesAppBar(
@@ -91,7 +103,7 @@ class _StockPageState extends State<StockPage> {
               tooltip: 'Exportar',
               onPressed: () => ExportService.showExportDialog(
                 context: context,
-                title: 'Stock${_articuloNombre != null ? " — $_articuloNombre" : ""}',
+                title: 'Stock${_articulos.length == 1 ? " — ${_articulos.first.descripcion}" : ""}',
                 columns: [
                   if (showAlmacenCol) 'Almacén',
                   if (showArticuloCol) 'Artículo',
@@ -103,7 +115,7 @@ class _StockPageState extends State<StockPage> {
                   s.stockActual.toStringAsFixed(2),
                   s.costoPromedio.toStringAsFixed(4),
                 ]).toList(),
-                subtitle: _almacenNombre != null ? 'Almacén: $_almacenNombre' : null,
+                subtitle: _almacenes.length == 1 ? 'Almacén: ${_almacenes.first.descripcion}' : null,
               ),
             ),
         ],
@@ -121,19 +133,19 @@ class _StockPageState extends State<StockPage> {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.warehouse, size: 18),
                       label: Text(
-                        _almacenNombre ?? 'Todos los almacenes',
+                        almacenLabel,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: _almacen == null ? Colors.grey : null),
+                        style: TextStyle(color: _almacenes.isEmpty ? Colors.grey : null),
                       ),
                       onPressed: _pickAlmacen,
                     ),
                   ),
-                  if (_almacen != null) ...[
+                  if (_almacenes.isNotEmpty) ...[
                     const SizedBox(width: 4),
                     IconButton(
                       icon: const Icon(Icons.close, size: 18),
                       tooltip: 'Todos los almacenes',
-                      onPressed: () => setState(() { _almacen = null; _almacenNombre = null; }),
+                      onPressed: () => setState(() => _almacenes = []),
                     ),
                   ],
                 ]),
@@ -144,19 +156,19 @@ class _StockPageState extends State<StockPage> {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.inventory_2, size: 18),
                       label: Text(
-                        _articuloNombre ?? 'Todos los artículos',
+                        articuloLabel,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: _articulo == null ? Colors.grey : null),
+                        style: TextStyle(color: _articulos.isEmpty ? Colors.grey : null),
                       ),
                       onPressed: _pickArticulo,
                     ),
                   ),
-                  if (_articulo != null) ...[
+                  if (_articulos.isNotEmpty) ...[
                     const SizedBox(width: 4),
                     IconButton(
                       icon: const Icon(Icons.close, size: 18),
                       tooltip: 'Todos los artículos',
-                      onPressed: () => setState(() { _articulo = null; _articuloNombre = null; }),
+                      onPressed: () => setState(() => _articulos = []),
                     ),
                   ],
                   const SizedBox(width: 8),

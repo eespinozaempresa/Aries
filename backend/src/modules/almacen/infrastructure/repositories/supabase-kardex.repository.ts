@@ -15,8 +15,8 @@ export class SupabaseKardexRepository implements IKardexRepository {
       .order('fecha', { ascending: true })
       .order('id', { ascending: true });
 
-    if (f.codigoAlmacen)  q = q.eq('codigo_almacen',  f.codigoAlmacen);
-    if (f.codigoArticulo) q = q.eq('codigo_articulo', f.codigoArticulo);
+    if (f.codigosAlmacen?.length)  q = q.in('codigo_almacen',  f.codigosAlmacen);
+    if (f.codigosArticulo?.length) q = q.in('codigo_articulo', f.codigosArticulo);
     if (f.desde) q = q.gte('fecha', f.desde);
     if (f.hasta) q = q.lte('fecha', f.hasta);
 

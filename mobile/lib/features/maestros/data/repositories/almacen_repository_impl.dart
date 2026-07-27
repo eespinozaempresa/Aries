@@ -28,4 +28,12 @@ class AlmacenRepositoryImpl implements AlmacenRepository {
       return Right(await _remote.saveAlmacen(data, id: id));
     } on ApiException catch (e) { return Left(e); }
   }
+
+  @override
+  Future<Either<ApiException, void>> remove(String id) async {
+    try {
+      await _remote.deleteAlmacen(id);
+      return const Right(null);
+    } on ApiException catch (e) { return Left(e); }
+  }
 }

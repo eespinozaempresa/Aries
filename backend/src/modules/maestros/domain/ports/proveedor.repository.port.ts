@@ -31,4 +31,5 @@ export abstract class IProveedorRepository {
   abstract findById(id: string, codigoEmpresa: string): Promise<Proveedor | null>;
   abstract create(codigoEmpresa: string, data: SaveProveedorData): Promise<Proveedor>;
   abstract update(id: string, codigoEmpresa: string, data: Partial<SaveProveedorData>): Promise<Proveedor>;
+  abstract remove(id: string, codigoEmpresa: string): Promise<void>;
 }

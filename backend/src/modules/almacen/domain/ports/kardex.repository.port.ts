@@ -2,8 +2,8 @@ import { KardexItem } from '../entities/kardex-item.entity';
 
 export interface KardexFilter {
   codigoEmpresa: string;
-  codigoAlmacen?: string;
-  codigoArticulo?: string;
+  codigosAlmacen?: string[];
+  codigosArticulo?: string[];
   desde?: string;
   hasta?: string;
 }

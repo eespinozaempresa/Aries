@@ -31,6 +31,12 @@ class TablasRemoteDataSource {
     } on DioException catch (e) { throw ApiException.fromDioError(e); }
   }
 
+  Future<void> delete(String path, String id) async {
+    try {
+      await _dio.delete('/tablas/$path/$id');
+    } on DioException catch (e) { throw ApiException.fromDioError(e); }
+  }
+
   Future<Map<String, dynamic>> toggle(String path, String id) async {
     try {
       final res = await _dio.patch('/tablas/$path/$id/toggle');

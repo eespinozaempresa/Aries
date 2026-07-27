@@ -147,6 +147,29 @@ export class SupabaseFormulaRepository implements IFormulaRepository {
     return (await this.findById(id, codigoEmpresa)) as Formula;
   }
 
+  async remove(id: string, codigoEmpresa: string): Promise<void> {
+    const { data: current, error: findErr } = await this.supabase.db
+      .from('formulas')
+      .select('activo, codigo_articulo')
+      .eq('id', id)
+      .eq('codigo_empresa', codigoEmpresa)
+      .maybeSingle();
+    if (findErr) throw new InternalServerErrorException(findErr.message);
+    if (!current) throw new NotFoundException('Fórmula no encontrada');
+    if (current.activo) {
+      throw new ConflictException('Debe desactivar la fórmula antes de eliminarla');
+    }
+
+    const { error } = await this.supabase.db
+      .from('formulas')
+      .delete()
+      .eq('id', id)
+      .eq('codigo_empresa', codigoEmpresa);
+    if (error) throw new InternalServerErrorException(error.message);
+
+    await this.syncConFormula(codigoEmpresa, current.codigo_articulo as string, false);
+  }
+
   private async syncConFormula(codigoEmpresa: string, codigoArticulo: string, conFormula: boolean): Promise<void> {
     const { error } = await this.supabase.db
       .from('articulos')

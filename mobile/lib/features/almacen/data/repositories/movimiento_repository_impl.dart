@@ -96,15 +96,15 @@ class MovimientoRepositoryImpl implements MovimientoRepository {
 
   @override
   Future<Either<ApiException, List<KardexItem>>> getKardex({
-    String? codigoAlmacen,
-    String? codigoArticulo,
+    List<String>? codigosAlmacen,
+    List<String>? codigosArticulo,
     String? desde,
     String? hasta,
   }) async {
     try {
       final list = await _ds.getKardex({
-        if (codigoAlmacen != null) 'almacen': codigoAlmacen,
-        if (codigoArticulo != null) 'articulo': codigoArticulo,
+        if (codigosAlmacen != null && codigosAlmacen.isNotEmpty) 'almacen': codigosAlmacen.join(','),
+        if (codigosArticulo != null && codigosArticulo.isNotEmpty) 'articulo': codigosArticulo.join(','),
         if (desde != null) 'desde': desde,
         if (hasta != null) 'hasta': hasta,
       });
@@ -125,15 +125,15 @@ class MovimientoRepositoryImpl implements MovimientoRepository {
 
   @override
   Future<Either<ApiException, List<StockItem>>> getStock({
-    String? codigoAlmacen,
-    String? codigoArticulo,
+    List<String>? codigosAlmacen,
+    List<String>? codigosArticulo,
     String? q,
     bool soloConStock = false,
   }) async {
     try {
       final list = await _ds.getStock({
-        if (codigoAlmacen != null) 'almacen': codigoAlmacen,
-        if (codigoArticulo != null) 'articulo': codigoArticulo,
+        if (codigosAlmacen != null && codigosAlmacen.isNotEmpty) 'almacen': codigosAlmacen.join(','),
+        if (codigosArticulo != null && codigosArticulo.isNotEmpty) 'articulo': codigosArticulo.join(','),
         if (q != null) 'q': q,
         if (soloConStock) 'soloConStock': 'true',
       });

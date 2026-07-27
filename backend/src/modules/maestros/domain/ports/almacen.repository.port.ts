@@ -20,4 +20,5 @@ export abstract class IAlmacenRepository {
   abstract findById(id: string, codigoEmpresa: string): Promise<Almacen | null>;
   abstract create(codigoEmpresa: string, data: SaveAlmacenData): Promise<Almacen>;
   abstract update(id: string, codigoEmpresa: string, data: Partial<SaveAlmacenData>): Promise<Almacen>;
+  abstract remove(id: string, codigoEmpresa: string): Promise<void>;
 }

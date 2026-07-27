@@ -14,8 +14,8 @@ export class SupabaseStockRepository implements IStockRepository {
       .eq('codigo_empresa', f.codigoEmpresa)
       .order('codigo_articulo', { ascending: true });
 
-    if (f.codigoAlmacen) q = q.eq('codigo_almacen', f.codigoAlmacen);
-    if (f.codigoArticulo) q = q.eq('codigo_articulo', f.codigoArticulo);
+    if (f.codigosAlmacen?.length) q = q.in('codigo_almacen', f.codigosAlmacen);
+    if (f.codigosArticulo?.length) q = q.in('codigo_articulo', f.codigosArticulo);
 
     // Pre-filter by article description when a search term is provided
     if (f.q) {

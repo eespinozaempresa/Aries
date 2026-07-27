@@ -8,11 +8,11 @@ export class GetKardexUseCase {
 
   execute(
     codigoEmpresa: string,
-    codigoAlmacen?: string,
-    codigoArticulo?: string,
+    codigosAlmacen?: string[],
+    codigosArticulo?: string[],
     desde?: string,
     hasta?: string,
   ): Promise<KardexItem[]> {
-    return this.repo.query({ codigoEmpresa, codigoAlmacen, codigoArticulo, desde, hasta });
+    return this.repo.query({ codigoEmpresa, codigosAlmacen, codigosArticulo, desde, hasta });
   }
 }

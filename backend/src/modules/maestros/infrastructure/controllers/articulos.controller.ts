@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Patch, Body, Param, Query,
+  Controller, Get, Post, Put, Patch, Delete, Body, Param, Query,
   Req, UseGuards, HttpCode, HttpStatus,
   ParseIntPipe, DefaultValuePipe, NotFoundException,
 } from '@nestjs/common';
@@ -64,5 +64,11 @@ export class ArticulosController {
     const current = await this.repo.findById(id, user.empresa);
     if (!current) throw new NotFoundException('Artículo no encontrado');
     return { data: await this.repo.update(id, user.empresa, { activo: !current.activo }) };
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string, @Req() req: Request) {
+    const user = req['user'] as JwtPayload;
+    await this.repo.remove(id, user.empresa);
   }
 }

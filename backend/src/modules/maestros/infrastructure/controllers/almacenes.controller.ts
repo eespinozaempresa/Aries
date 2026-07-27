@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Body, Param, Query,
+  Controller, Get, Post, Put, Delete, Body, Param, Query,
   Req, UseGuards, HttpCode, HttpStatus, NotFoundException,
 } from '@nestjs/common';
 import { Request } from 'express';
@@ -53,5 +53,11 @@ export class AlmacenesController {
   ) {
     const user = req['user'] as JwtPayload;
     return { data: await this.save.execute(user.empresa, dto as any, id) };
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string, @Req() req: Request) {
+    const user = req['user'] as JwtPayload;
+    await this.repo.remove(id, user.empresa);
   }
 }

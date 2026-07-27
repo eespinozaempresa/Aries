@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import {
   IClienteRepository,
@@ -93,6 +93,18 @@ export class SupabaseClienteRepository implements IClienteRepository {
       .single();
     if (error) throw new InternalServerErrorException(error.message);
     return this.toEntity(data);
+  }
+
+  async remove(id: string, codigoEmpresa: string): Promise<void> {
+    const { error } = await this.supabase.db
+      .from('clientes')
+      .delete()
+      .eq('id', id)
+      .eq('codigo_empresa', codigoEmpresa);
+    if (error) {
+      if (error.code === '23503') throw new ConflictException('No se puede eliminar: tiene operaciones asociadas');
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
   private toEntity(row: Record<string, unknown>): Cliente {

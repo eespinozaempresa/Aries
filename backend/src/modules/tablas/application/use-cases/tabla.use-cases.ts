@@ -19,3 +19,12 @@ export class SaveTablaUseCase<T extends TablaBase> {
     return this.repo.save(codigoEmpresa, data, id);
   }
 }
+
+@Injectable()
+export class RemoveTablaUseCase<T extends TablaBase> {
+  constructor(private readonly repo: ITablaRepository<T>) {}
+
+  execute(codigoEmpresa: string, id: string): Promise<void> {
+    return this.repo.remove(codigoEmpresa, id);
+  }
+}

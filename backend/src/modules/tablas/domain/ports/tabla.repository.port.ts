@@ -11,6 +11,7 @@ export abstract class ITablaRepository<T extends TablaBase> {
   abstract findAll(filter: TablaFilter): Promise<T[]>;
   abstract findByCodigo(codigoEmpresa: string, codigo: string): Promise<T | null>;
   abstract save(codigoEmpresa: string, data: Partial<T>, id?: string): Promise<T>;
+  abstract remove(codigoEmpresa: string, id: string): Promise<void>;
 }
 
 export abstract class ILineaRepository     extends ITablaRepository<import('../entities/tabla-base.entity').Linea>  {}

@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Patch, Body, Param, Query,
+  Controller, Get, Post, Put, Patch, Delete, Body, Param, Query,
   Req, UseGuards, HttpCode, HttpStatus, NotFoundException,
 } from '@nestjs/common';
 import { Request } from 'express';
@@ -59,5 +59,11 @@ export class FormulasController {
   async toggle(@Param('id') id: string, @Req() req: Request) {
     const user = req['user'] as JwtPayload;
     return { data: await this.repo.toggleActivo(user.empresa, id) };
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string, @Req() req: Request) {
+    const user = req['user'] as JwtPayload;
+    await this.repo.remove(id, user.empresa);
   }
 }

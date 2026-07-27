@@ -7,6 +7,7 @@ import '../../domain/repositories/formula_repository.dart';
 import '../bloc/formulas_bloc.dart';
 import '../bloc/maestro_list_event.dart';
 import '../bloc/maestro_list_state.dart';
+import '../widgets/confirm_delete.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 
 class FormulasListPage extends StatelessWidget {
@@ -97,13 +98,31 @@ class _FormulasViewState extends State<_FormulasView> {
                       style: const TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text('${f.codigoArticulo}  |  ${f.detalle.length} parte(s)',
                       style: const TextStyle(fontSize: 12)),
-                  trailing: !f.activo
-                      ? const Chip(
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!f.activo) ...[
+                        const Chip(
                           label: Text('Inactivo'),
                           labelStyle: TextStyle(fontSize: 10),
                           padding: EdgeInsets.zero,
-                        )
-                      : null,
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        tooltip: 'Eliminar',
+                        onPressed: () async {
+                          final deleted = await confirmAndDelete(
+                            ctx,
+                            itemName: f.descripcionArticulo ?? f.codigoArticulo,
+                            onDelete: () => getIt<FormulaRepository>().remove(f.id),
+                          );
+                          if (deleted && ctx.mounted) ctx.read<FormulasBloc>().add(const MaestroListRefresh());
+                        },
+                      ),
+                    ],
+                  ),
                   onTap: () async {
                     final saved = await ctx.push<bool>('/maestros/formulas/${f.id}');
                     if (saved == true && ctx.mounted) ctx.read<FormulasBloc>().add(const MaestroListRefresh());

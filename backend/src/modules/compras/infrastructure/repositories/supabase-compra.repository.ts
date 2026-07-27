@@ -1,6 +1,7 @@
-import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, ConflictException, BadRequestException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import { NumeroDocumentoService } from '../../../../shared/infrastructure/supabase/numero-documento.service';
+import { STOCK_INSUFICIENTE_PG_CODE, buildStockInsuficienteMessage } from '../../../almacen/domain/errors/stock-insuficiente.error';
 import { ICompraRepository, RegistrarCompraData, CompraFilter, CompraListResult } from '../../domain/ports/compra.repository.port';
 import { Compra } from '../../domain/entities/compra.entity';
 import { DetalleCompra } from '../../domain/entities/detalle-compra.entity';
@@ -111,7 +112,10 @@ export class SupabaseCompraRepository implements ICompraRepository {
       p_serie:       d.serie ?? '0001',
     });
 
-    if (rpcErr) throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
+    if (rpcErr) {
+      if (rpcErr.code === STOCK_INSUFICIENTE_PG_CODE) throw new BadRequestException(buildStockInsuficienteMessage(rpcErr.message));
+      throw new InternalServerErrorException(`Stock error: ${rpcErr.message}`);
+    }
 
     // Crear cuenta por pagar para compras al crédito
     if (d.formaPago === 'CREDITO') {
