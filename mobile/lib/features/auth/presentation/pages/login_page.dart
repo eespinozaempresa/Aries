@@ -127,7 +127,7 @@ class _LoginViewState extends State<_LoginView> {
     return Column(
       children: [
         FractionallySizedBox(
-          widthFactor: 0.75,
+          widthFactor: 0.50,
           child: Image.asset(
             'assets/images/logo_aries.png',
             fit: BoxFit.contain,
