@@ -227,6 +227,13 @@ class _FormState extends State<_Form> {
                 });
                 return;
               }
+              final precio = double.tryParse(pCtrl.text) ?? 0;
+              if (precio <= 0) {
+                setLocalState(() {
+                  stockError = 'El precio unitario debe ser mayor que 0';
+                });
+                return;
+              }
               if (_controlStockSalidas == 'SI' && _almacen != null) {
                 final yaEnCola = _lineas
                     .where((l) => l.codigo == art.codigo)

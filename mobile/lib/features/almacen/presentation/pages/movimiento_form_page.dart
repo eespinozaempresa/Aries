@@ -198,6 +198,13 @@ class _MovimientoFormState extends State<_MovimientoForm> {
                   });
                   return;
                 }
+                final precio = double.tryParse(priceCtrl.text) ?? 0;
+                if (precio <= 0) {
+                  setLocalState(() {
+                    stockError = 'El precio unitario debe ser mayor que 0';
+                  });
+                  return;
+                }
                 if (_controlStockSalidas == 'SI' && _esOperacionSalida && _almacenOrigen != null) {
                   final yaEnCola = _lineas
                       .where((l) => l.codigoArticulo == art.codigo)

@@ -160,6 +160,13 @@ class _FormState extends State<_Form> {
                 });
                 return;
               }
+              final precio = double.tryParse(pCtrl.text) ?? 0;
+              if (precio <= 0) {
+                setLocalState(() {
+                  qtyError = 'El precio unitario debe ser mayor que 0';
+                });
+                return;
+              }
               Navigator.pop(context, true);
             },
             child: const Text('Agregar'),
