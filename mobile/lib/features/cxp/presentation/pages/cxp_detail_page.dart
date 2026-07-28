@@ -207,7 +207,7 @@ class _View extends StatelessWidget {
             bancoSeleccionado = null;
           }),
         ),
-        if (tipoPagoSeleccionado?.requiereOperacion == true) ...[
+        if (tipoPagoSeleccionado?.requiereBanco == true) ...[
           const SizedBox(height: 8),
           DropdownButtonFormField<Banco>(
             initialValue: bancoSeleccionado,
@@ -215,6 +215,8 @@ class _View extends StatelessWidget {
             items: bancos.map((b) => DropdownMenuItem(value: b, child: Text(b.descripcion))).toList(),
             onChanged: (v) => setSt(() => bancoSeleccionado = v),
           ),
+        ],
+        if (tipoPagoSeleccionado?.requiereOperacion == true) ...[
           const SizedBox(height: 8),
           TextField(controller: operCtrl, decoration: const InputDecoration(labelText: 'N° Operación')),
         ],

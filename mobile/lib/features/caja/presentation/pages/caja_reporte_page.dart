@@ -77,6 +77,10 @@ class _View extends StatelessWidget {
             ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Movimiento registrado'), backgroundColor: Colors.green));
             ctx.read<CajaBloc>().add(CajaLoadReporte(sesionId));
           }
+          if (s is CajaMovimientoEliminado) {
+            ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Movimiento eliminado'), backgroundColor: Colors.green));
+            ctx.read<CajaBloc>().add(CajaLoadReporte(sesionId));
+          }
         },
         builder: (ctx, s) {
           if (s is CajaLoading || s is CajaSaving) return const Center(child: CircularProgressIndicator());
@@ -115,11 +119,22 @@ class _View extends StatelessWidget {
                 color: m.tipo == TipoMovCaja.INGRESO ? Colors.green : Colors.red, size: 20),
               title: Text(m.concepto),
               subtitle: Text('${m.fecha}${m.tipoPago != null ? " • ${m.tipoPago}" : ""}${m.referencia != null ? " • ${m.referencia}" : ""}'),
-              trailing: Text('S/ ${m.monto.toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: m.tipo == TipoMovCaja.INGRESO ? Colors.green : Colors.red,
-                )),
+              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('S/ ${m.monto.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: m.tipo == TipoMovCaja.INGRESO ? Colors.green : Colors.red,
+                  )),
+                if (abierta) ...[
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.grey),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () => _confirmEliminarMovimiento(ctx, m.id, r.sesion.id),
+                  ),
+                ],
+              ]),
             )),
             if (r.movimientos.isEmpty) const Text('Sin movimientos', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),
@@ -150,6 +165,27 @@ class _View extends StatelessWidget {
       Expanded(child: Text(v, style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal, color: color))),
     ]),
   );
+
+  void _confirmEliminarMovimiento(BuildContext ctx, String movimientoId, String sesionCajaId) {
+    showDialog(
+      context: ctx,
+      builder: (dctx) => AlertDialog(
+        title: const Text('Eliminar movimiento'),
+        content: const Text('¿Seguro que desea eliminar este movimiento? Se recalcularán los saldos de la caja.'),
+        actions: [
+          OutlinedButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(dctx);
+              ctx.read<CajaBloc>().add(CajaEliminarMovimiento(movimientoId: movimientoId, sesionCajaId: sesionCajaId));
+            },
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showMovDialog(BuildContext ctx, String sesionId) {
     final conceptoCtrl = TextEditingController();
@@ -215,7 +251,7 @@ class _View extends StatelessWidget {
               }),
             ),
           ],
-          if (tipoPagoSeleccionado?.requiereOperacion == true) ...[
+          if (tipoPagoSeleccionado?.requiereBanco == true) ...[
             const SizedBox(height: 8),
             DropdownButtonFormField<Banco>(
               initialValue: bancoSeleccionado,
@@ -223,6 +259,8 @@ class _View extends StatelessWidget {
               items: bancos.map((b) => DropdownMenuItem(value: b, child: Text(b.descripcion))).toList(),
               onChanged: (v) => setSt(() => bancoSeleccionado = v),
             ),
+          ],
+          if (tipoPagoSeleccionado?.requiereOperacion == true) ...[
             const SizedBox(height: 8),
             TextField(controller: nroOpCtrl, decoration: const InputDecoration(labelText: 'N° Operación')),
           ],

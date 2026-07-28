@@ -53,6 +53,7 @@ export abstract class ICajaRepository {
   abstract abrir(codigoEmpresa: string, data: AbrirCajaData): Promise<SesionCaja>;
   abstract cerrar(codigoEmpresa: string, data: CerrarCajaData): Promise<SesionCaja>;
   abstract registrarMovimiento(codigoEmpresa: string, data: RegistrarMovCajaData): Promise<MovimientoCaja>;
+  abstract eliminarMovimiento(codigoEmpresa: string, movimientoId: string): Promise<ReporteCaja>;
   abstract getMovimientos(codigoEmpresa: string, sesionCajaId: string): Promise<MovimientoCaja[]>;
   abstract reporte(codigoEmpresa: string, sesionCajaId: string): Promise<ReporteCaja>;
 }

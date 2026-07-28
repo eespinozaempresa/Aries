@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import {
   ICajaRepository, CajaFilter, CajaListResult,
@@ -101,6 +101,29 @@ export class SupabaseCajaRepository implements ICajaRepository {
       }).select().single();
     if (error) throw new InternalServerErrorException(error.message);
     return this.toMovimiento(data);
+  }
+
+  async eliminarMovimiento(codigoEmpresa: string, movimientoId: string): Promise<ReporteCaja> {
+    const { data: row, error: findErr } = await this.supabase.db
+      .from('movimientos_caja')
+      .select('id, sesion_caja_id')
+      .eq('id', movimientoId)
+      .eq('codigo_empresa', codigoEmpresa)
+      .maybeSingle();
+    if (findErr) throw new InternalServerErrorException(findErr.message);
+    if (!row) throw new NotFoundException('Movimiento no encontrado');
+
+    const sesionCajaId = row.sesion_caja_id as string;
+    const sesion = await this.findById(sesionCajaId, codigoEmpresa);
+    if (!sesion) throw new BadRequestException('Sesión de caja no encontrada');
+    if (sesion.estado === 'CERRADA') throw new BadRequestException('La caja está cerrada');
+
+    const { error: delErr } = await this.supabase.db
+      .from('movimientos_caja').delete()
+      .eq('id', movimientoId).eq('codigo_empresa', codigoEmpresa);
+    if (delErr) throw new InternalServerErrorException(delErr.message);
+
+    return this.reporte(codigoEmpresa, sesionCajaId);
   }
 
   async getMovimientos(codigoEmpresa: string, sesionCajaId: string): Promise<MovimientoCaja[]> {

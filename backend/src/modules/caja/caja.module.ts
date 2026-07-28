@@ -5,7 +5,7 @@ import { ICajaRepository } from './domain/ports/caja.repository.port';
 import { SupabaseCajaRepository } from './infrastructure/repositories/supabase-caja.repository';
 import {
   ListCajaUseCase, FindSesionUseCase, AbrirCajaUseCase,
-  CerrarCajaUseCase, RegistrarMovCajaUseCase, ReporteCajaUseCase,
+  CerrarCajaUseCase, RegistrarMovCajaUseCase, ReporteCajaUseCase, EliminarMovCajaUseCase,
 } from './application/use-cases/caja.use-cases';
 import { CajaController } from './infrastructure/controllers/caja.controller';
 
@@ -42,6 +42,11 @@ import { CajaController } from './infrastructure/controllers/caja.controller';
     {
       provide: ReporteCajaUseCase,
       useFactory: (r: ICajaRepository) => new ReporteCajaUseCase(r),
+      inject: [ICajaRepository],
+    },
+    {
+      provide: EliminarMovCajaUseCase,
+      useFactory: (r: ICajaRepository) => new EliminarMovCajaUseCase(r),
       inject: [ICajaRepository],
     },
   ],

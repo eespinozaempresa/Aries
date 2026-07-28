@@ -33,3 +33,8 @@ export class ReporteCajaUseCase {
   constructor(@Inject(ICajaRepository) private readonly repo: ICajaRepository) {}
   execute(codigoEmpresa: string, sesionCajaId: string) { return this.repo.reporte(codigoEmpresa, sesionCajaId); }
 }
+
+export class EliminarMovCajaUseCase {
+  constructor(@Inject(ICajaRepository) private readonly repo: ICajaRepository) {}
+  execute(codigoEmpresa: string, movimientoId: string) { return this.repo.eliminarMovimiento(codigoEmpresa, movimientoId); }
+}

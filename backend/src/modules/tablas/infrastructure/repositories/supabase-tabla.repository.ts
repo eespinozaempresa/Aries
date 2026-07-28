@@ -53,13 +53,13 @@ function makeRepo<T extends TablaBase>(tableName: string, fromRow: (r: Record<st
       const usageChecks = USAGE_CHECKS[tableName];
       if (usageChecks) {
         const { data: row, error: findError } = await this.supabase.db
-          .from(tableName).select('id, codigo')
+          .from(tableName).select('id, codigo, descripcion')
           .eq('id', id).eq('codigo_empresa', codigoEmpresa).maybeSingle();
         if (findError) throw new InternalServerErrorException(findError.message);
         if (!row) throw new NotFoundException();
-        const { id: rowId, codigo } = row as { id: string; codigo: string };
+        const { id: rowId, codigo, descripcion } = row as { id: string; codigo: string; descripcion: string };
 
-        await assertNotInUse(this.supabase.db, usageChecks, codigoEmpresa, { codigo, id: rowId });
+        await assertNotInUse(this.supabase.db, usageChecks, codigoEmpresa, { codigo, id: rowId, descripcion });
       }
 
       const { error } = await this.supabase.db
@@ -84,10 +84,12 @@ const USAGE_CHECKS: Record<string, UsageCheck[]> = {
     { table: 'cuentas_pagar', column: 'codigo_documento' },
     { table: 'caja', column: 'codigo_documento' },
   ],
+  // tipo_pago se referencia como texto suelto y las tablas transaccionales
+  // guardan la descripción (no el código) en su columna tipo_pago.
   tipo_pago: [
-    { table: 'cobros', column: 'tipo_pago' },
-    { table: 'pagos', column: 'tipo_pago' },
-    { table: 'movimientos_caja', column: 'tipo_pago' },
+    { table: 'cobros', column: 'tipo_pago', matchOn: 'descripcion' },
+    { table: 'pagos', column: 'tipo_pago', matchOn: 'descripcion' },
+    { table: 'movimientos_caja', column: 'tipo_pago', matchOn: 'descripcion' },
   ],
   lineas:  [{ table: 'articulos', column: 'codigo_linea' }],
   medidas: [{ table: 'articulos', column: 'codigo_medida' }],
@@ -109,6 +111,7 @@ function toRow(d: Record<string, unknown>): Record<string, unknown> {
     numeroSiguiente: 'numero_siguiente', aplicaIgv: 'aplica_igv', tipo: 'tipo',
     dsctoPct: 'dscto_pct', dctoMto: 'dcto_mto',
     requiereOperacion: 'requiere_operacion',
+    requiereBanco: 'requiere_banco',
   };
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(d)) {
@@ -139,6 +142,7 @@ export const SupabaseTipoListaRepo = makeRepo<TipoLista>('tipos_lista', (r) => (
 export const SupabaseTipoPagoRepo = makeRepo<TipoPago>('tipo_pago', (r) => ({
   ...base(r),
   requiereOperacion: (r.requiere_operacion as boolean) ?? false,
+  requiereBanco: (r.requiere_banco as boolean) ?? false,
 }));
 
 export const SupabaseDocumentoRepo = makeRepo<Documento>('documentos', (r) => ({

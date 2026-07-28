@@ -81,4 +81,13 @@ class CajaRemoteDataSource {
       throw ApiException.fromDioError(e);
     }
   }
+
+  Future<Map<String, dynamic>> eliminarMovimiento(String id) async {
+    try {
+      final r = await _dio.delete('/caja/movimientos/$id');
+      return r.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
 }

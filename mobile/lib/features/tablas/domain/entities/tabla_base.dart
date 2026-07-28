@@ -41,6 +41,7 @@ class TipoLista extends TablaBase {
 
 class TipoPago extends TablaBase {
   final bool requiereOperacion;
+  final bool requiereBanco;
 
   const TipoPago({
     required super.id,
@@ -49,10 +50,17 @@ class TipoPago extends TablaBase {
     required super.descripcion,
     required super.activo,
     required this.requiereOperacion,
+    required this.requiereBanco,
   });
 
   @override
-  String get subtitle => requiereOperacion ? 'Requiere N° operación' : '';
+  String get subtitle {
+    final partes = [
+      if (requiereOperacion) 'Requiere N° operación',
+      if (requiereBanco) 'Requiere banco',
+    ];
+    return partes.join(' • ');
+  }
 }
 
 class Documento extends TablaBase {

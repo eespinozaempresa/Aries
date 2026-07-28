@@ -26,4 +26,5 @@ export interface TipoLista extends TablaBase {
 
 export interface TipoPago extends TablaBase {
   requiereOperacion: boolean;
+  requiereBanco: boolean;
 }

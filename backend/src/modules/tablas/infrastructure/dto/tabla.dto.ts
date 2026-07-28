@@ -39,11 +39,17 @@ export class CreateDocumentoDto extends CreateTablaDto {
 export class CreateTipoPagoDto extends CreateTablaDto {
   @IsBoolean() @IsOptional()
   requiereOperacion?: boolean;
+
+  @IsBoolean() @IsOptional()
+  requiereBanco?: boolean;
 }
 
 export class UpdateTipoPagoDto extends UpdateTablaDto {
   @IsBoolean() @IsOptional()
   requiereOperacion?: boolean;
+
+  @IsBoolean() @IsOptional()
+  requiereBanco?: boolean;
 }
 
 export class CreateTipoListaDto extends CreateTablaDto {

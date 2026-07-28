@@ -30,6 +30,11 @@ class CajaRegistrarMovimiento extends CajaEvent {
     this.numeroOperacion, this.codigoBanco,
   });
 }
+class CajaEliminarMovimiento extends CajaEvent {
+  final String movimientoId;
+  final String sesionCajaId;
+  CajaEliminarMovimiento({required this.movimientoId, required this.sesionCajaId});
+}
 
 // ── States ───────────────────────────────────────────────────────────────────
 sealed class CajaState {}
@@ -45,6 +50,7 @@ class CajaSaving extends CajaState {}
 class CajaAbierta extends CajaState { final SesionCaja sesion; CajaAbierta(this.sesion); }
 class CajaCerrada extends CajaState { final SesionCaja sesion; CajaCerrada(this.sesion); }
 class CajaMovimientoRegistrado extends CajaState { final MovimientoCaja movimiento; CajaMovimientoRegistrado(this.movimiento); }
+class CajaMovimientoEliminado extends CajaState {}
 class CajaError extends CajaState { final String message; CajaError(this.message); }
 
 // ── BLoC ─────────────────────────────────────────────────────────────────────
@@ -59,6 +65,7 @@ class CajaBloc extends Bloc<CajaEvent, CajaState> {
     on<CajaAbrir>(_onAbrir);
     on<CajaCerrar>(_onCerrar);
     on<CajaRegistrarMovimiento>(_onRegistrarMovimiento);
+    on<CajaEliminarMovimiento>(_onEliminarMovimiento);
   }
 
   Future<void> _onLoad(CajaLoad e, Emitter<CajaState> emit) async {
@@ -122,6 +129,16 @@ class CajaBloc extends Bloc<CajaEvent, CajaState> {
         codigoBanco: e.codigoBanco,
       );
       emit(CajaMovimientoRegistrado(MovimientoCaja.fromJson(json)));
+    } on ApiException catch (ex) {
+      emit(CajaError(ex.message));
+    }
+  }
+
+  Future<void> _onEliminarMovimiento(CajaEliminarMovimiento e, Emitter<CajaState> emit) async {
+    emit(CajaSaving());
+    try {
+      await _ds.eliminarMovimiento(e.movimientoId);
+      emit(CajaMovimientoEliminado());
     } on ApiException catch (ex) {
       emit(CajaError(ex.message));
     }

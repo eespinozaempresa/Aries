@@ -1,10 +1,10 @@
 import {
-  Controller, Get, Post, Param, Body, Query, UseGuards, Request,
+  Controller, Get, Post, Delete, Param, Body, Query, UseGuards, Request,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
 import {
   ListCajaUseCase, FindSesionUseCase, AbrirCajaUseCase,
-  CerrarCajaUseCase, RegistrarMovCajaUseCase, ReporteCajaUseCase,
+  CerrarCajaUseCase, RegistrarMovCajaUseCase, ReporteCajaUseCase, EliminarMovCajaUseCase,
 } from '../../application/use-cases/caja.use-cases';
 import { AbrirCajaDto, CerrarCajaDto, RegistrarMovCajaDto } from '../dto/caja.dto';
 
@@ -18,6 +18,7 @@ export class CajaController {
     private readonly cerrarUC: CerrarCajaUseCase,
     private readonly movUC: RegistrarMovCajaUseCase,
     private readonly reporteUC: ReporteCajaUseCase,
+    private readonly eliminarMovUC: EliminarMovCajaUseCase,
   ) {}
 
   @Get()
@@ -69,5 +70,10 @@ export class CajaController {
       ...dto,
       codigoUsuario: req.user.codigo,
     });
+  }
+
+  @Delete('movimientos/:id')
+  eliminarMovimiento(@Param('id') id: string, @Request() req: any) {
+    return this.eliminarMovUC.execute(req.user.empresa, id);
   }
 }

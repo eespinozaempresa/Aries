@@ -182,6 +182,7 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
         case 'dsctoPct':          return (item as dynamic).dsctoPct?.toString() as V?;
         case 'dctoMto':           return (item as dynamic).dctoMto?.toString() as V?;
         case 'requiereOperacion': return (item as dynamic).requiereOperacion as V?;
+        case 'requiereBanco':     return (item as dynamic).requiereBanco as V?;
         default:                  return null;
       }
     } catch (_) {
@@ -340,6 +341,7 @@ class TiposPagoPage extends StatelessWidget {
         bloc: bloc,
         extraFields: const [
           _ExtraField('requiereOperacion', 'Requiere N° Operación', isSwitch: true),
+          _ExtraField('requiereBanco', 'Requiere Banco', isSwitch: true),
         ],
       );
 }

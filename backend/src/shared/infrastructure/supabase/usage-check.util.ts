@@ -4,12 +4,12 @@ import { SupabaseClient } from '@supabase/supabase-js';
 export interface UsageCheck {
   table: string;
   column: string;
-  /** Valor contra el que se compara `column`: el código o el id del registro que se intenta eliminar. */
-  matchOn?: 'codigo' | 'id';
+  /** Valor contra el que se compara `column`: el código, el id o la descripción del registro que se intenta eliminar. */
+  matchOn?: 'codigo' | 'id' | 'descripcion';
 }
 
 /**
- * Lanza ConflictException si el registro (codigo/id) aparece referenciado
+ * Lanza ConflictException si el registro (codigo/id/descripcion) aparece referenciado
  * en alguna de las tablas indicadas. Se usa como validación explícita previa
  * al DELETE, en vez de depender únicamente del error 23503 de la FK
  * (necesario para relaciones sin FK real, o con ON DELETE SET NULL/CASCADE).
@@ -18,10 +18,10 @@ export async function assertNotInUse(
   db: SupabaseClient,
   checks: readonly UsageCheck[],
   codigoEmpresa: string,
-  match: { codigo?: string; id?: string },
+  match: { codigo?: string; id?: string; descripcion?: string },
 ): Promise<void> {
   for (const { table, column, matchOn = 'codigo' } of checks) {
-    const value = matchOn === 'id' ? match.id : match.codigo;
+    const value = matchOn === 'id' ? match.id : matchOn === 'descripcion' ? match.descripcion : match.codigo;
     if (!value) continue;
 
     const { count, error } = await db

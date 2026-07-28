@@ -356,6 +356,8 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
     final operCtrl   = TextEditingController();
     List<TipoPago> tiposPago = [];
     TipoPago? tipoPagoSeleccionado;
+    List<Banco> bancos = [];
+    Banco? bancoSeleccionado;
     bool fetched = false;
     DateTime fecha   = DateTime.now();
 
@@ -366,6 +368,10 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
           fetched = true;
           getIt<TablasRemoteDataSource>().list('tipos-pago', activo: true).then((raw) {
             setSt(() => tiposPago = raw.map(TablaModel.tipoPagoFromJson).toList()
+              ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase())));
+          }).catchError((_) {});
+          getIt<TablasRemoteDataSource>().list('bancos', activo: true).then((raw) {
+            setSt(() => bancos = raw.map(TablaModel.bancoFromJson).toList()
               ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase())));
           }).catchError((_) {});
         }
@@ -396,8 +402,18 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
             onChanged: (v) => setSt(() {
               tipoPagoSeleccionado = v;
               operCtrl.clear();
+              bancoSeleccionado = null;
             }),
           ),
+          if (tipoPagoSeleccionado?.requiereBanco == true) ...[
+            const SizedBox(height: 8),
+            DropdownButtonFormField<Banco>(
+              initialValue: bancoSeleccionado,
+              decoration: const InputDecoration(labelText: 'Banco'),
+              items: bancos.map((b) => DropdownMenuItem(value: b, child: Text(b.descripcion))).toList(),
+              onChanged: (v) => setSt(() => bancoSeleccionado = v),
+            ),
+          ],
           if (tipoPagoSeleccionado?.requiereOperacion == true)
             TextField(controller: operCtrl,
                 decoration: const InputDecoration(labelText: 'N° Operación')),
@@ -433,6 +449,7 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
                 monto: m,
                 numeroOperacion:
                     operCtrl.text.isNotEmpty ? operCtrl.text.trim() : null,
+                codigoBanco: bancoSeleccionado?.codigo,
               ));
               Navigator.pop(dctx);    // close cobro dialog
               Navigator.pop(context); // close consolidado dialog
