@@ -1,11 +1,16 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
+import { assertNotInUse } from '../../../../shared/infrastructure/supabase/usage-check.util';
 import { CreateUsuarioDto, UpdateUsuarioDto, CreatePerfilDto, UpdatePerfilDto } from '../dto/utilitarios.dto';
 
 @Injectable()
 export class SupabaseUtilitariosRepository {
   constructor(private readonly supabase: SupabaseService) {}
+
+  private static readonly PERFIL_USAGE_CHECKS = [
+    { table: 'usuarios', column: 'perfil_id', matchOn: 'id' },
+  ] as const;
 
   async getParametros(codigoEmpresa: string): Promise<{ igv: number; tiempoFinanciamiento: number; almacenPartes: string | null; operacionPartes: string | null; controlStockSalidas: string }> {
     const { data, error } = await this.supabase.db
@@ -220,6 +225,19 @@ export class SupabaseUtilitariosRepository {
       .single();
     if (error) throw new InternalServerErrorException(error.message);
     return data;
+  }
+
+  async removePerfil(id: string, codigoEmpresa: string): Promise<void> {
+    await assertNotInUse(this.supabase.db, SupabaseUtilitariosRepository.PERFIL_USAGE_CHECKS, codigoEmpresa, { id });
+    const { error } = await this.supabase.db
+      .from('perfiles')
+      .delete()
+      .eq('id', id)
+      .eq('codigo_empresa', codigoEmpresa);
+    if (error) {
+      if (error.code === '23503') throw new ConflictException('No se puede eliminar: tiene operaciones asociadas');
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
   async getAuditoria(codigoEmpresa: string, limit = 50, requestingNivel = 'OPERADOR'): Promise<unknown[]> {

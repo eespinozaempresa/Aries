@@ -14,6 +14,11 @@ echo   Base de datos: Supabase
 echo ============================================
 echo.
 
+echo.
+echo [0/0] Arrancando backend NestJS...
+cd /d "%ROOT%backend"
+call npm run build
+
 REM --- 0) Recordatorio de migraciones de Supabase (no se aplican solas) ---
 if exist "%ROOT%supabase\migrations" (
     echo [0/5] Migraciones en supabase\migrations\:

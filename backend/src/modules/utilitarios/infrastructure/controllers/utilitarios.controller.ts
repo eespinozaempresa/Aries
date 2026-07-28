@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Patch, Body, Param, Query,
+  Controller, Get, Post, Put, Patch, Delete, Body, Param, Query,
   UseGuards, Request, HttpCode, ForbiddenException,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
@@ -113,5 +113,10 @@ export class UtilitariosController {
   @HttpCode(200)
   togglePerfil(@Param('id') id: string, @Request() req: any) {
     return this.repo.togglePerfil(id, req.user.empresa);
+  }
+
+  @Delete('perfiles/:id')
+  removePerfil(@Param('id') id: string, @Request() req: any) {
+    return this.repo.removePerfil(id, req.user.empresa);
   }
 }

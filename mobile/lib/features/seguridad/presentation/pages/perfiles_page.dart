@@ -313,6 +313,37 @@ class _PerfilFormPageState extends State<PerfilFormPage> {
     }
   }
 
+  Future<void> _delete() async {
+    if (!_isEdit) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar'),
+        content: Text('¿Eliminar el perfil "${_descCtrl.text}"? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _saving = true);
+    try {
+      final dio = getIt<DioClient>().dio;
+      await dio.delete('${ApiConstants.baseUrl}/utilitarios/perfiles/${widget.perfil!['id']}');
+      if (mounted) context.pop(true);
+    } on DioException catch (e) {
+      final msg = (e.response?.data['message'] ?? 'Error al eliminar').toString();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -366,6 +397,14 @@ class _PerfilFormPageState extends State<PerfilFormPage> {
                 ),
               ),
             ]),
+            if (_isEdit) ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: _saving ? null : _delete,
+                icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+                label: Text('Eliminar', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              ),
+            ],
             const SizedBox(height: 40),
           ],
         ),
