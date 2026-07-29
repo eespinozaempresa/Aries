@@ -11,6 +11,14 @@ export class RegistrarCobroDto {
   @IsNumber() @Min(0.01) monto: number;
 }
 
+export class ActualizarCobroDto {
+  @IsOptional() @IsNumber() @Min(0.01) monto?: number;
+  @IsOptional() @IsDateString() fecha?: string;
+  @IsOptional() @IsString() tipoPago?: string;
+  @IsOptional() @IsString() numeroOperacion?: string;
+  @IsOptional() @IsString() codigoBanco?: string;
+}
+
 export class CuotaRenovacionDto {
   @IsNumber() numeroCuota: number;
   @IsString() numeroLetra: string;

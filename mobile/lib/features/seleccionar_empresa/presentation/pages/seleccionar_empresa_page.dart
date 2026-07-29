@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/utils/fecha_hora_util.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 import '../../../../core/widgets/number_form_field.dart';
 import '../../../auth/domain/entities/empresa_opcion.dart';
@@ -59,7 +59,7 @@ class _SeleccionarEmpresaViewState extends State<_SeleccionarEmpresaView> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final fechaStr = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    final fechaStr = FechaHoraUtil.formatearFecha(DateTime.now());
 
     return BlocListener<SeleccionarEmpresaBloc, SeleccionarEmpresaState>(
       listener: (context, state) {

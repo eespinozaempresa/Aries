@@ -3,7 +3,7 @@ import { SupabaseService } from '../../../../shared/infrastructure/supabase/supa
 import { NumeroDocumentoService } from '../../../../shared/infrastructure/supabase/numero-documento.service';
 import {
   ICxCRepository, CxCFilter, CxCListResult,
-  RegistrarCobroData, RenovarCxCData,
+  RegistrarCobroData, RenovarCxCData, ActualizarCobroData,
 } from '../../domain/ports/cxc.repository.port';
 import { CuentaCobrar, Cobro } from '../../domain/entities/cuenta-cobrar.entity';
 
@@ -151,6 +151,45 @@ export class SupabaseCxCRepository implements ICxCRepository {
       .eq('id', cobroId).eq('codigo_empresa', codigoEmpresa);
     if (delErr) throw new InternalServerErrorException(delErr.message);
 
+    return this.recalcularSaldoCxC(codigoEmpresa, cuentaCobrarId);
+  }
+
+  async actualizarCobro(codigoEmpresa: string, cobroId: string, d: ActualizarCobroData): Promise<CuentaCobrar> {
+    const { data: cobroRow, error: findErr } = await this.supabase.db
+      .from('cobros')
+      .select('id, cuenta_cobrar_id, monto')
+      .eq('id', cobroId)
+      .eq('codigo_empresa', codigoEmpresa)
+      .maybeSingle();
+    if (findErr) throw new InternalServerErrorException(findErr.message);
+    if (!cobroRow) throw new NotFoundException('Cobro no encontrado');
+
+    const cuentaCobrarId = cobroRow.cuenta_cobrar_id as string;
+
+    if (d.monto !== undefined) {
+      const cxc = await this.findById(cuentaCobrarId, codigoEmpresa);
+      if (!cxc) throw new InternalServerErrorException('Cuenta por cobrar no encontrada');
+      const otrosCobrados = cxc.montoPagado - Number(cobroRow.monto);
+      if (otrosCobrados + d.monto > cxc.montoTotal) {
+        throw new BadRequestException(
+          `Monto (${d.monto}) supera el saldo disponible (${(cxc.montoTotal - otrosCobrados).toFixed(2)})`,
+        );
+      }
+    }
+
+    const { error: updErr } = await this.supabase.db.from('cobros').update({
+      ...(d.monto !== undefined ? { monto: d.monto } : {}),
+      ...(d.fecha !== undefined ? { fecha: d.fecha } : {}),
+      ...(d.tipoPago !== undefined ? { tipo_pago: d.tipoPago } : {}),
+      ...(d.numeroOperacion !== undefined ? { numero_operacion: d.numeroOperacion } : {}),
+      ...(d.codigoBanco !== undefined ? { codigo_banco: d.codigoBanco } : {}),
+    }).eq('id', cobroId).eq('codigo_empresa', codigoEmpresa);
+    if (updErr) throw new InternalServerErrorException(updErr.message);
+
+    return this.recalcularSaldoCxC(codigoEmpresa, cuentaCobrarId);
+  }
+
+  private async recalcularSaldoCxC(codigoEmpresa: string, cuentaCobrarId: string): Promise<CuentaCobrar> {
     const cxc = await this.findById(cuentaCobrarId, codigoEmpresa);
     if (!cxc) throw new InternalServerErrorException('Cuenta por cobrar no encontrada');
 

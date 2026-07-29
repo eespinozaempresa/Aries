@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import {
   ICajaRepository, CajaFilter,
-  AbrirCajaData, CerrarCajaData, RegistrarMovCajaData,
+  AbrirCajaData, CerrarCajaData, RegistrarMovCajaData, ActualizarMovCajaData,
 } from '../../domain/ports/caja.repository.port';
 
 export class ListCajaUseCase {
@@ -37,4 +37,11 @@ export class ReporteCajaUseCase {
 export class EliminarMovCajaUseCase {
   constructor(@Inject(ICajaRepository) private readonly repo: ICajaRepository) {}
   execute(codigoEmpresa: string, movimientoId: string) { return this.repo.eliminarMovimiento(codigoEmpresa, movimientoId); }
+}
+
+export class ActualizarMovCajaUseCase {
+  constructor(@Inject(ICajaRepository) private readonly repo: ICajaRepository) {}
+  execute(codigoEmpresa: string, movimientoId: string, data: ActualizarMovCajaData) {
+    return this.repo.actualizarMovimiento(codigoEmpresa, movimientoId, data);
+  }
 }

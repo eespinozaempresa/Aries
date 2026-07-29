@@ -78,6 +78,28 @@ class CxPRemoteDataSource {
     }
   }
 
+  Future<Map<String, dynamic>> actualizarPago(
+    String id, {
+    double? monto,
+    String? fecha,
+    String? tipoPago,
+    String? numeroOperacion,
+    String? codigoBanco,
+  }) async {
+    try {
+      final r = await _dio.patch('/cxp/pagos/$id', data: {
+        if (monto != null) 'monto': monto,
+        if (fecha != null) 'fecha': fecha,
+        if (tipoPago != null) 'tipoPago': tipoPago,
+        if (numeroOperacion != null) 'numeroOperacion': numeroOperacion,
+        if (codigoBanco != null) 'codigoBanco': codigoBanco,
+      });
+      return r.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   Future<List<dynamic>> renovar({
     required String id,
     required List<Map<String, dynamic>> cuotas,

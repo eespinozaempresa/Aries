@@ -7,9 +7,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
+import 'fecha_hora_util.dart';
 
 class ExportService {
-  static final _dateFmt = DateFormat('dd/MM/yyyy');
   static final _fileTimestampFmt = DateFormat('yyyyMMddHHmmss');
 
   /// Formatea una fecha ISO (yyyy-MM-dd o datetime) a dd/MM/yyyy.
@@ -17,7 +17,7 @@ class ExportService {
   static String fmtDate(String? iso, {String fallback = '-'}) {
     if (iso == null || iso.isEmpty) return fallback;
     try {
-      return _dateFmt.format(DateTime.parse(iso));
+      return FechaHoraUtil.formatearFecha(iso);
     } catch (_) {
       return iso;
     }
@@ -27,7 +27,7 @@ class ExportService {
   /// (ej. "Ventas_20260721145502"), para que cada descarga tenga nombre único.
   static String _fileBaseName(String title) {
     final safe = title.replaceAll(RegExp(r'[^\w]'), '_');
-    return '${safe}_${_fileTimestampFmt.format(DateTime.now())}';
+    return '${safe}_${_fileTimestampFmt.format(FechaHoraUtil.ahora())}';
   }
 
   /// Exporta a PDF y abre el visor de impresión/compartir

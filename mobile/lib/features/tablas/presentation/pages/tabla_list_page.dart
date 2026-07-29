@@ -7,6 +7,7 @@ import '../bloc/tabla_event.dart';
 import '../bloc/tabla_state.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 import '../../../../core/widgets/number_form_field.dart';
+import '../../../maestros/presentation/widgets/confirm_delete.dart';
 
 /// Página de lista + formulario inline para cualquier tabla base.
 class TablaListPage<T extends TablaBase> extends StatefulWidget {
@@ -35,6 +36,7 @@ class _ExtraField {
 
 class _TablaListPageState<T extends TablaBase> extends State<TablaListPage<T>> {
   final _searchCtrl = TextEditingController();
+  List<T>? _lastItems;
 
   @override
   void initState() {
@@ -103,10 +105,16 @@ class _TablaListPageState<T extends TablaBase> extends State<TablaListPage<T>> {
                 },
                 builder: (ctx, state) {
                   if (state is TablaLoading) return const Center(child: CircularProgressIndicator());
-                  if (state is TablaError) return Center(child: Text(state.message));
-                  final items = (state is TablaLoaded<T> ? state.items : <T>[])
+                  // TablaError solo bloquea la pantalla cuando la carga inicial falló
+                  // (no hay lista previa que mostrar). Errores de guardar/eliminar ya
+                  // se comunican vía SnackBar en el listener y no deben blanquear la lista.
+                  if (state is TablaError && _lastItems == null) {
+                    return Center(child: Text(state.message));
+                  }
+                  final items = (state is TablaLoaded<T> ? state.items : _lastItems ?? <T>[])
                     ..sort((a, b) =>
                         a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase()));
+                  if (state is TablaLoaded<T>) _lastItems = items;
                   if (items.isEmpty) return const Center(child: Text('Sin registros'));
                   return ListView.builder(
                     itemCount: items.length,
@@ -229,21 +237,12 @@ class _TablaFormState<T extends TablaBase> extends State<_TablaForm<T>> {
   Future<void> _delete() async {
     final item = widget.item;
     if (item == null) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        title: const Text('Eliminar'),
-        content: Text('¿Eliminar "${item.descripcion}"? Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(dctx).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(dctx).pop(true), child: const Text('Eliminar')),
-        ],
-      ),
+    final deleted = await confirmAndDelete(
+      context,
+      itemName: item.descripcion,
+      onDelete: () => context.read<TablaBloc<T>>().deleteItem(item.id),
     );
-    if (confirmed != true) return;
-    if (!mounted) return;
-    context.read<TablaBloc<T>>().add(TablaDelete(item.id));
-    Navigator.pop(context);
+    if (deleted && mounted) Navigator.pop(context);
   }
 
   @override

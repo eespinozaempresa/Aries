@@ -35,6 +35,17 @@ class CajaEliminarMovimiento extends CajaEvent {
   final String sesionCajaId;
   CajaEliminarMovimiento({required this.movimientoId, required this.sesionCajaId});
 }
+class CajaActualizarMovimiento extends CajaEvent {
+  final String movimientoId, sesionCajaId;
+  final String? tipo, concepto, fecha;
+  final double? monto;
+  final String? referencia, tipoPago, numeroOperacion, codigoBanco;
+  CajaActualizarMovimiento({
+    required this.movimientoId, required this.sesionCajaId,
+    this.tipo, this.concepto, this.monto, this.fecha,
+    this.referencia, this.tipoPago, this.numeroOperacion, this.codigoBanco,
+  });
+}
 
 // ── States ───────────────────────────────────────────────────────────────────
 sealed class CajaState {}
@@ -51,6 +62,7 @@ class CajaAbierta extends CajaState { final SesionCaja sesion; CajaAbierta(this.
 class CajaCerrada extends CajaState { final SesionCaja sesion; CajaCerrada(this.sesion); }
 class CajaMovimientoRegistrado extends CajaState { final MovimientoCaja movimiento; CajaMovimientoRegistrado(this.movimiento); }
 class CajaMovimientoEliminado extends CajaState {}
+class CajaMovimientoActualizado extends CajaState {}
 class CajaError extends CajaState { final String message; CajaError(this.message); }
 
 // ── BLoC ─────────────────────────────────────────────────────────────────────
@@ -66,6 +78,7 @@ class CajaBloc extends Bloc<CajaEvent, CajaState> {
     on<CajaCerrar>(_onCerrar);
     on<CajaRegistrarMovimiento>(_onRegistrarMovimiento);
     on<CajaEliminarMovimiento>(_onEliminarMovimiento);
+    on<CajaActualizarMovimiento>(_onActualizarMovimiento);
   }
 
   Future<void> _onLoad(CajaLoad e, Emitter<CajaState> emit) async {
@@ -139,6 +152,26 @@ class CajaBloc extends Bloc<CajaEvent, CajaState> {
     try {
       await _ds.eliminarMovimiento(e.movimientoId);
       emit(CajaMovimientoEliminado());
+    } on ApiException catch (ex) {
+      emit(CajaError(ex.message));
+    }
+  }
+
+  Future<void> _onActualizarMovimiento(CajaActualizarMovimiento e, Emitter<CajaState> emit) async {
+    emit(CajaSaving());
+    try {
+      await _ds.actualizarMovimiento(
+        e.movimientoId,
+        tipo: e.tipo,
+        concepto: e.concepto,
+        referencia: e.referencia,
+        tipoPago: e.tipoPago,
+        numeroOperacion: e.numeroOperacion,
+        codigoBanco: e.codigoBanco,
+        monto: e.monto,
+        fecha: e.fecha,
+      );
+      emit(CajaMovimientoActualizado());
     } on ApiException catch (ex) {
       emit(CajaError(ex.message));
     }

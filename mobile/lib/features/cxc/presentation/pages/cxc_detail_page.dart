@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/utils/fecha_hora_util.dart';
 import '../../data/datasources/cxc_remote_datasource.dart';
 import '../../domain/entities/cuenta_cobrar.dart';
 import '../bloc/cxc_bloc.dart';
@@ -47,6 +48,10 @@ class _View extends StatelessWidget {
             ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Cobro eliminado'), backgroundColor: Colors.green));
             ctx.read<CxCBloc>().add(CxCLoadDetail(cxcId));
           }
+          if (s is CxCCobroActualizado) {
+            ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Cobro actualizado'), backgroundColor: Colors.green));
+            ctx.read<CxCBloc>().add(CxCLoadDetail(cxcId));
+          }
         },
         builder: (ctx, s) {
           if (s is CxCLoading || s is CxCSaving) return const Center(child: CircularProgressIndicator());
@@ -75,6 +80,10 @@ class _View extends StatelessWidget {
               trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('S/ ${c.monto.toStringAsFixed(2)}',
                   style: const TextStyle(fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue),
+                  onPressed: () => _showEditarCobroDialog(ctx, c),
+                ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () => _confirmEliminarCobro(ctx, c.id),
@@ -166,7 +175,7 @@ class _View extends StatelessWidget {
     List<Banco> bancos = [];
     Banco? bancoSeleccionado;
     bool fetched = false;
-    DateTime fecha   = DateTime.now();
+    DateTime fecha   = FechaHoraUtil.ahora();
 
     showDialog(context: ctx, builder: (dctx) => StatefulBuilder(builder: (dctx, setSt) {
       if (!fetched) {
@@ -223,10 +232,10 @@ class _View extends StatelessWidget {
         const SizedBox(height: 8),
         ListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text('Fecha: ${fecha.toIso8601String().substring(0, 10)}'),
+          title: Text('Fecha: ${FechaHoraUtil.formatoCorto(fecha)}'),
           trailing: const Icon(Icons.calendar_today),
           onTap: () async {
-            final d = await showDatePicker(context: dctx, initialDate: fecha, firstDate: DateTime(2020), lastDate: DateTime.now());
+            final d = await showDatePicker(context: dctx, initialDate: fecha, firstDate: DateTime(2020), lastDate: FechaHoraUtil.ahora());
             if (d != null) setSt(() => fecha = d);
           },
         ),
@@ -241,7 +250,7 @@ class _View extends StatelessWidget {
             ctx.read<CxCBloc>().add(CxCRegistrarCobro(
               cuentaCobrarId: cxc.id,
               numeroRecibo: reciboCtrl.text.trim(),
-              fecha: fecha.toIso8601String().substring(0, 10),
+              fecha: FechaHoraUtil.iso(fecha),
               tipoPago: tipoPagoSeleccionado!.descripcion,
               monto: m,
               numeroOperacion: operCtrl.text.isNotEmpty ? operCtrl.text.trim() : null,
@@ -252,6 +261,106 @@ class _View extends StatelessWidget {
         ),
       ],
     );}));
+  }
+
+  void _showEditarCobroDialog(BuildContext ctx, Cobro c) {
+    final montoCtrl = TextEditingController(text: c.monto.toStringAsFixed(2));
+    final operCtrl  = TextEditingController(text: c.numeroOperacion ?? '');
+    List<TipoPago> tiposPago = [];
+    TipoPago? tipoPagoSeleccionado;
+    List<Banco> bancos = [];
+    Banco? bancoSeleccionado;
+    bool fetched = false;
+    DateTime fecha = DateTime.parse(c.fecha);
+
+    showDialog(context: ctx, builder: (dctx) => StatefulBuilder(builder: (dctx, setSt) {
+      if (!fetched) {
+        fetched = true;
+        getIt<TablasRemoteDataSource>().list('tipos-pago', activo: true).then((raw) {
+          setSt(() {
+            tiposPago = raw.map(TablaModel.tipoPagoFromJson).toList()
+              ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase()));
+            final matches = tiposPago.where((t) => t.descripcion == c.tipoPago);
+            tipoPagoSeleccionado = matches.isEmpty ? null : matches.first;
+          });
+        }).catchError((_) {});
+        getIt<TablasRemoteDataSource>().list('bancos', activo: true).then((raw) {
+          setSt(() {
+            bancos = raw.map(TablaModel.bancoFromJson).toList()
+              ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase()));
+            final matches = bancos.where((b) => b.codigo == c.codigoBanco);
+            bancoSeleccionado = matches.isEmpty ? null : matches.first;
+          });
+        }).catchError((_) {});
+      }
+      return AlertDialog(
+        title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text('Editar Cobro ${c.numeroRecibo}'),
+          IconButton(
+            icon: const Icon(Icons.close),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () => Navigator.pop(dctx),
+          ),
+        ]),
+        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          NumberFormField(controller: montoCtrl, decoration: const InputDecoration(labelText: 'Monto')),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<TipoPago>(
+            initialValue: tipoPagoSeleccionado,
+            decoration: const InputDecoration(labelText: 'Tipo Pago'),
+            items: tiposPago.map((t) => DropdownMenuItem(value: t, child: Text(t.descripcion))).toList(),
+            onChanged: (v) => setSt(() {
+              tipoPagoSeleccionado = v;
+              operCtrl.clear();
+              bancoSeleccionado = null;
+            }),
+          ),
+          if (tipoPagoSeleccionado?.requiereBanco == true) ...[
+            const SizedBox(height: 8),
+            DropdownButtonFormField<Banco>(
+              initialValue: bancoSeleccionado,
+              decoration: const InputDecoration(labelText: 'Banco'),
+              items: bancos.map((b) => DropdownMenuItem(value: b, child: Text(b.descripcion))).toList(),
+              onChanged: (v) => setSt(() => bancoSeleccionado = v),
+            ),
+          ],
+          if (tipoPagoSeleccionado?.requiereOperacion == true) ...[
+            const SizedBox(height: 8),
+            TextField(controller: operCtrl, decoration: const InputDecoration(labelText: 'N° Operación')),
+          ],
+          const SizedBox(height: 8),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text('Fecha: ${FechaHoraUtil.formatoCorto(fecha)}'),
+            trailing: const Icon(Icons.calendar_today),
+            onTap: () async {
+              final d = await showDatePicker(context: dctx, initialDate: fecha, firstDate: DateTime(2020), lastDate: FechaHoraUtil.ahora());
+              if (d != null) setSt(() => fecha = d);
+            },
+          ),
+        ])),
+        actions: [
+          OutlinedButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () {
+              final m = double.tryParse(montoCtrl.text);
+              if (m == null || m <= 0 || tipoPagoSeleccionado == null) return;
+              Navigator.pop(dctx);
+              ctx.read<CxCBloc>().add(CxCActualizarCobro(
+                cobroId: c.id,
+                monto: m,
+                fecha: FechaHoraUtil.iso(fecha),
+                tipoPago: tipoPagoSeleccionado!.descripcion,
+                numeroOperacion: operCtrl.text.isNotEmpty ? operCtrl.text.trim() : null,
+                codigoBanco: bancoSeleccionado?.codigo,
+              ));
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      );
+    }));
   }
 
   void _showRenovarDialog(BuildContext ctx, CuentaCobrar cxc) {

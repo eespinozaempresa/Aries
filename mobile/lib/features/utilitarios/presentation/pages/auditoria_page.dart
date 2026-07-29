@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/utils/fecha_hora_util.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 
 class AuditoriaPage extends StatefulWidget {
@@ -17,8 +17,6 @@ class _AuditoriaPageState extends State<AuditoriaPage> {
   List<Map<String, dynamic>> _entries = [];
   bool _loading = false;
   String? _error;
-
-  static final _fmt = DateFormat('dd/MM/yyyy HH:mm');
 
   @override
   void initState() {
@@ -52,7 +50,7 @@ class _AuditoriaPageState extends State<AuditoriaPage> {
   String _formatFecha(String? raw) {
     if (raw == null || raw.isEmpty) return '';
     try {
-      return _fmt.format(DateTime.parse(raw).toLocal());
+      return FechaHoraUtil.formatearFechaHora(raw);
     } catch (_) {
       return raw;
     }

@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { ICxCRepository, CxCFilter, RegistrarCobroData, RenovarCxCData } from '../../domain/ports/cxc.repository.port';
+import { ICxCRepository, CxCFilter, RegistrarCobroData, RenovarCxCData, ActualizarCobroData } from '../../domain/ports/cxc.repository.port';
 
 export class ListCxCUseCase {
   constructor(@Inject(ICxCRepository) private readonly repo: ICxCRepository) {}
@@ -24,6 +24,13 @@ export class GetCobrosUseCase {
 export class EliminarCobroUseCase {
   constructor(@Inject(ICxCRepository) private readonly repo: ICxCRepository) {}
   execute(codigoEmpresa: string, cobroId: string) { return this.repo.eliminarCobro(codigoEmpresa, cobroId); }
+}
+
+export class ActualizarCobroUseCase {
+  constructor(@Inject(ICxCRepository) private readonly repo: ICxCRepository) {}
+  execute(codigoEmpresa: string, cobroId: string, data: ActualizarCobroData) {
+    return this.repo.actualizarCobro(codigoEmpresa, cobroId, data);
+  }
 }
 
 export class RenovarCxCUseCase {

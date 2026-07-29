@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/utils/fecha_hora_util.dart';
 import '../../../maestros/domain/repositories/articulo_repository.dart';
 import '../../../maestros/domain/repositories/almacen_repository.dart' as maestro_alm;
 import '../../../maestros/domain/entities/articulo.dart';
@@ -69,7 +70,7 @@ class _MovimientoFormState extends State<_MovimientoForm> {
   TipoMovimiento _tipo = TipoMovimiento.INGRESO;
   List<Documento> _documentos = [];
   Documento? _documento;
-  String _fecha = DateTime.now().toIso8601String().substring(0, 10);
+  String _fecha = FechaHoraUtil.fechaHoyIso();
   String? _almacenOrigen;
   String? _almacenOrigenNombre;
   String? _almacenDest;
@@ -149,36 +150,51 @@ class _MovimientoFormState extends State<_MovimientoForm> {
     }
   }
 
-  Future<void> _addLinea() async {
-    if (_controlStockSalidas == 'SI' && _esOperacionSalida && _almacenOrigen == null) {
+  Future<void> _addLinea({int? editIndex}) async {
+    final editing = editIndex != null;
+    final existente = editing ? _lineas[editIndex] : null;
+
+    if (!editing && _controlStockSalidas == 'SI' && _esOperacionSalida && _almacenOrigen == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Seleccione el almacén origen antes de agregar artículos')),
       );
       return;
     }
 
-    final repo = getIt<ArticuloRepository>();
-    final art = await MaestroPicker.show<Articulo>(
-      context,
-      title: 'Seleccionar artículo',
-      onSearch: (q) async {
-        final res = await repo.search(q: q, page: 1);
-        return res.fold((_) => [], (page) => page.data);
-      },
-      itemTitle: (a) => a.descripcion,
-    );
-    if (art == null || !mounted) return;
+    String codigo;
+    String descripcion;
+    double precioSugerido;
+    if (existente != null) {
+      codigo = existente.codigoArticulo;
+      descripcion = existente.descripcionArticulo;
+      precioSugerido = existente.precioUnitario;
+    } else {
+      final repo = getIt<ArticuloRepository>();
+      final art = await MaestroPicker.show<Articulo>(
+        context,
+        title: 'Seleccionar artículo',
+        onSearch: (q) async {
+          final res = await repo.search(q: q, page: 1);
+          return res.fold((_) => [], (page) => page.data);
+        },
+        itemTitle: (a) => a.descripcion,
+      );
+      if (art == null || !mounted) return;
+      codigo = art.codigo;
+      descripcion = art.descripcion;
+      precioSugerido = art.precioCompraBase;
+    }
 
     // Pedir cantidad y precio
-    final qtyCtrl   = TextEditingController(text: '1');
-    final priceCtrl = TextEditingController(text: art.precioCompraBase.toStringAsFixed(4));
+    final qtyCtrl   = TextEditingController(text: existente?.cantidad.toString() ?? '1');
+    final priceCtrl = TextEditingController(text: precioSugerido.toStringAsFixed(4));
     String? stockError;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setLocalState) => AlertDialog(
-          title: Text(art.descripcion),
+          title: Text(descripcion),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
             NumberFormField(controller: qtyCtrl,
                 decoration: const InputDecoration(labelText: 'Cantidad')),
@@ -210,11 +226,12 @@ class _MovimientoFormState extends State<_MovimientoForm> {
                 }
                 if (_controlStockSalidas == 'SI' && _esOperacionSalida && _almacenOrigen != null) {
                   final yaEnCola = _lineas
-                      .where((l) => l.codigoArticulo == art.codigo)
-                      .fold<double>(0, (s, l) => s + l.cantidad);
+                      .asMap().entries
+                      .where((e) => e.key != editIndex && e.value.codigoArticulo == codigo)
+                      .fold<double>(0, (s, e) => s + e.value.cantidad);
                   final res = await getIt<MovimientoRepository>().getStock(
                     codigosAlmacen: [_almacenOrigen!],
-                    codigosArticulo: [art.codigo],
+                    codigosArticulo: [codigo],
                   );
                   final stockActual = res.fold(
                     (_) => 0.0,
@@ -234,7 +251,7 @@ class _MovimientoFormState extends State<_MovimientoForm> {
                 }
                 if (context.mounted) Navigator.pop(context, true);
               },
-              child: const Text('Agregar'),
+              child: Text(editing ? 'Guardar' : 'Agregar'),
             ),
           ],
         ),
@@ -243,12 +260,17 @@ class _MovimientoFormState extends State<_MovimientoForm> {
 
     if (confirmed == true) {
       setState(() {
-        _lineas.add(_LineaEntry(
-          codigoArticulo: art.codigo,
-          descripcionArticulo: art.descripcion,
+        final linea = _LineaEntry(
+          codigoArticulo: codigo,
+          descripcionArticulo: descripcion,
           cantidad: double.tryParse(qtyCtrl.text) ?? 1,
           precioUnitario: double.tryParse(priceCtrl.text) ?? 0,
-        ));
+        );
+        if (editing) {
+          _lineas[editIndex] = linea;
+        } else {
+          _lineas.add(linea);
+        }
       });
     }
   }
@@ -341,16 +363,16 @@ class _MovimientoFormState extends State<_MovimientoForm> {
                   // Fecha
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text('Fecha: $_fecha'),
+                    title: Text('Fecha: ${FechaHoraUtil.formatearFecha(_fecha)}'),
                     trailing: const Icon(Icons.calendar_today),
                     onTap: () async {
                       final d = await showDatePicker(
                         context: context,
                         initialDate: DateTime.parse(_fecha),
                         firstDate: DateTime(2000),
-                        lastDate: DateTime.now(),
+                        lastDate: FechaHoraUtil.ahora(),
                       );
-                      if (d != null) setState(() => _fecha = d.toIso8601String().substring(0, 10));
+                      if (d != null) setState(() => _fecha = FechaHoraUtil.iso(d));
                     },
                   ),
                   const Divider(),
@@ -403,10 +425,16 @@ class _MovimientoFormState extends State<_MovimientoForm> {
                       dense: true,
                       title: Text(l.descripcionArticulo),
                       subtitle: Text('${l.cantidad} × ${l.precioUnitario.toStringAsFixed(4)} = S/ ${l.importe.toStringAsFixed(2)}'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.remove_circle, color: Colors.red),
-                        onPressed: () => setState(() => _lineas.removeAt(i)),
-                      ),
+                      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => _addLinea(editIndex: i),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle, color: Colors.red),
+                          onPressed: () => setState(() => _lineas.removeAt(i)),
+                        ),
+                      ]),
                     );
                   }),
 

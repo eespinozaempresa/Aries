@@ -47,6 +47,17 @@ export interface ReporteCaja {
   saldoFinal: number;
 }
 
+export interface ActualizarMovCajaData {
+  tipo?: 'INGRESO' | 'EGRESO';
+  concepto?: string;
+  referencia?: string;
+  tipoPago?: string;
+  numeroOperacion?: string;
+  codigoBanco?: string;
+  monto?: number;
+  fecha?: string;
+}
+
 export abstract class ICajaRepository {
   abstract list(filter: CajaFilter): Promise<CajaListResult>;
   abstract findById(id: string, codigoEmpresa: string): Promise<SesionCaja | null>;
@@ -54,6 +65,7 @@ export abstract class ICajaRepository {
   abstract cerrar(codigoEmpresa: string, data: CerrarCajaData): Promise<SesionCaja>;
   abstract registrarMovimiento(codigoEmpresa: string, data: RegistrarMovCajaData): Promise<MovimientoCaja>;
   abstract eliminarMovimiento(codigoEmpresa: string, movimientoId: string): Promise<ReporteCaja>;
+  abstract actualizarMovimiento(codigoEmpresa: string, movimientoId: string, data: ActualizarMovCajaData): Promise<ReporteCaja>;
   abstract getMovimientos(codigoEmpresa: string, sesionCajaId: string): Promise<MovimientoCaja[]>;
   abstract reporte(codigoEmpresa: string, sesionCajaId: string): Promise<ReporteCaja>;
 }

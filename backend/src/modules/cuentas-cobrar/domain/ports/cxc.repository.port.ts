@@ -41,11 +41,20 @@ export interface RenovarCxCData {
   codigoUsuario: string;
 }
 
+export interface ActualizarCobroData {
+  monto?: number;
+  fecha?: string;
+  tipoPago?: string;
+  numeroOperacion?: string;
+  codigoBanco?: string;
+}
+
 export abstract class ICxCRepository {
   abstract list(filter: CxCFilter): Promise<CxCListResult>;
   abstract findById(id: string, codigoEmpresa: string): Promise<CuentaCobrar | null>;
   abstract registrarCobro(codigoEmpresa: string, data: RegistrarCobroData): Promise<Cobro>;
   abstract getCobros(codigoEmpresa: string, cuentaCobrarId: string): Promise<Cobro[]>;
   abstract eliminarCobro(codigoEmpresa: string, cobroId: string): Promise<CuentaCobrar>;
+  abstract actualizarCobro(codigoEmpresa: string, cobroId: string, data: ActualizarCobroData): Promise<CuentaCobrar>;
   abstract renovar(codigoEmpresa: string, data: RenovarCxCData): Promise<CuentaCobrar[]>;
 }

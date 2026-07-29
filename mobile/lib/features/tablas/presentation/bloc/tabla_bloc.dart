@@ -1,3 +1,4 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/datasources/tablas_remote_datasource.dart';
@@ -57,5 +58,17 @@ class TablaBloc<T extends TablaBase> extends Bloc<TablaEvent, TablaState> {
       await _ds.delete(_path, event.id);
       emit(TablaDeleted());
     } on ApiException catch (e) { emit(TablaError(e.message)); }
+  }
+
+  /// Elimina directamente sin pasar por eventos/emit, para que el llamador
+  /// (p. ej. confirmAndDelete) pueda esperar el resultado antes de cerrar
+  /// el formulario, en vez de cerrarlo antes de que el borrado resuelva.
+  Future<Either<ApiException, void>> deleteItem(String id) async {
+    try {
+      await _ds.delete(_path, id);
+      return const Right(null);
+    } on ApiException catch (e) {
+      return Left(e);
+    }
   }
 }

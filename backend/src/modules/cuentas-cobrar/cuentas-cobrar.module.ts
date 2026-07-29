@@ -5,7 +5,7 @@ import { ICxCRepository } from './domain/ports/cxc.repository.port';
 import { SupabaseCxCRepository } from './infrastructure/repositories/supabase-cxc.repository';
 import {
   ListCxCUseCase, FindCxCUseCase,
-  RegistrarCobroUseCase, GetCobrosUseCase, EliminarCobroUseCase, RenovarCxCUseCase,
+  RegistrarCobroUseCase, GetCobrosUseCase, EliminarCobroUseCase, ActualizarCobroUseCase, RenovarCxCUseCase,
 } from './application/use-cases/cxc.use-cases';
 import { CxCController } from './infrastructure/controllers/cxc.controller';
 
@@ -37,6 +37,11 @@ import { CxCController } from './infrastructure/controllers/cxc.controller';
     {
       provide: EliminarCobroUseCase,
       useFactory: (r: ICxCRepository) => new EliminarCobroUseCase(r),
+      inject: [ICxCRepository],
+    },
+    {
+      provide: ActualizarCobroUseCase,
+      useFactory: (r: ICxCRepository) => new ActualizarCobroUseCase(r),
       inject: [ICxCRepository],
     },
     {

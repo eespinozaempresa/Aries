@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../constants/api_constants.dart';
 import '../di/injection.dart';
 import '../services/menu_permission_service.dart';
+import '../utils/fecha_hora_util.dart';
 import '../../features/auth/domain/entities/usuario.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/seleccionar_empresa/seleccionar_empresa_args.dart';
@@ -72,7 +73,7 @@ class AriesAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Future<void> _showUserMenu(BuildContext context) async {
     final usuario = await getIt<AuthRepository>().getCachedUsuario();
-    final now = DateTime.now();
+    final now = FechaHoraUtil.ahora();
     if (!context.mounted) return;
     await showDialog<void>(
       context: context,
@@ -92,6 +93,9 @@ class AriesAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             _InfoRow('Usuario', usuario?.codigo ?? '-'),
             _InfoRow('Nombre', usuario?.nombre ?? '-'),
+            // 'now' ya viene ajustado a hora de Lima (FechaHoraUtil.ahora());
+            // formatear directo, sin pasar de nuevo por formatearFecha/formatearFechaHora
+            // (que asumen un valor UTC crudo y duplicarían el corrimiento de horas).
             _InfoRow('Fecha', DateFormat('dd/MM/yyyy').format(now)),
             _InfoRow('Hora', DateFormat('HH:mm:ss').format(now)),
             const Divider(height: 24),

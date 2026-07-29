@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/utils/fecha_hora_util.dart';
 import '../../../maestros/domain/repositories/cliente_repository.dart';
 import '../../../maestros/domain/repositories/articulo_repository.dart';
 import '../../../maestros/domain/repositories/almacen_repository.dart' as maestro;
@@ -60,7 +61,7 @@ class _FormState extends State<_Form> {
 
   List<Documento> _documentos = [];
   Documento? _documento;
-  String _fecha  = DateTime.now().toIso8601String().substring(0, 10);
+  String _fecha  = FechaHoraUtil.fechaHoyIso();
   TipoVenta _tipo = TipoVenta.CONTADO;
   int _plazo      = 30;
   String _moneda  = 'PEN';
@@ -166,45 +167,59 @@ class _FormState extends State<_Form> {
     }
   }
 
-  Future<void> _addLinea() async {
-    if (_controlStockSalidas == 'SI' && _almacen == null) {
+  Future<void> _addLinea({int? editIndex}) async {
+    final editing = editIndex != null;
+    final existente = editing ? _lineas[editIndex] : null;
+
+    if (!editing && _controlStockSalidas == 'SI' && _almacen == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Seleccione el almacén antes de agregar artículos')),
       );
       return;
     }
 
-    final art = await MaestroPicker.show<Articulo>(context,
-      title: 'Artículo', onSearch: (q) async {
-        final res = await getIt<ArticuloRepository>().search(q: q, activo: true, page: 1);
-        return res.fold((_) => [], (p) => p.data);
-      }, itemTitle: (a) => a.descripcion);
-    if (art == null || !mounted) return;
+    String codigo;
+    String descripcion;
+    double precioSugerido;
+    if (existente != null) {
+      codigo = existente.codigo;
+      descripcion = existente.descripcion;
+      precioSugerido = existente.precio;
+    } else {
+      final art = await MaestroPicker.show<Articulo>(context,
+        title: 'Artículo', onSearch: (q) async {
+          final res = await getIt<ArticuloRepository>().search(q: q, activo: true, page: 1);
+          return res.fold((_) => [], (p) => p.data);
+        }, itemTitle: (a) => a.descripcion);
+      if (art == null || !mounted) return;
+      codigo = art.codigo;
+      descripcion = art.descripcion;
 
-    double precioSugerido = art.precioVentaBase > 0 ? art.precioVentaBase : art.precioVenta;
-    // Si moneda es USD, convertir precio sugerido
-    if (_moneda == 'USD' && _tipoCambio > 0) {
-      precioSugerido = precioSugerido / _tipoCambio;
+      precioSugerido = art.precioVentaBase > 0 ? art.precioVentaBase : art.precioVenta;
+      // Si moneda es USD, convertir precio sugerido
+      if (_moneda == 'USD' && _tipoCambio > 0) {
+        precioSugerido = precioSugerido / _tipoCambio;
+      }
+
+      if (_clienteTipoLista != null) {
+        try {
+          final lp = await getIt<MaestrosRemoteDataSource>()
+              .getPrecioParaCliente(art.id, _clienteTipoLista!);
+          if (lp != null && lp.precioVenta > 0) {
+            precioSugerido = _moneda == 'USD' ? lp.precioVenta / _tipoCambio : lp.precioVenta;
+          }
+        } catch (_) {}
+      }
     }
 
-    if (_clienteTipoLista != null) {
-      try {
-        final lp = await getIt<MaestrosRemoteDataSource>()
-            .getPrecioParaCliente(art.id, _clienteTipoLista!);
-        if (lp != null && lp.precioVenta > 0) {
-          precioSugerido = _moneda == 'USD' ? lp.precioVenta / _tipoCambio : lp.precioVenta;
-        }
-      } catch (_) {}
-    }
-
-    final qCtrl   = TextEditingController(text: '1');
+    final qCtrl   = TextEditingController(text: existente?.cantidad.toString() ?? '1');
     final pCtrl   = TextEditingController(text: precioSugerido.toStringAsFixed(4));
-    final dscCtrl = TextEditingController(text: '0');
+    final dscCtrl = TextEditingController(text: existente?.descPct.toString() ?? '0');
     String? stockError;
     if (!mounted) return;
     final ok = await showDialog<bool>(context: context, builder: (_) => StatefulBuilder(
       builder: (context, setLocalState) => AlertDialog(
-        title: Text(art.descripcion),
+        title: Text(descripcion),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           NumberFormField(controller: qCtrl,
               decoration: const InputDecoration(labelText: 'Cantidad')),
@@ -239,11 +254,12 @@ class _FormState extends State<_Form> {
               }
               if (_controlStockSalidas == 'SI' && _almacen != null) {
                 final yaEnCola = _lineas
-                    .where((l) => l.codigo == art.codigo)
-                    .fold<double>(0, (s, l) => s + l.cantidad);
+                    .asMap().entries
+                    .where((e) => e.key != editIndex && e.value.codigo == codigo)
+                    .fold<double>(0, (s, e) => s + e.value.cantidad);
                 final res = await getIt<MovimientoRepository>().getStock(
                   codigosAlmacen: [_almacen!],
-                  codigosArticulo: [art.codigo],
+                  codigosArticulo: [codigo],
                 );
                 final stockActual = res.fold(
                   (_) => 0.0,
@@ -263,18 +279,25 @@ class _FormState extends State<_Form> {
               }
               if (context.mounted) Navigator.pop(context, true);
             },
-            child: const Text('Agregar'),
+            child: Text(editing ? 'Guardar' : 'Agregar'),
           ),
         ],
       ),
     ));
     if (ok == true) {
-      setState(() => _lineas.add(_Linea(
-        codigo: art.codigo, descripcion: art.descripcion,
-        cantidad: double.tryParse(qCtrl.text) ?? 1,
-        precio:   double.tryParse(pCtrl.text) ?? 0,
-        descPct:  double.tryParse(dscCtrl.text) ?? 0,
-      )));
+      setState(() {
+        final linea = _Linea(
+          codigo: codigo, descripcion: descripcion,
+          cantidad: double.tryParse(qCtrl.text) ?? 1,
+          precio:   double.tryParse(pCtrl.text) ?? 0,
+          descPct:  double.tryParse(dscCtrl.text) ?? 0,
+        );
+        if (editing) {
+          _lineas[editIndex] = linea;
+        } else {
+          _lineas.add(linea);
+        }
+      });
     }
   }
 
@@ -353,16 +376,16 @@ class _FormState extends State<_Form> {
               // Fecha
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text('Fecha: $_fecha'),
+                title: Text('Fecha: ${FechaHoraUtil.formatearFecha(_fecha)}'),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
                   final d = await showDatePicker(
                       context: context,
                       initialDate: DateTime.parse(_fecha),
                       firstDate: DateTime(2000),
-                      lastDate: DateTime.now());
+                      lastDate: FechaHoraUtil.ahora());
                   if (d != null) {
-                    setState(() => _fecha = d.toIso8601String().substring(0, 10));
+                    setState(() => _fecha = FechaHoraUtil.iso(d));
                     await _fetchTipoCambio();
                   }
                 },
@@ -431,9 +454,14 @@ class _FormState extends State<_Form> {
                   '${e.value.descPct > 0 ? " (-${e.value.descPct}%)" : ""}'
                   ' = $currLabel ${e.value.importe.toStringAsFixed(2)}',
                 ),
-                trailing: IconButton(
-                    icon: const Icon(Icons.remove_circle, color: Colors.red),
-                    onPressed: () => setState(() => _lineas.removeAt(e.key))),
+                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                  IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () => _addLinea(editIndex: e.key)),
+                  IconButton(
+                      icon: const Icon(Icons.remove_circle, color: Colors.red),
+                      onPressed: () => setState(() => _lineas.removeAt(e.key))),
+                ]),
               )),
               const Divider(),
               // Totales en la moneda seleccionada

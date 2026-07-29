@@ -1,14 +1,14 @@
 import {
-  Controller, Get, Post, Delete, Param, Body, Query,
+  Controller, Get, Post, Patch, Delete, Param, Body, Query,
   UseGuards, Request, ParseBoolPipe, ParseIntPipe,
   Optional,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
 import {
   ListCxCUseCase, FindCxCUseCase,
-  RegistrarCobroUseCase, GetCobrosUseCase, EliminarCobroUseCase, RenovarCxCUseCase,
+  RegistrarCobroUseCase, GetCobrosUseCase, EliminarCobroUseCase, ActualizarCobroUseCase, RenovarCxCUseCase,
 } from '../../application/use-cases/cxc.use-cases';
-import { RegistrarCobroDto, RenovarCxCDto } from '../dto/cxc.dto';
+import { RegistrarCobroDto, ActualizarCobroDto, RenovarCxCDto } from '../dto/cxc.dto';
 
 @UseGuards(AuthGuard)
 @Controller('cxc')
@@ -19,6 +19,7 @@ export class CxCController {
     private readonly registrarCobroUC: RegistrarCobroUseCase,
     private readonly getCobrosUC: GetCobrosUseCase,
     private readonly eliminarCobroUC: EliminarCobroUseCase,
+    private readonly actualizarCobroUC: ActualizarCobroUseCase,
     private readonly renovarUC: RenovarCxCUseCase,
   ) {}
 
@@ -65,6 +66,11 @@ export class CxCController {
   @Delete('cobros/:id')
   eliminarCobro(@Param('id') id: string, @Request() req: any) {
     return this.eliminarCobroUC.execute(req.user.empresa, id);
+  }
+
+  @Patch('cobros/:id')
+  actualizarCobro(@Param('id') id: string, @Body() dto: ActualizarCobroDto, @Request() req: any) {
+    return this.actualizarCobroUC.execute(req.user.empresa, id, dto);
   }
 
   @Post(':id/renovar')

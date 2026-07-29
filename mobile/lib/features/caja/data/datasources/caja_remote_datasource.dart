@@ -90,4 +90,32 @@ class CajaRemoteDataSource {
       throw ApiException.fromDioError(e);
     }
   }
+
+  Future<Map<String, dynamic>> actualizarMovimiento(
+    String id, {
+    String? tipo,
+    String? concepto,
+    String? referencia,
+    String? tipoPago,
+    String? numeroOperacion,
+    String? codigoBanco,
+    double? monto,
+    String? fecha,
+  }) async {
+    try {
+      final r = await _dio.patch('/caja/movimientos/$id', data: {
+        if (tipo != null) 'tipo': tipo,
+        if (concepto != null) 'concepto': concepto,
+        if (referencia != null) 'referencia': referencia,
+        if (tipoPago != null) 'tipoPago': tipoPago,
+        if (numeroOperacion != null) 'numeroOperacion': numeroOperacion,
+        if (codigoBanco != null) 'codigoBanco': codigoBanco,
+        if (monto != null) 'monto': monto,
+        if (fecha != null) 'fecha': fecha,
+      });
+      return r.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
 }

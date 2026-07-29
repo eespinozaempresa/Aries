@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException, BadRequestException, Conflict
 import { SupabaseService } from '../../../../shared/infrastructure/supabase/supabase.service';
 import {
   ICajaRepository, CajaFilter, CajaListResult,
-  AbrirCajaData, CerrarCajaData, RegistrarMovCajaData, ReporteCaja,
+  AbrirCajaData, CerrarCajaData, RegistrarMovCajaData, ActualizarMovCajaData, ReporteCaja,
 } from '../../domain/ports/caja.repository.port';
 import { SesionCaja, MovimientoCaja } from '../../domain/entities/caja.entity';
 
@@ -122,6 +122,36 @@ export class SupabaseCajaRepository implements ICajaRepository {
       .from('movimientos_caja').delete()
       .eq('id', movimientoId).eq('codigo_empresa', codigoEmpresa);
     if (delErr) throw new InternalServerErrorException(delErr.message);
+
+    return this.reporte(codigoEmpresa, sesionCajaId);
+  }
+
+  async actualizarMovimiento(codigoEmpresa: string, movimientoId: string, d: ActualizarMovCajaData): Promise<ReporteCaja> {
+    const { data: row, error: findErr } = await this.supabase.db
+      .from('movimientos_caja')
+      .select('id, sesion_caja_id')
+      .eq('id', movimientoId)
+      .eq('codigo_empresa', codigoEmpresa)
+      .maybeSingle();
+    if (findErr) throw new InternalServerErrorException(findErr.message);
+    if (!row) throw new NotFoundException('Movimiento no encontrado');
+
+    const sesionCajaId = row.sesion_caja_id as string;
+    const sesion = await this.findById(sesionCajaId, codigoEmpresa);
+    if (!sesion) throw new BadRequestException('Sesión de caja no encontrada');
+    if (sesion.estado === 'CERRADA') throw new BadRequestException('La caja está cerrada');
+
+    const { error: updErr } = await this.supabase.db.from('movimientos_caja').update({
+      ...(d.tipo !== undefined ? { tipo: d.tipo } : {}),
+      ...(d.concepto !== undefined ? { concepto: d.concepto } : {}),
+      ...(d.referencia !== undefined ? { referencia: d.referencia } : {}),
+      ...(d.tipoPago !== undefined ? { tipo_pago: d.tipoPago } : {}),
+      ...(d.numeroOperacion !== undefined ? { numero_operacion: d.numeroOperacion } : {}),
+      ...(d.codigoBanco !== undefined ? { codigo_banco: d.codigoBanco } : {}),
+      ...(d.monto !== undefined ? { monto: d.monto } : {}),
+      ...(d.fecha !== undefined ? { fecha: d.fecha } : {}),
+    }).eq('id', movimientoId).eq('codigo_empresa', codigoEmpresa);
+    if (updErr) throw new InternalServerErrorException(updErr.message);
 
     return this.reporte(codigoEmpresa, sesionCajaId);
   }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/utils/export_service.dart';
+import '../../../../core/utils/fecha_hora_util.dart';
 import '../../data/datasources/cxp_remote_datasource.dart';
 import '../../domain/entities/cuenta_pagar.dart';
 import '../bloc/cxp_bloc.dart';
@@ -153,7 +154,7 @@ class _State extends State<CxPListPage> {
                 }
                 final cxp = items[i];
                 final vencida = cxp.fechaVencimiento != null &&
-                  DateTime.tryParse(cxp.fechaVencimiento!)?.isBefore(DateTime.now()) == true &&
+                  DateTime.tryParse(cxp.fechaVencimiento!)?.isBefore(FechaHoraUtil.ahora()) == true &&
                   cxp.pendiente;
                 return ListTile(
                   onTap: () async {
@@ -350,7 +351,7 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
     List<Banco> bancos = [];
     Banco? bancoSeleccionado;
     bool fetched = false;
-    DateTime fecha    = DateTime.now();
+    DateTime fecha    = FechaHoraUtil.ahora();
 
     showDialog(
       context: context,
@@ -411,14 +412,14 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
           const SizedBox(height: 8),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text('Fecha: ${fecha.toIso8601String().substring(0, 10)}'),
+            title: Text('Fecha: ${FechaHoraUtil.formatoCorto(fecha)}'),
             trailing: const Icon(Icons.calendar_today),
             onTap: () async {
               final d = await showDatePicker(
                 context: dctx,
                 initialDate: fecha,
                 firstDate: DateTime(2020),
-                lastDate: DateTime.now(),
+                lastDate: FechaHoraUtil.ahora(),
               );
               if (d != null) setSt(() => fecha = d);
             },
@@ -435,7 +436,7 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
               widget.bloc.add(CxPRegistrarPago(
                 cuentaPagarId: cxp.id,
                 numeroVoucher: voucherCtrl.text.trim(),
-                fecha: fecha.toIso8601String().substring(0, 10),
+                fecha: FechaHoraUtil.iso(fecha),
                 tipoPago: tipoPagoSeleccionado!.descripcion,
                 monto: m,
                 numeroOperacion:
@@ -507,7 +508,7 @@ class _ProveedorGroupState extends State<_ProveedorGroup> {
                 '${doc.abreviaturaDocumento ?? doc.codigoDocumento}-${doc.serieDocumento ?? '0001'}-${doc.numeroDocumento}';
             final vencida = doc.fechaVencimiento != null &&
                 DateTime.tryParse(doc.fechaVencimiento!)
-                    ?.isBefore(DateTime.now()) ==
+                    ?.isBefore(FechaHoraUtil.ahora()) ==
                     true;
             return InkWell(
               onTap: () => widget.onDocTap(doc),

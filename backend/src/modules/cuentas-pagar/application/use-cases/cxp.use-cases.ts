@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { ICxPRepository, CxPFilter, RegistrarPagoData, RenovarCxPData } from '../../domain/ports/cxp.repository.port';
+import { ICxPRepository, CxPFilter, RegistrarPagoData, RenovarCxPData, ActualizarPagoData } from '../../domain/ports/cxp.repository.port';
 
 export class ListCxPUseCase {
   constructor(@Inject(ICxPRepository) private readonly repo: ICxPRepository) {}
@@ -24,6 +24,13 @@ export class GetPagosUseCase {
 export class EliminarPagoUseCase {
   constructor(@Inject(ICxPRepository) private readonly repo: ICxPRepository) {}
   execute(codigoEmpresa: string, pagoId: string) { return this.repo.eliminarPago(codigoEmpresa, pagoId); }
+}
+
+export class ActualizarPagoUseCase {
+  constructor(@Inject(ICxPRepository) private readonly repo: ICxPRepository) {}
+  execute(codigoEmpresa: string, pagoId: string, data: ActualizarPagoData) {
+    return this.repo.actualizarPago(codigoEmpresa, pagoId, data);
+  }
 }
 
 export class RenovarCxPUseCase {

@@ -28,6 +28,15 @@ class CxCRenovar extends CxCEvent {
   CxCRenovar({required this.id, required this.cuotas});
 }
 class CxCEliminarCobro extends CxCEvent { final String cobroId; CxCEliminarCobro(this.cobroId); }
+class CxCActualizarCobro extends CxCEvent {
+  final String cobroId;
+  final double? monto;
+  final String? fecha, tipoPago, numeroOperacion, codigoBanco;
+  CxCActualizarCobro({
+    required this.cobroId, this.monto, this.fecha,
+    this.tipoPago, this.numeroOperacion, this.codigoBanco,
+  });
+}
 
 // ── States ───────────────────────────────────────────────────────────────────
 sealed class CxCState {}
@@ -47,6 +56,7 @@ class CxCSaving extends CxCState {}
 class CxCCobroRegistrado extends CxCState { final Cobro cobro; CxCCobroRegistrado(this.cobro); }
 class CxCRenovada extends CxCState { final List<CuentaCobrar> nuevas; CxCRenovada(this.nuevas); }
 class CxCCobroEliminado extends CxCState { final CuentaCobrar cxc; CxCCobroEliminado(this.cxc); }
+class CxCCobroActualizado extends CxCState { final CuentaCobrar cxc; CxCCobroActualizado(this.cxc); }
 class CxCError extends CxCState { final String message; CxCError(this.message); }
 
 // ── BLoC ─────────────────────────────────────────────────────────────────────
@@ -61,6 +71,7 @@ class CxCBloc extends Bloc<CxCEvent, CxCState> {
     on<CxCRegistrarCobro>(_onRegistrarCobro);
     on<CxCRenovar>(_onRenovar);
     on<CxCEliminarCobro>(_onEliminarCobro);
+    on<CxCActualizarCobro>(_onActualizarCobro);
   }
 
   Future<void> _onLoad(CxCLoad e, Emitter<CxCState> emit) async {
@@ -124,6 +135,23 @@ class CxCBloc extends Bloc<CxCEvent, CxCState> {
     try {
       final cxc = await _ds.eliminarCobro(e.cobroId);
       emit(CxCCobroEliminado(CuentaCobrar.fromJson(cxc)));
+    } on ApiException catch (ex) {
+      emit(CxCError(ex.message));
+    }
+  }
+
+  Future<void> _onActualizarCobro(CxCActualizarCobro e, Emitter<CxCState> emit) async {
+    emit(CxCSaving());
+    try {
+      final cxc = await _ds.actualizarCobro(
+        e.cobroId,
+        monto: e.monto,
+        fecha: e.fecha,
+        tipoPago: e.tipoPago,
+        numeroOperacion: e.numeroOperacion,
+        codigoBanco: e.codigoBanco,
+      );
+      emit(CxCCobroActualizado(CuentaCobrar.fromJson(cxc)));
     } on ApiException catch (ex) {
       emit(CxCError(ex.message));
     }

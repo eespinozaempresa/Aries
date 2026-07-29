@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/utils/export_service.dart';
+import '../../../../core/utils/fecha_hora_util.dart';
 import '../../../../features/tablas/data/datasources/tablas_remote_datasource.dart';
 import '../../../../features/tablas/data/models/tabla_model.dart';
 import '../../../../features/tablas/domain/entities/tabla_base.dart';
@@ -81,6 +82,10 @@ class _View extends StatelessWidget {
             ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Movimiento eliminado'), backgroundColor: Colors.green));
             ctx.read<CajaBloc>().add(CajaLoadReporte(sesionId));
           }
+          if (s is CajaMovimientoActualizado) {
+            ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Movimiento actualizado'), backgroundColor: Colors.green));
+            ctx.read<CajaBloc>().add(CajaLoadReporte(sesionId));
+          }
         },
         builder: (ctx, s) {
           if (s is CajaLoading || s is CajaSaving) return const Center(child: CircularProgressIndicator());
@@ -99,8 +104,8 @@ class _View extends StatelessWidget {
                 ),
               ]),
               const Divider(),
-              _row('Apertura', r.sesion.fechaApertura.substring(0, 16)),
-              if (r.sesion.fechaCierre != null) _row('Cierre', r.sesion.fechaCierre!.substring(0, 16)),
+              _row('Apertura', FechaHoraUtil.formatearFechaHora(r.sesion.fechaApertura)),
+              if (r.sesion.fechaCierre != null) _row('Cierre', FechaHoraUtil.formatearFechaHora(r.sesion.fechaCierre!)),
               _row('Monto apertura', 'S/ ${r.sesion.montoApertura.toStringAsFixed(2)}'),
               const Divider(),
               _row('Ingresos',  'S/ ${r.totalIngresos.toStringAsFixed(2)}', color: Colors.green),
@@ -118,7 +123,7 @@ class _View extends StatelessWidget {
               leading: Icon(m.tipo == TipoMovCaja.INGRESO ? Icons.arrow_downward : Icons.arrow_upward,
                 color: m.tipo == TipoMovCaja.INGRESO ? Colors.green : Colors.red, size: 20),
               title: Text(m.concepto),
-              subtitle: Text('${m.fecha}${m.tipoPago != null ? " • ${m.tipoPago}" : ""}${m.referencia != null ? " • ${m.referencia}" : ""}'),
+              subtitle: Text('${FechaHoraUtil.formatearFecha(m.fecha)}${m.tipoPago != null ? " • ${m.tipoPago}" : ""}${m.referencia != null ? " • ${m.referencia}" : ""}'),
               trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('S/ ${m.monto.toStringAsFixed(2)}',
                   style: TextStyle(
@@ -126,6 +131,13 @@ class _View extends StatelessWidget {
                     color: m.tipo == TipoMovCaja.INGRESO ? Colors.green : Colors.red,
                   )),
                 if (abierta) ...[
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () => _showMovDialog(ctx, r.sesion.id, existente: m),
+                  ),
                   const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 20, color: Colors.grey),
@@ -187,13 +199,14 @@ class _View extends StatelessWidget {
     );
   }
 
-  void _showMovDialog(BuildContext ctx, String sesionId) {
-    final conceptoCtrl = TextEditingController();
-    final montoCtrl    = TextEditingController();
-    final refCtrl      = TextEditingController();
-    final nroOpCtrl    = TextEditingController();
-    String tipo = 'INGRESO';
-    DateTime fecha = DateTime.now();
+  void _showMovDialog(BuildContext ctx, String sesionId, {MovimientoCaja? existente}) {
+    final editing = existente != null;
+    final conceptoCtrl = TextEditingController(text: existente?.concepto ?? '');
+    final montoCtrl    = TextEditingController(text: existente?.monto.toStringAsFixed(2) ?? '');
+    final refCtrl      = TextEditingController(text: existente?.referencia ?? '');
+    final nroOpCtrl    = TextEditingController(text: existente?.numeroOperacion ?? '');
+    String tipo = existente?.tipo.name ?? 'INGRESO';
+    DateTime fecha = existente != null ? DateTime.parse(existente.fecha) : FechaHoraUtil.ahora();
     List<TipoPago> tiposPago = [];
     TipoPago? tipoPagoSeleccionado;
     List<Banco> bancos = [];
@@ -204,17 +217,29 @@ class _View extends StatelessWidget {
       if (!_fetched) {
         _fetched = true;
         getIt<TablasRemoteDataSource>().list('tipos-pago', activo: true).then((raw) {
-          setSt(() => tiposPago = raw.map(TablaModel.tipoPagoFromJson).toList()
-            ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase())));
+          setSt(() {
+            tiposPago = raw.map(TablaModel.tipoPagoFromJson).toList()
+              ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase()));
+            if (existente?.tipoPago != null) {
+              final matches = tiposPago.where((t) => t.descripcion == existente!.tipoPago);
+              tipoPagoSeleccionado = matches.isEmpty ? null : matches.first;
+            }
+          });
         }).catchError((_) {});
         getIt<TablasRemoteDataSource>().list('bancos', activo: true).then((raw) {
-          setSt(() => bancos = raw.map(TablaModel.bancoFromJson).toList()
-            ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase())));
+          setSt(() {
+            bancos = raw.map(TablaModel.bancoFromJson).toList()
+              ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase()));
+            if (existente?.codigoBanco != null) {
+              final matches = bancos.where((b) => b.codigo == existente!.codigoBanco);
+              bancoSeleccionado = matches.isEmpty ? null : matches.first;
+            }
+          });
         }).catchError((_) {});
       }
       return AlertDialog(
         title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          const Text('Registrar Movimiento'),
+          Text(editing ? 'Editar Movimiento' : 'Registrar Movimiento'),
           IconButton(
             icon: const Icon(Icons.close),
             padding: EdgeInsets.zero,
@@ -266,10 +291,10 @@ class _View extends StatelessWidget {
           ],
           ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text('Fecha: ${fecha.toIso8601String().substring(0, 10)}'),
+            title: Text('Fecha: ${FechaHoraUtil.formatoCorto(fecha)}'),
             trailing: const Icon(Icons.calendar_today),
             onTap: () async {
-              final d = await showDatePicker(context: dctx, initialDate: fecha, firstDate: DateTime(2020), lastDate: DateTime.now());
+              final d = await showDatePicker(context: dctx, initialDate: fecha, firstDate: DateTime(2020), lastDate: FechaHoraUtil.ahora());
               if (d != null) setSt(() => fecha = d);
             },
           ),
@@ -281,17 +306,32 @@ class _View extends StatelessWidget {
               final m = double.tryParse(montoCtrl.text);
               if (conceptoCtrl.text.isEmpty || m == null || m <= 0) return;
               Navigator.pop(dctx);
-              ctx.read<CajaBloc>().add(CajaRegistrarMovimiento(
-                sesionCajaId: sesionId,
-                tipo: tipo,
-                concepto: conceptoCtrl.text.trim(),
-                monto: m,
-                fecha: fecha.toIso8601String().substring(0, 10),
-                referencia: refCtrl.text.isNotEmpty ? refCtrl.text.trim() : null,
-                tipoPago: tipoPagoSeleccionado?.descripcion,
-                numeroOperacion: nroOpCtrl.text.isNotEmpty ? nroOpCtrl.text.trim() : null,
-                codigoBanco: bancoSeleccionado?.codigo,
-              ));
+              if (editing) {
+                ctx.read<CajaBloc>().add(CajaActualizarMovimiento(
+                  movimientoId: existente.id,
+                  sesionCajaId: sesionId,
+                  tipo: tipo,
+                  concepto: conceptoCtrl.text.trim(),
+                  monto: m,
+                  fecha: FechaHoraUtil.iso(fecha),
+                  referencia: refCtrl.text.isNotEmpty ? refCtrl.text.trim() : null,
+                  tipoPago: tipoPagoSeleccionado?.descripcion,
+                  numeroOperacion: nroOpCtrl.text.isNotEmpty ? nroOpCtrl.text.trim() : null,
+                  codigoBanco: bancoSeleccionado?.codigo,
+                ));
+              } else {
+                ctx.read<CajaBloc>().add(CajaRegistrarMovimiento(
+                  sesionCajaId: sesionId,
+                  tipo: tipo,
+                  concepto: conceptoCtrl.text.trim(),
+                  monto: m,
+                  fecha: FechaHoraUtil.iso(fecha),
+                  referencia: refCtrl.text.isNotEmpty ? refCtrl.text.trim() : null,
+                  tipoPago: tipoPagoSeleccionado?.descripcion,
+                  numeroOperacion: nroOpCtrl.text.isNotEmpty ? nroOpCtrl.text.trim() : null,
+                  codigoBanco: bancoSeleccionado?.codigo,
+                ));
+              }
             },
             child: const Text('Guardar'),
           ),
@@ -681,7 +721,7 @@ class _DetalladoView extends StatelessWidget {
         // Apertura row
         _DetailHeaderRow(
           tipo: '—',
-          fecha: reporte.sesion.fechaApertura.substring(0, 10),
+          fecha: FechaHoraUtil.formatearFecha(reporte.sesion.fechaApertura),
           concepto: 'APERTURA DE CAJA',
           referencia: '',
           tipoPago: '',
@@ -776,7 +816,7 @@ class _DetailRow extends StatelessWidget {
           SizedBox(width: 52,
             child: Text(isIngreso ? 'INGRESO' : 'EGRESO',
               style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold))),
-          SizedBox(width: 72, child: Text(m.fecha, style: const TextStyle(fontSize: 11))),
+          SizedBox(width: 72, child: Text(FechaHoraUtil.formatearFecha(m.fecha), style: const TextStyle(fontSize: 11))),
           Expanded(child: Text(m.concepto, style: const TextStyle(fontSize: 11))),
           SizedBox(width: 64,
             child: Text(m.referencia ?? '', style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),

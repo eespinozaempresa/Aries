@@ -20,3 +20,14 @@ export class RegistrarMovCajaDto {
   @IsNumber() @Min(0.01) monto: number;
   @IsDateString() fecha: string;
 }
+
+export class ActualizarMovCajaDto {
+  @IsOptional() @IsEnum(['INGRESO', 'EGRESO']) tipo?: 'INGRESO' | 'EGRESO';
+  @IsOptional() @IsString() concepto?: string;
+  @IsOptional() @IsString() referencia?: string;
+  @IsOptional() @IsString() tipoPago?: string;
+  @IsOptional() @IsString() numeroOperacion?: string;
+  @IsOptional() @IsString() codigoBanco?: string;
+  @IsOptional() @IsNumber() @Min(0.01) monto?: number;
+  @IsOptional() @IsDateString() fecha?: string;
+}

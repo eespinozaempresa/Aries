@@ -1,12 +1,12 @@
 import {
-  Controller, Get, Post, Delete, Param, Body, Query, UseGuards, Request,
+  Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, Request,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../../shared/infrastructure/guards/auth.guard';
 import {
   ListCajaUseCase, FindSesionUseCase, AbrirCajaUseCase,
-  CerrarCajaUseCase, RegistrarMovCajaUseCase, ReporteCajaUseCase, EliminarMovCajaUseCase,
+  CerrarCajaUseCase, RegistrarMovCajaUseCase, ReporteCajaUseCase, EliminarMovCajaUseCase, ActualizarMovCajaUseCase,
 } from '../../application/use-cases/caja.use-cases';
-import { AbrirCajaDto, CerrarCajaDto, RegistrarMovCajaDto } from '../dto/caja.dto';
+import { AbrirCajaDto, CerrarCajaDto, RegistrarMovCajaDto, ActualizarMovCajaDto } from '../dto/caja.dto';
 
 @UseGuards(AuthGuard)
 @Controller('caja')
@@ -19,6 +19,7 @@ export class CajaController {
     private readonly movUC: RegistrarMovCajaUseCase,
     private readonly reporteUC: ReporteCajaUseCase,
     private readonly eliminarMovUC: EliminarMovCajaUseCase,
+    private readonly actualizarMovUC: ActualizarMovCajaUseCase,
   ) {}
 
   @Get()
@@ -75,5 +76,10 @@ export class CajaController {
   @Delete('movimientos/:id')
   eliminarMovimiento(@Param('id') id: string, @Request() req: any) {
     return this.eliminarMovUC.execute(req.user.empresa, id);
+  }
+
+  @Patch('movimientos/:id')
+  actualizarMovimiento(@Param('id') id: string, @Body() dto: ActualizarMovCajaDto, @Request() req: any) {
+    return this.actualizarMovUC.execute(req.user.empresa, id, dto);
   }
 }

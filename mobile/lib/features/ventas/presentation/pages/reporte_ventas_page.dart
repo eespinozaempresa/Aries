@@ -5,6 +5,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/utils/export_service.dart';
+import '../../../../core/utils/fecha_hora_util.dart';
 import '../../../../core/widgets/aries_app_bar.dart';
 
 enum _TipoReporte { ventas, general }
@@ -42,12 +43,11 @@ class _ReporteVentasPageState extends State<ReporteVentasPage> {
   String? _error;
 
   static final _dateFmt    = DateFormat('dd/MM/yyyy');
-  static final _rowDateFmt = DateFormat('dd/MM/yyyy');
   static final _numFmt     = NumberFormat('#,##0.00');
 
   String _fmtFecha(String? iso) {
     if (iso == null || iso.isEmpty) return '';
-    try { return _rowDateFmt.format(DateTime.parse(iso)); } catch (_) { return iso; }
+    try { return FechaHoraUtil.formatearFecha(iso); } catch (_) { return iso; }
   }
 
   @override
