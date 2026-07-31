@@ -13,6 +13,7 @@ export interface RegistrarCompraData {
   codigoUsuario: string;
   moneda?: string;
   tipoCambio?: number;
+  aplicaIgv?: boolean;
   lineas: Array<{
     codigoArticulo: string;
     cantidad: number;

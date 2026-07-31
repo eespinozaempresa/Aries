@@ -20,7 +20,7 @@ export class SupabaseCompraRepository implements ICompraRepository {
       this.supabase.db.from('parametros').select('igv').eq('codigo_empresa', codigoEmpresa).maybeSingle(),
       this.supabase.db.from('documentos').select('aplica_igv').eq('codigo_empresa', codigoEmpresa).eq('codigo', d.codigoDocumento).maybeSingle(),
     ]);
-    const aplicaIgv = docRes.data?.aplica_igv ?? true;
+    const aplicaIgv = d.aplicaIgv ?? docRes.data?.aplica_igv ?? true;
     const igvRate   = aplicaIgv ? (Number(paramRes.data?.igv ?? 18) / 100) : 0;
     const tipoCambio = d.tipoCambio ?? 1;
 

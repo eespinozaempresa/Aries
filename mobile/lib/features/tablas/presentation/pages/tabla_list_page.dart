@@ -61,6 +61,29 @@ class _TablaListPageState<T extends TablaBase> extends State<TablaListPage<T>> {
     ).then((_) => widget.bloc.add(TablaLoad(q: _searchCtrl.text.isEmpty ? null : _searchCtrl.text)));
   }
 
+  Future<void> _showAutoCloseDialog(BuildContext context, String title, String message) {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogCtx) {
+        Future.microtask(() {
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
+          });
+        });
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
@@ -100,25 +123,11 @@ class _TablaListPageState<T extends TablaBase> extends State<TablaListPage<T>> {
                     widget.bloc.add(TablaLoad(q: _searchCtrl.text.isEmpty ? null : _searchCtrl.text));
                   }
                   if (state is TablaDeleted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      const SnackBar(
-                        content: Text('Eliminado'),
-                        backgroundColor: Colors.green,
-                        behavior: SnackBarBehavior.floating,
-                        margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      ),
-                    );
+                    _showAutoCloseDialog(ctx, 'Eliminado', 'El registro se eliminó correctamente.');
                     widget.bloc.add(TablaLoad(q: _searchCtrl.text.isEmpty ? null : _searchCtrl.text));
                   }
                   if (state is TablaError) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: Colors.red,
-                        behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      ),
-                    );
+                    _showAutoCloseDialog(ctx, 'Error', state.message);
                   }
                 },
                 builder: (ctx, state) {

@@ -57,6 +57,7 @@ class _FormState extends State<_Form> {
   FormaPago _forma  = FormaPago.CONTADO;
   int _plazo        = 30;
   String _moneda    = 'PEN';
+  bool _aplicaIgv   = true;
 
   String? _almacen;
   String? _almacenNombre;
@@ -79,7 +80,10 @@ class _FormState extends State<_Form> {
         setState(() {
           _documentos = raw.map(TablaModel.documentoFromJson).toList()
             ..sort((a, b) => a.descripcion.toLowerCase().compareTo(b.descripcion.toLowerCase()));
-          if (_documentos.length == 1) _documento = _documentos.first;
+          if (_documentos.length == 1) {
+            _documento = _documentos.first;
+            _aplicaIgv = _documentos.first.aplicaIgv;
+          }
         });
       }
     } catch (_) {}
@@ -102,8 +106,8 @@ class _FormState extends State<_Form> {
   double get _subtotalMon => _lineas.fold(0, (s, l) => s + l.importe);
   double get _subtotalPen => _moneda == 'USD' ? _subtotalMon * _tc : _subtotalMon;
   double get _subtotalUsd => _moneda == 'USD' ? _subtotalMon : _subtotalMon / (_tc > 0 ? _tc : 1);
-  double get _igv        => _subtotalPen * 0.18;
-  double get _igvUsd     => _subtotalUsd * 0.18;
+  double get _igv        => _aplicaIgv ? _subtotalPen * 0.18 : 0.0;
+  double get _igvUsd     => _aplicaIgv ? _subtotalUsd * 0.18 : 0.0;
   double get _total      => _subtotalPen + _igv;
   double get _totalUsd   => _subtotalUsd + _igvUsd;
 
@@ -127,6 +131,13 @@ class _FormState extends State<_Form> {
     if (r != null) setState(() { _proveedor = r.codigo; _proveedorNombre = r.razonSocial; });
   }
 
+  void _onDocChanged(Documento? doc) {
+    setState(() {
+      _documento = doc;
+      _aplicaIgv = doc?.aplicaIgv ?? true;
+    });
+  }
+
   Future<void> _addLinea({int? editIndex}) async {
     final editing = editIndex != null;
     final existente = editing ? _lineas[editIndex] : null;
@@ -145,11 +156,14 @@ class _FormState extends State<_Form> {
       if (art == null || !mounted) return;
       codigo = art.codigo;
       descripcion = art.descripcion;
-    }
 
-    final qCtrl = TextEditingController(text: existente?.cantidad.toString() ?? '1');
-    final pCtrl = TextEditingController(text: existente?.precio.toStringAsFixed(4) ?? '0.0000');
-    String? qtyError;
+      final precioSugerido = art.precioCompraBase > 0 ? art.precioCompraBase : art.precioCompra;
+      final precioFinal = _moneda == 'USD' && _tc > 0 ? precioSugerido / _tc : precioSugerido;
+      final pInit = precioFinal.toStringAsFixed(4);
+
+      final qCtrl = TextEditingController(text: existente?.cantidad.toString() ?? '1');
+      final pCtrl = TextEditingController(text: existente?.precio.toStringAsFixed(4) ?? pInit);
+      String? qtyError;
     final ok = await showDialog<bool>(context: context, builder: (_) => StatefulBuilder(
       builder: (context, setLocalState) => AlertDialog(
         title: Text(descripcion),
@@ -249,6 +263,7 @@ class _FormState extends State<_Form> {
       'codigoProveedor': _proveedor,
       'moneda': _moneda,
       'tipoCambio': double.tryParse(_tcCtrl.text) ?? 1,
+      'aplicaIgv': _aplicaIgv,
       'lineas': _lineas.map((l) => {
         'codigoArticulo': l.codigo,
         'cantidad': l.cantidad,
@@ -297,7 +312,7 @@ class _FormState extends State<_Form> {
                   value: d,
                   child: Text('${d.descripcion}  [${d.serie}]', overflow: TextOverflow.ellipsis),
                 )).toList(),
-                onChanged: (d) => setState(() => _documento = d),
+                onChanged: _onDocChanged,
                 validator: (v) => v == null ? 'Seleccione un documento' : null,
               ),
               const SizedBox(height: 12),
@@ -356,7 +371,15 @@ class _FormState extends State<_Form> {
               // Totales en la moneda seleccionada
               if (_moneda == 'PEN') ...[
                 _TotalesRow('Subtotal', _subtotalPen, 'S/'),
-                _TotalesRow('IGV (18%)', _igv, 'S/'),
+                if (_aplicaIgv)
+                  _TotalesRow('IGV (18%)', _igv, 'S/')
+                else
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 2),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.end,
+                      children: [Text('Sin IGV', style: TextStyle(color: Colors.grey))],
+                    ),
+                  ),
                 _TotalesRow('Total', _total, 'S/', bold: true),
                 if (_tc != 1.0 && _tc > 0) ...[
                   const SizedBox(height: 4),
@@ -364,7 +387,15 @@ class _FormState extends State<_Form> {
                 ],
               ] else ...[
                 _TotalesRow('Subtotal', _subtotalUsd, 'USD'),
-                _TotalesRow('IGV (18%)', _igvUsd, 'USD'),
+                if (_aplicaIgv)
+                  _TotalesRow('IGV (18%)', _igvUsd, 'USD')
+                else
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 2),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.end,
+                      children: [Text('Sin IGV', style: TextStyle(color: Colors.grey))],
+                    ),
+                  ),
                 _TotalesRow('Total', _totalUsd, 'USD', bold: true),
                 const SizedBox(height: 4),
                 _TotalesRow('≈ Equivalente S/', _total, 'S/', color: Colors.orange.shade700),

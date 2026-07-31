@@ -1,6 +1,6 @@
 import {
   IsString, IsNotEmpty, IsDateString, IsEnum, IsOptional,
-  IsArray, ArrayMinSize, ValidateNested, IsNumber, IsPositive, Min, IsInt,
+  IsArray, ArrayMinSize, ValidateNested, IsNumber, IsPositive, Min, IsInt, IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -51,6 +51,9 @@ export class RegistrarCompraDto {
 
   @IsNumber({ maxDecimalPlaces: 4 }) @IsOptional() @Min(0.0001)
   tipoCambio?: number;
+
+  @IsBoolean() @IsOptional()
+  aplicaIgv?: boolean;
 
   @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) @Type(() => LineaCompraDto)
   lineas: LineaCompraDto[];

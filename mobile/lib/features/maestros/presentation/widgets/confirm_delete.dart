@@ -33,12 +33,17 @@ Future<bool> confirmAndDelete(
   return result.fold(
     (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        await showDialog<void>(
+          context: context,
+          builder: (dialogCtx) => AlertDialog(
+            title: const Text('Error'),
             content: Text(e.message),
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogCtx).pop(),
+                child: const Text('Cerrar'),
+              ),
+            ],
           ),
         );
       }
