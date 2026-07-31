@@ -144,9 +144,11 @@ class _FormState extends State<_Form> {
 
     String codigo;
     String descripcion;
+    double precioInicial;
     if (existente != null) {
       codigo = existente.codigo;
       descripcion = existente.descripcion;
+      precioInicial = existente.precio;
     } else {
       final art = await MaestroPicker.show<Articulo>(context,
         title: 'Artículo', onSearch: (q) async {
@@ -158,49 +160,52 @@ class _FormState extends State<_Form> {
       descripcion = art.descripcion;
 
       final precioSugerido = art.precioCompraBase > 0 ? art.precioCompraBase : art.precioCompra;
-      final precioFinal = _moneda == 'USD' && _tc > 0 ? precioSugerido / _tc : precioSugerido;
-      final pInit = precioFinal.toStringAsFixed(4);
+      precioInicial = _moneda == 'USD' && _tc > 0 ? precioSugerido / _tc : precioSugerido;
+    }
 
-      final qCtrl = TextEditingController(text: existente?.cantidad.toString() ?? '1');
-      final pCtrl = TextEditingController(text: existente?.precio.toStringAsFixed(4) ?? pInit);
-      String? qtyError;
-    final ok = await showDialog<bool>(context: context, builder: (_) => StatefulBuilder(
-      builder: (context, setLocalState) => AlertDialog(
-        title: Text(descripcion),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          NumberFormField(controller: qCtrl, decoration: const InputDecoration(labelText: 'Cantidad')),
-          const SizedBox(height: 8),
-          NumberFormField(controller: pCtrl, decoration: const InputDecoration(labelText: 'Precio unitario')),
-          if (qtyError != null) ...[
+    final qCtrl = TextEditingController(text: existente?.cantidad.toString() ?? '1');
+    final pCtrl = TextEditingController(text: existente?.precio.toStringAsFixed(4) ?? precioInicial.toStringAsFixed(4));
+    String? qtyError;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setLocalState) => AlertDialog(
+          title: Text(descripcion),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            NumberFormField(controller: qCtrl, decoration: const InputDecoration(labelText: 'Cantidad')),
             const SizedBox(height: 8),
-            Text(qtyError!, style: const TextStyle(color: Colors.red)),
+            NumberFormField(controller: pCtrl, decoration: const InputDecoration(labelText: 'Precio unitario')),
+            if (qtyError != null) ...[
+              const SizedBox(height: 8),
+              Text(qtyError!, style: const TextStyle(color: Colors.red)),
+            ],
+          ]),
+          actions: [
+            OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+            FilledButton(
+              onPressed: () {
+                final cantidad = double.tryParse(qCtrl.text) ?? 0;
+                if (cantidad <= 0) {
+                  setLocalState(() {
+                    qtyError = 'La cantidad debe ser mayor que 0';
+                  });
+                  return;
+                }
+                final precio = double.tryParse(pCtrl.text) ?? 0;
+                if (precio <= 0) {
+                  setLocalState(() {
+                    qtyError = 'El precio unitario debe ser mayor que 0';
+                  });
+                  return;
+                }
+                Navigator.pop(context, true);
+              },
+              child: Text(editing ? 'Guardar' : 'Agregar'),
+            ),
           ],
-        ]),
-        actions: [
-          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(
-            onPressed: () {
-              final cantidad = double.tryParse(qCtrl.text) ?? 0;
-              if (cantidad <= 0) {
-                setLocalState(() {
-                  qtyError = 'La cantidad debe ser mayor que 0';
-                });
-                return;
-              }
-              final precio = double.tryParse(pCtrl.text) ?? 0;
-              if (precio <= 0) {
-                setLocalState(() {
-                  qtyError = 'El precio unitario debe ser mayor que 0';
-                });
-                return;
-              }
-              Navigator.pop(context, true);
-            },
-            child: Text(editing ? 'Guardar' : 'Agregar'),
-          ),
-        ],
+        ),
       ),
-    ));
+    );
     if (ok == true) {
       setState(() {
         if (editing) {
@@ -216,6 +221,8 @@ class _FormState extends State<_Form> {
             precio: double.tryParse(pCtrl.text) ?? 0,
           ));
         }
+      });
+    }
       });
     }
   }
