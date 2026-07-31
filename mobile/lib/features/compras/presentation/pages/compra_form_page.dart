@@ -209,15 +209,33 @@ class _FormState extends State<_Form> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     if (_documento == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seleccione un documento')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Seleccione un documento'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
+      );
       return;
     }
     if (_almacen == null || _proveedor == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seleccione almacén y proveedor')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Seleccione almacén y proveedor'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
+      );
       return;
     }
     if (_lineas.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Agregue artículos')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Agregue artículos'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
+      );
       return;
     }
     context.read<CompraBloc>().add(CompraRegistrar({
@@ -248,10 +266,24 @@ class _FormState extends State<_Form> {
           if (state is CompraSaved) {
             final docLabel = _documento?.abreviatura ?? state.compra.codigoDocumento;
             final nro = '$docLabel-${state.compra.serie}-${state.compra.numeroDocumento}';
-            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Compra registrada · $nro'), backgroundColor: Colors.green));
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              SnackBar(
+                content: Text('Compra registrada · $nro'),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              ),
+            );
             ctx.pop(true);
           }
-          if (state is CompraError) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.red));
+          if (state is CompraError) ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            ),
+          );
         },
         builder: (ctx, state) {
           final saving = state is CompraSaving;

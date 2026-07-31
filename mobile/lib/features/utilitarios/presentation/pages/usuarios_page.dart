@@ -85,7 +85,12 @@ class _UsuariosPageState extends State<UsuariosPage> {
         _showForbiddenDialog(context, msg);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          ),
         );
       }
     }
@@ -383,6 +388,8 @@ class _UsuarioSheetState extends State<_UsuarioSheet> {
           SnackBar(
             content: Text(_isEdit ? 'Usuario actualizado' : 'Usuario creado'),
             backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           ),
         );
         widget.onSaved();
@@ -394,7 +401,12 @@ class _UsuarioSheetState extends State<_UsuarioSheet> {
         _showForbiddenDialog(context, msg);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          ),
         );
       }
     } finally {
@@ -584,6 +596,8 @@ class _ResetPasswordDialogState extends State<_ResetPasswordDialog> {
           SnackBar(
             content: Text('Contraseña de ${widget.usuario['nombre']} actualizada'),
             backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           ),
         );
       }
@@ -594,7 +608,12 @@ class _ResetPasswordDialogState extends State<_ResetPasswordDialog> {
         _showForbiddenDialog(context, msg);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          ),
         );
       }
     } finally {

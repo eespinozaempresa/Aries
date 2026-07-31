@@ -90,17 +90,35 @@ class _TablaListPageState<T extends TablaBase> extends State<TablaListPage<T>> {
                 listener: (ctx, state) {
                   if (state is TablaSaved<T>) {
                     ScaffoldMessenger.of(ctx).showSnackBar(
-                      const SnackBar(content: Text('Guardado'), backgroundColor: Colors.green));
+                      const SnackBar(
+                        content: Text('Guardado'),
+                        backgroundColor: Colors.green,
+                        behavior: SnackBarBehavior.floating,
+                        margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      ),
+                    );
                     widget.bloc.add(TablaLoad(q: _searchCtrl.text.isEmpty ? null : _searchCtrl.text));
                   }
                   if (state is TablaDeleted) {
                     ScaffoldMessenger.of(ctx).showSnackBar(
-                      const SnackBar(content: Text('Eliminado'), backgroundColor: Colors.green));
+                      const SnackBar(
+                        content: Text('Eliminado'),
+                        backgroundColor: Colors.green,
+                        behavior: SnackBarBehavior.floating,
+                        margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      ),
+                    );
                     widget.bloc.add(TablaLoad(q: _searchCtrl.text.isEmpty ? null : _searchCtrl.text));
                   }
                   if (state is TablaError) {
                     ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(content: Text(state.message), backgroundColor: Colors.red));
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      ),
+                    );
                   }
                 },
                 builder: (ctx, state) {

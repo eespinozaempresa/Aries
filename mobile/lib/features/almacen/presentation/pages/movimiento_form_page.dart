@@ -156,7 +156,11 @@ class _MovimientoFormState extends State<_MovimientoForm> {
 
     if (!editing && _controlStockSalidas == 'SI' && _esOperacionSalida && _almacenOrigen == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seleccione el almacén origen antes de agregar artículos')),
+        const SnackBar(
+          content: Text('Seleccione el almacén origen antes de agregar artículos'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
       );
       return;
     }
@@ -280,19 +284,43 @@ class _MovimientoFormState extends State<_MovimientoForm> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     if (_documento == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seleccione un documento')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Seleccione un documento'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
+      );
       return;
     }
     if (_almacenOrigen == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seleccione almacén origen')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Seleccione almacén origen'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
+      );
       return;
     }
     if (_needsDest && _almacenDest == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seleccione almacén destino')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Seleccione almacén destino'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
+      );
       return;
     }
     if (_lineas.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Agregue al menos un artículo')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Agregue al menos un artículo'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
+      );
       return;
     }
 
@@ -317,13 +345,23 @@ class _MovimientoFormState extends State<_MovimientoForm> {
           if (state is MovimientoSaved) {
             final nro = '${state.movimiento.codigoDocumento}-${state.movimiento.serie}-${state.movimiento.numeroDocumento}';
             ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(content: Text('Movimiento registrado · $nro'), backgroundColor: Colors.green),
+              SnackBar(
+                content: Text('Movimiento registrado · $nro'),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              ),
             );
             ctx.pop(true);
           }
           if (state is MovimientoError) {
             ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              ),
             );
           }
         },

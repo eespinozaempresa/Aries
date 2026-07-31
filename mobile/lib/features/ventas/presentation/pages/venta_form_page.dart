@@ -173,7 +173,11 @@ class _FormState extends State<_Form> {
 
     if (!editing && _controlStockSalidas == 'SI' && _almacen == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seleccione el almacén antes de agregar artículos')),
+        const SnackBar(
+          content: Text('Seleccione el almacén antes de agregar artículos'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
       );
       return;
     }
@@ -305,17 +309,32 @@ class _FormState extends State<_Form> {
     if (!_formKey.currentState!.validate()) return;
     if (_documento == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Seleccione el tipo de documento')));
+        const SnackBar(
+          content: Text('Seleccione el tipo de documento'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
+      );
       return;
     }
     if (_almacen == null || _clienteCodigo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Seleccione almacén y cliente')));
+        const SnackBar(
+          content: Text('Seleccione almacén y cliente'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
+      );
       return;
     }
     if (_lineas.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Agregue artículos')));
+        const SnackBar(
+          content: Text('Agregue artículos'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
+      );
       return;
     }
     context.read<VentaBloc>().add(VentaRegistrar({
@@ -349,12 +368,24 @@ class _FormState extends State<_Form> {
             final docLabel = _documento?.abreviatura ?? state.venta.codigoDocumento;
             final nro = '$docLabel-${state.venta.serie}-${state.venta.numeroDocumento}';
             ScaffoldMessenger.of(ctx).showSnackBar(
-                SnackBar(content: Text('Venta registrada · $nro'), backgroundColor: Colors.green));
+              SnackBar(
+                content: Text('Venta registrada · $nro'),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              ),
+            );
             ctx.pop(true);
           }
           if (state is VentaError) {
             ScaffoldMessenger.of(ctx).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: Colors.red));
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              ),
+            );
           }
         },
         builder: (ctx, state) {

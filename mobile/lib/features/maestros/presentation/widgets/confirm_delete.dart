@@ -17,8 +17,12 @@ Future<bool> confirmAndDelete(
       title: const Text('Eliminar'),
       content: Text('¿Eliminar "$itemName"? Esta acción no se puede deshacer.'),
       actions: [
-        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
-        FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Eliminar')),
+        TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar')),
+        FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Eliminar')),
       ],
     ),
   );
@@ -29,7 +33,14 @@ Future<bool> confirmAndDelete(
   return result.fold(
     (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
       }
       return false;
     },
