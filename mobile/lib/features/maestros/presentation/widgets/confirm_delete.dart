@@ -31,9 +31,9 @@ Future<bool> confirmAndDelete(
 
   final result = await onDelete();
   return result.fold(
-    (e) async {
+    (e) {
       if (context.mounted) {
-        await showDialog<void>(
+        showDialog<void>(
           context: context,
           builder: (dialogCtx) => AlertDialog(
             title: const Text('Error'),
@@ -49,6 +49,6 @@ Future<bool> confirmAndDelete(
       }
       return false;
     },
-    (_) async => true,
+    (_) => true,
   );
 }

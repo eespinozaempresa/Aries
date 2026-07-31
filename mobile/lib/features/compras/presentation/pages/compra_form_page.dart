@@ -223,8 +223,6 @@ class _FormState extends State<_Form> {
         }
       });
     }
-      });
-    }
   }
 
   void _submit() {
