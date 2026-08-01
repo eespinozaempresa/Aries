@@ -75,7 +75,7 @@ class _View extends StatelessWidget {
             const SizedBox(height: 8),
             ...pagos.map((p) => Card(child: ListTile(
               leading: const Icon(Icons.receipt),
-              title: Text('Voucher ${p.numeroVoucher} — ${p.tipoPago}'),
+              title: Text('REF: ${p.numeroVoucher} — ${p.tipoPago}'),
               subtitle: Text(p.fecha),
               trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('S/ ${p.monto.toStringAsFixed(2)}',
@@ -216,7 +216,7 @@ class _View extends StatelessWidget {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: voucherCtrl,
-                  decoration: const InputDecoration(labelText: 'Referecia'),
+                  decoration: const InputDecoration(labelText: 'Referencia'),
                   validator: (value) => (value == null || value.trim().isEmpty) ? 'Ingrese el número de voucher' : null,
                 ),
                 const SizedBox(height: 8),
