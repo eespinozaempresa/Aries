@@ -344,7 +344,6 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
 
   void _showPagoForm(CuentaPagar cxp) {
     final formKey = GlobalKey<FormState>();
-    final voucherCtrl = TextEditingController();
     final montoCtrl   = TextEditingController(text: cxp.saldo.toStringAsFixed(2));
     final operCtrl    = TextEditingController();
     List<TipoPago> tiposPago = [];
@@ -386,10 +385,6 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
                 children: [
                   Text('Saldo: S/ ${cxp.saldo.toStringAsFixed(2)}',
                       style: const TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 8),
-                  TextFormField(controller: voucherCtrl,
-                      decoration: const InputDecoration(labelText: 'Referencia'),
-                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Ingrese el número de voucher' : null),
                   const SizedBox(height: 8),
                   NumberFormField(controller: montoCtrl,
                       decoration: const InputDecoration(labelText: 'Monto'),
@@ -455,7 +450,6 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
                 if (m == null || m <= 0) return;
                 widget.bloc.add(CxPRegistrarPago(
                   cuentaPagarId: cxp.id,
-                  numeroVoucher: voucherCtrl.text.trim(),
                   fecha: FechaHoraUtil.iso(fecha),
                   tipoPago: tipoPagoSeleccionado!.descripcion,
                   monto: m,

@@ -174,7 +174,6 @@ class _View extends StatelessWidget {
 
   void _showPagoDialog(BuildContext ctx, CuentaPagar cxp) {
     final formKey = GlobalKey<FormState>();
-    final voucherCtrl = TextEditingController();
     final montoCtrl   = TextEditingController(text: cxp.saldo.toStringAsFixed(2));
     final operCtrl    = TextEditingController();
     List<TipoPago> tiposPago = [];
@@ -213,12 +212,6 @@ class _View extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('Saldo: S/ ${cxp.saldo.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey)),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: voucherCtrl,
-                  decoration: const InputDecoration(labelText: 'Referecia'),
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Ingrese el número de voucher' : null,
-                ),
                 const SizedBox(height: 8),
                 NumberFormField(
                   controller: montoCtrl,
@@ -289,7 +282,6 @@ class _View extends StatelessWidget {
               Navigator.pop(dctx);
               ctx.read<CxPBloc>().add(CxPRegistrarPago(
                 cuentaPagarId: cxp.id,
-                numeroVoucher: voucherCtrl.text.trim(),
                 fecha: FechaHoraUtil.iso(fecha),
                 tipoPago: tipoPagoSeleccionado!.descripcion,
                 monto: m,
