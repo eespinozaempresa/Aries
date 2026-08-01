@@ -388,7 +388,7 @@ class _ConsolidadoDialogState extends State<_ConsolidadoDialog> {
                       style: const TextStyle(color: Colors.grey)),
                   const SizedBox(height: 8),
                   TextFormField(controller: voucherCtrl,
-                      decoration: const InputDecoration(labelText: 'N° Voucher'),
+                      decoration: const InputDecoration(labelText: 'Referencia'),
                       validator: (value) => (value == null || value.trim().isEmpty) ? 'Ingrese el número de voucher' : null),
                   const SizedBox(height: 8),
                   NumberFormField(controller: montoCtrl,

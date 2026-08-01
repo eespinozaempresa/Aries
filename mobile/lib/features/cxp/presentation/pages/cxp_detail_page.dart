@@ -216,7 +216,7 @@ class _View extends StatelessWidget {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: voucherCtrl,
-                  decoration: const InputDecoration(labelText: 'N° Voucher'),
+                  decoration: const InputDecoration(labelText: 'Referecia'),
                   validator: (value) => (value == null || value.trim().isEmpty) ? 'Ingrese el número de voucher' : null,
                 ),
                 const SizedBox(height: 8),
