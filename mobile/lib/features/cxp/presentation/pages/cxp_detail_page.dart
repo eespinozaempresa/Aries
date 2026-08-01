@@ -100,6 +100,12 @@ class _View extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Cancelar'),
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
                 icon: const Icon(Icons.autorenew),
                 label: const Text('Renovar CxP'),
                 onPressed: () => _showRenovarDialog(ctx, cxp),
