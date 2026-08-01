@@ -167,6 +167,7 @@ class _View extends StatelessWidget {
   }
 
   void _showPagoDialog(BuildContext ctx, CuentaPagar cxp) {
+    final formKey = GlobalKey<FormState>();
     final voucherCtrl = TextEditingController();
     final montoCtrl   = TextEditingController(text: cxp.saldo.toStringAsFixed(2));
     final operCtrl    = TextEditingController();
@@ -190,77 +191,111 @@ class _View extends StatelessWidget {
         }).catchError((_) {});
       }
       return AlertDialog(
-      title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        const Text('Registrar Pago'),
-        IconButton(
-          icon: const Icon(Icons.close),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          onPressed: () => Navigator.pop(dctx),
+        title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          const Text('Registrar Pago'),
+          IconButton(
+            icon: const Icon(Icons.close),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () => Navigator.pop(dctx),
+          ),
+        ]),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Saldo: S/ ${cxp.saldo.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey)),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: voucherCtrl,
+                  decoration: const InputDecoration(labelText: 'N° Voucher'),
+                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Ingrese el número de voucher' : null,
+                ),
+                const SizedBox(height: 8),
+                NumberFormField(
+                  controller: montoCtrl,
+                  decoration: const InputDecoration(labelText: 'Monto'),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) return 'Ingrese un monto';
+                    final parsed = double.tryParse(value.trim());
+                    if (parsed == null || parsed <= 0) return 'Ingrese un monto válido';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<TipoPago>(
+                  initialValue: tipoPagoSeleccionado,
+                  decoration: const InputDecoration(labelText: 'Tipo Pago'),
+                  items: tiposPago.map((t) => DropdownMenuItem(value: t, child: Text(t.descripcion))).toList(),
+                  onChanged: (v) => setSt(() {
+                    tipoPagoSeleccionado = v;
+                    operCtrl.clear();
+                    bancoSeleccionado = null;
+                  }),
+                  validator: (v) => v == null ? 'Seleccione un tipo de pago' : null,
+                ),
+                if (tipoPagoSeleccionado?.requiereBanco == true) ...[
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<Banco>(
+                    initialValue: bancoSeleccionado,
+                    decoration: const InputDecoration(labelText: 'Banco'),
+                    items: bancos.map((b) => DropdownMenuItem(value: b, child: Text(b.descripcion))).toList(),
+                    onChanged: (v) => setSt(() => bancoSeleccionado = v),
+                    validator: (v) => v == null ? 'Seleccione un banco' : null,
+                  ),
+                ],
+                if (tipoPagoSeleccionado?.requiereOperacion == true) ...[
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: operCtrl,
+                    decoration: const InputDecoration(labelText: 'N° Operación'),
+                    validator: (value) => (value == null || value.trim().isEmpty) ? 'Ingrese el número de operación' : null,
+                  ),
+                ],
+                const SizedBox(height: 8),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text('Fecha: ${FechaHoraUtil.formatoCorto(fecha)}'),
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    final d = await showDatePicker(
+                      context: dctx,
+                      initialDate: fecha,
+                      firstDate: DateTime(2020),
+                      lastDate: FechaHoraUtil.ahora(),
+                    );
+                    if (d != null) setSt(() => fecha = d);
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
-      ]),
-      content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('Saldo: S/ ${cxp.saldo.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey)),
-        const SizedBox(height: 8),
-        TextField(controller: voucherCtrl, decoration: const InputDecoration(labelText: 'N° Voucher')),
-        const SizedBox(height: 8),
-        NumberFormField(controller: montoCtrl, decoration: const InputDecoration(labelText: 'Monto')),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<TipoPago>(
-          initialValue: tipoPagoSeleccionado,
-          decoration: const InputDecoration(labelText: 'Tipo Pago'),
-          items: tiposPago.map((t) => DropdownMenuItem(value: t, child: Text(t.descripcion))).toList(),
-          onChanged: (v) => setSt(() {
-            tipoPagoSeleccionado = v;
-            operCtrl.clear();
-            bancoSeleccionado = null;
-          }),
-        ),
-        if (tipoPagoSeleccionado?.requiereBanco == true) ...[
-          const SizedBox(height: 8),
-          DropdownButtonFormField<Banco>(
-            initialValue: bancoSeleccionado,
-            decoration: const InputDecoration(labelText: 'Banco'),
-            items: bancos.map((b) => DropdownMenuItem(value: b, child: Text(b.descripcion))).toList(),
-            onChanged: (v) => setSt(() => bancoSeleccionado = v),
+        actions: [
+          OutlinedButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              final m = double.tryParse(montoCtrl.text);
+              if (m == null || m <= 0) return;
+              Navigator.pop(dctx);
+              ctx.read<CxPBloc>().add(CxPRegistrarPago(
+                cuentaPagarId: cxp.id,
+                numeroVoucher: voucherCtrl.text.trim(),
+                fecha: FechaHoraUtil.iso(fecha),
+                tipoPago: tipoPagoSeleccionado!.descripcion,
+                monto: m,
+                numeroOperacion: operCtrl.text.isNotEmpty ? operCtrl.text.trim() : null,
+                codigoBanco: bancoSeleccionado?.codigo,
+              ));
+            },
+            child: const Text('Guardar'),
           ),
         ],
-        if (tipoPagoSeleccionado?.requiereOperacion == true) ...[
-          const SizedBox(height: 8),
-          TextField(controller: operCtrl, decoration: const InputDecoration(labelText: 'N° Operación')),
-        ],
-        const SizedBox(height: 8),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text('Fecha: ${FechaHoraUtil.formatoCorto(fecha)}'),
-          trailing: const Icon(Icons.calendar_today),
-          onTap: () async {
-            final d = await showDatePicker(context: dctx, initialDate: fecha, firstDate: DateTime(2020), lastDate: FechaHoraUtil.ahora());
-            if (d != null) setSt(() => fecha = d);
-          },
-        ),
-      ])),
-      actions: [
-        OutlinedButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
-        FilledButton(
-          onPressed: () {
-            final m = double.tryParse(montoCtrl.text);
-            if (voucherCtrl.text.isEmpty || m == null || m <= 0 || tipoPagoSeleccionado == null) return;
-            Navigator.pop(dctx);
-            ctx.read<CxPBloc>().add(CxPRegistrarPago(
-              cuentaPagarId: cxp.id,
-              numeroVoucher: voucherCtrl.text.trim(),
-              fecha: FechaHoraUtil.iso(fecha),
-              tipoPago: tipoPagoSeleccionado!.descripcion,
-              monto: m,
-              numeroOperacion: operCtrl.text.isNotEmpty ? operCtrl.text.trim() : null,
-              codigoBanco: bancoSeleccionado?.codigo,
-            ));
-          },
-          child: const Text('Guardar'),
-        ),
-      ],
-    );}));
+      );
+    }));
   }
 
   void _showEditarPagoDialog(BuildContext ctx, Pago p) {

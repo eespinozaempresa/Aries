@@ -201,6 +201,7 @@ class _View extends StatelessWidget {
 
   void _showMovDialog(BuildContext ctx, String sesionId, {MovimientoCaja? existente}) {
     final editing = existente != null;
+    final formKey = GlobalKey<FormState>();
     final conceptoCtrl = TextEditingController(text: existente?.concepto ?? '');
     final montoCtrl    = TextEditingController(text: existente?.monto.toStringAsFixed(2) ?? '');
     final refCtrl      = TextEditingController(text: existente?.referencia ?? '');
@@ -247,64 +248,97 @@ class _View extends StatelessWidget {
             onPressed: () => Navigator.pop(dctx),
           ),
         ]),
-        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'INGRESO', label: Text('Ingreso'), icon: Icon(Icons.arrow_downward)),
-              ButtonSegment(value: 'EGRESO',  label: Text('Egreso'),  icon: Icon(Icons.arrow_upward)),
-            ],
-            selected: {tipo},
-            onSelectionChanged: (s) => setSt(() => tipo = s.first),
-          ),
-          const SizedBox(height: 8),
-          TextField(controller: conceptoCtrl, decoration: const InputDecoration(labelText: 'Concepto')),
-          TextField(controller: refCtrl, decoration: const InputDecoration(labelText: 'Referencia (opcional)')),
-          NumberFormField(controller: montoCtrl, decoration: const InputDecoration(labelText: 'Monto')),
-          if (tiposPago.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            DropdownButtonFormField<TipoPago>(
-              initialValue: tipoPagoSeleccionado,
-              decoration: const InputDecoration(labelText: 'Tipo de Pago'),
-              items: tiposPago.map((t) => DropdownMenuItem(
-                value: t,
-                child: Text(t.descripcion),
-              )).toList(),
-              onChanged: (v) => setSt(() {
-                tipoPagoSeleccionado = v;
-                nroOpCtrl.clear();
-                bancoSeleccionado = null;
-              }),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'INGRESO', label: Text('Ingreso'), icon: Icon(Icons.arrow_downward)),
+                    ButtonSegment(value: 'EGRESO',  label: Text('Egreso'),  icon: Icon(Icons.arrow_upward)),
+                  ],
+                  selected: {tipo},
+                  onSelectionChanged: (s) => setSt(() => tipo = s.first),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: conceptoCtrl,
+                  decoration: const InputDecoration(labelText: 'Concepto'),
+                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Ingrese un concepto' : null,
+                ),
+                TextFormField(controller: refCtrl, decoration: const InputDecoration(labelText: 'Referencia (opcional)')),
+                NumberFormField(
+                  controller: montoCtrl,
+                  decoration: const InputDecoration(labelText: 'Monto'),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) return 'Ingrese un monto';
+                    final parsed = double.tryParse(value.trim());
+                    if (parsed == null || parsed <= 0) return 'Ingrese un monto válido';
+                    return null;
+                  },
+                ),
+                if (tiposPago.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<TipoPago>(
+                    initialValue: tipoPagoSeleccionado,
+                    decoration: const InputDecoration(labelText: 'Tipo de Pago'),
+                    items: tiposPago.map((t) => DropdownMenuItem(
+                      value: t,
+                      child: Text(t.descripcion),
+                    )).toList(),
+                    onChanged: (v) => setSt(() {
+                      tipoPagoSeleccionado = v;
+                      nroOpCtrl.clear();
+                      bancoSeleccionado = null;
+                    }),
+                    validator: (v) => v == null ? 'Seleccione un tipo de pago' : null,
+                  ),
+                ],
+                if (tipoPagoSeleccionado?.requiereBanco == true) ...[
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<Banco>(
+                    initialValue: bancoSeleccionado,
+                    decoration: const InputDecoration(labelText: 'Banco'),
+                    items: bancos.map((b) => DropdownMenuItem(value: b, child: Text(b.descripcion))).toList(),
+                    onChanged: (v) => setSt(() => bancoSeleccionado = v),
+                    validator: (v) => v == null ? 'Seleccione un banco' : null,
+                  ),
+                ],
+                if (tipoPagoSeleccionado?.requiereOperacion == true) ...[
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: nroOpCtrl,
+                    decoration: const InputDecoration(labelText: 'N° Operación'),
+                    validator: (value) => (value == null || value.trim().isEmpty) ? 'Ingrese el número de operación' : null,
+                  ),
+                ],
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text('Fecha: ${FechaHoraUtil.formatoCorto(fecha)}'),
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    final d = await showDatePicker(
+                      context: dctx,
+                      initialDate: fecha,
+                      firstDate: DateTime(2020),
+                      lastDate: FechaHoraUtil.ahora(),
+                    );
+                    if (d != null) setSt(() => fecha = d);
+                  },
+                ),
+              ],
             ),
-          ],
-          if (tipoPagoSeleccionado?.requiereBanco == true) ...[
-            const SizedBox(height: 8),
-            DropdownButtonFormField<Banco>(
-              initialValue: bancoSeleccionado,
-              decoration: const InputDecoration(labelText: 'Banco'),
-              items: bancos.map((b) => DropdownMenuItem(value: b, child: Text(b.descripcion))).toList(),
-              onChanged: (v) => setSt(() => bancoSeleccionado = v),
-            ),
-          ],
-          if (tipoPagoSeleccionado?.requiereOperacion == true) ...[
-            const SizedBox(height: 8),
-            TextField(controller: nroOpCtrl, decoration: const InputDecoration(labelText: 'N° Operación')),
-          ],
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text('Fecha: ${FechaHoraUtil.formatoCorto(fecha)}'),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: () async {
-              final d = await showDatePicker(context: dctx, initialDate: fecha, firstDate: DateTime(2020), lastDate: FechaHoraUtil.ahora());
-              if (d != null) setSt(() => fecha = d);
-            },
           ),
-        ])),
+        ),
         actions: [
           OutlinedButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancelar')),
           FilledButton(
             onPressed: () {
+              if (!formKey.currentState!.validate()) return;
               final m = double.tryParse(montoCtrl.text);
-              if (conceptoCtrl.text.isEmpty || m == null || m <= 0) return;
+              if (m == null || m <= 0) return;
               Navigator.pop(dctx);
               if (editing) {
                 ctx.read<CajaBloc>().add(CajaActualizarMovimiento(
